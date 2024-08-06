@@ -1,0 +1,173 @@
+######3rd begin######
+# metric
+metrics.server=http://15.204.22.126:2082/els/postData2
+metrics.active=true
+metrics.server.queueSize=500
+metrics.sendPackageSize=3
+metrics.debug=true
+metrics.server.scheduleTime=60000
+
+metric.server=http://15.204.22.126:2082
+metric.thread.pool.size=2
+metric.buffer.queue.size=500
+metric.post.batch.size=50
+metric.serverId=meta01
+metric.envId=uat
+
+# statistics
+statistics.out.log=false
+statistics.report=false
+
+# common session
+vod.commonservice.api.host=http://vod-3d0-sit-mfc-elb-2091625780.us-east-2.elb.amazonaws.com:19779
+# 闲置状态客户端是否占用配额:0 不占用 1 占用
+common.session.inactive.limit=1
+# session状态缓存是否启用：0 否  1 是
+common.session.status.cache.enable=1
+# session状态缓存大小
+common.session.status.cache.size=10000
+# session状态缓存过期时间(秒)
+common.session.status.cache.expire=0
+
+# profile
+profile.api.host=http://vod-3d0-sit-mfc-elb-2091625780.us-east-2.elb.amazonaws.com:9772
+profile.api.timeout=60000
+profile.api.url.forYouList=/api/profile/foryou/list/v1
+
+# like模块
+like.api.host=http://vod-3d0-sit-mfc-elb-2091625780.us-east-2.elb.amazonaws.com:9779
+#like.api.host=http://localhost:9779
+like.api.timeout=60000
+like.api.url.likeUserInfo=/api/like/likeUserInfo/v1
+like.api.url.batchLikeUserInfo=/api/like/batchLikeUserInfo/v1
+like.api.url.playCount=/api/like/playCount/v1
+
+# auth
+mfc.auth.api.url=http://vod-3d0-sit-mfc-elb-2091625780.us-east-2.elb.amazonaws.com:9770
+# 这也是auth模块接口
+useraccount.api.host=http://vod-3d0-sit-mfc-elb-2091625780.us-east-2.elb.amazonaws.com:9770
+useraccount.api.timeout=60000
+useraccount.api.url.accountBiz=/api/uc/admin/queryAccountInfo/v1
+msg.api.host=http://vod-3d0-sit-mfc-elb-2091625780.us-east-2.elb.amazonaws.com:9800
+msg.api.timeout=60000
+# account
+http.user.queryAccountBaseInfoByLoginId=http://vod-3d0-sit-mfc-elb-2091625780.us-east-2.elb.amazonaws.com:9712/api/user3/queryAccountBaseInfoByLoginId/v1
+
+# lac
+lac.server.host=vod-3d0-sit-mfc-elb-2091625780.us-east-2.elb.amazonaws.com:20191
+lac.client.enable=true
+mfc.lac.enable=false
+
+# eula 静态资源 请求跳转至appweb服务
+mfc.meta.eula.redirection.origin.uri=/eula/en.html,/eula/es.html,/eula/pt.html
+mfc.meta.eula.redirection.target.host=http://120.77.225.194:9715/webconfigi
+######3rd end######
+
+
+######db begin######
+# mfc meta db
+mfc.meta.db.host=127.0.0.1:3306
+mfc.meta.db.inst=vod_meta_db
+mfc.meta.db.user=root
+mfc.meta.db.pass=1234
+mfc.meta.db.useL2Cache=true
+mfc.meta.db.appendPackagesToScan=com.valor.mfc.vms.meta.sync,com.valor.vod.cloud.model.database.ddo
+#mfc.meta.db.crypt.key=Ebw6MyVpHAC23ZMszboDDQ
+
+# mfc user db
+mfc.user.db.host=127.0.0.1:3306
+mfc.user.db.inst=vod_account_db
+mfc.user.db.user=root
+mfc.user.db.password=1234
+#mfc.user.db.appendPackage=com.valor.vod.user.model.database.ddo
+#mfc.user.db.key=Ebw6MyVpHAC23ZMszboDDQ
+
+db.HikariCP.maxActive=5
+######db end#######
+
+
+######redis begin######
+#spring.redis.connectType=cluster
+#spring.redis.database=0
+#spring.redis.host=vod-3d0-sit-mfc-redis-backup.oi7qo8.ng.0001.use2.cache.amazonaws.com
+spring.redis.host=127.0.0.1
+spring.redis.port=6379
+#spring.redis.password=7sxJe$UQnPs#Y7nJ
+spring.redis.password=
+spring.redis.pool.max-active=18
+spring.redis.pool.max-wait=-1
+spring.redis.pool.max-idle=20
+spring.redis.pool.min-idle=0
+spring.redis.timeout=30000
+
+mfc.redis.cache.expire.time=600
+
+mfc-redis-time-UserClouds=600
+mfc-redis-time-MediaIndex=1800
+mfc-redis-time-MediaType=1800
+mfc-redis-time-SeasonClouds=600
+mfc-redis-time-SeasonEpisodes=1800
+mfc-redis-time-SeasonEpisodesTotalCount=1800
+mfc-redis-time-CloudAccts=600
+mfc-redis-time-TopicFilmListId=1800
+mfc-redis-time-RegionData=1800
+mfc-redis-time-Series4Seasons=1800
+
+mfc.cloud.redis.database=3
+mfc.cloud.redis.host=127.0.0.1
+mfc.cloud.redis.port=6379
+mfc.cloud.redis.password=
+mfc.cloud.redis.timeout=3000
+mfc.cloud.redis.pool.max-active=18
+mfc.cloud.redis.pool.max-wait=-1
+mfc.cloud.redis.pool.max-idle=20
+
+vod.cloud.cloudName.redis.database=7
+vod.cloud.cloudName.redis.host=127.0.0.1
+vod.cloud.cloudName.redis.port=6379
+vod.cloud.cloudName.redis.password=
+vod.cloud.cloudName.redis.timeout=30000
+vod.cloud.cloudName.redis.pool.max-idle=20
+vod.cloud.cloudName.redis.pool.min-idle=0
+vod.cloud.cloudName.redis.pool.max-active=20
+vod.cloud.cloudName.redis.pool.max-wait=-1
+######redis end######
+
+
+######es begin######
+# api use data source:db/es
+mfc.vms.api.dataSource=es
+
+# es config
+mfc.vms.api.es.enable.version=10500
+mfc.vms.api.es.enable.group=
+mfc.vms.api.es.enable.whitelist=
+
+mfc.es.cluster.name=mfc-meta
+mfc.es.cluster.server.address=es
+mfc.es.cluster.server.port=9200
+mfc.es.cluster.server.protocol=http
+
+es.max.result=1000000
+
+mfc.detail.es.cluster.name=elasticsearch
+mfc.detail.es.cluster.server.address=127.0.0.1
+mfc.detail.es.cluster.server.port=9200
+mfc.detail.es.cluster.server.protocol=http
+mfc.detail.es.cluster.server.username=
+mfc.detail.es.cluster.server.password=
+mfc.detail.es.cluster.server.serverName=
+mfc.es.cluster.server.AWS4SignerServiceName=es
+mfc.es.cluster.server.AWS4SignerRegionName=cn-northwest-1
+
+mfc.es.search.req.log.enabled=true
+######es end######
+
+
+######hotkey begin######
+hotkey.app=vod-meta-api
+hotkey.configcenter.type=etcd
+hotkey.configcenter.adders=http://3.133.134.75:2379
+hotkey.configcenter.username=root
+hotkey.configcenter.password=etcd@sit
+######hotkey end######
