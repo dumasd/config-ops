@@ -27,3 +27,4 @@ replay_pid*
 
 **/__pycache__
 **/.pytest_cache
+**/nacos-data
