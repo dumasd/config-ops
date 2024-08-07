@@ -9,3 +9,7 @@ def create_app() -> Flask:
     app.register_blueprint(nacos_bp)
     app.config.from_object(Config)
     return app
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(host='0.0.0.0')

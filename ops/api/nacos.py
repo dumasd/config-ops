@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, make_response, request, current_app
 import nacos
 import io
 import logging
-from nacos_config.utils import parser, constants
+from ops.utils import parser, constants
 from ruamel import yaml as ryaml
 
 bp = Blueprint('nacos', __name__)
@@ -37,28 +37,23 @@ def modify_preview():
                                password=nacosConfig.get('password'),
                                namespace=namespace_id)
     current_content = client.get_config(data_id=data_id,group=group)
-    print(current_content)
     
-    format, parser_obj, yaml = parser.parse_content(current_content)
-    
-    print(format, parser_obj)
+    format, current, yaml = parser.parse_content(current_content)
     
     if format == constants.YAML:
         logger.info("modify yaml")
-        parser_obj['foo'] = "fdaff"
-        output_stream = io.StringIO()
-        yaml.dump(parser_obj, output_stream)
-        for k, v in parser_obj.items():
-            print(k, v)
+        f_format, full, yaml = parser.parse_content(full_content, constants.YAML)
+        parser.yaml_remove_extra_keys(full, current)
+        
+        p_format, patch, yaml = parser.parse_content(patch_content, format=constants.YAML)
+        parser.yaml_patch(patch, current)
+        
     elif format == constants.PROPERTIES:
         logger.info("modify properties")
         
     else:
         return make_response('Unsupported content format', 400)            
         
-    
-    
-    
     # 2. 解析full_content，比对当前配置，新增或删除
     
     # 3. 解析patch_content，比对新增或删除
