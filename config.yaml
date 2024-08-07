@@ -1,0 +1,17 @@
+nacos:
+  default:
+    url: http://localhost:8848
+    username: nacos
+    password: nacos
+    blacklist:
+      - namespace: public
+        group: DEFAULT_GROUP
+        dataId: sss:ssss
+
+database:
+  db1:
+    url: 'mysql+mysqlconnector://root:1234@localhost/test'
+
+logging:
+  level: INFO
+  format: '[%(asctime)s] %(levelname)s %(name)s %(message)s'

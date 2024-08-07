@@ -6,14 +6,14 @@ from ruamel import yaml as ryaml
 
 logger = logging.getLogger(__name__)
 
-def parse_content(content, format=None):
+def parse_content(content:str, format=None):
     # 尝试当properties解析
     try:
         prop = configobj.ConfigObj(io.StringIO(content), encoding='utf-8', list_values=False)
         return constants.PROPERTIES, prop, None
     except BaseException as ex:
         logger.warning(f'非properties文件{ex}')
-        if format is constants.PROPERTIES:
+        if format == constants.PROPERTIES:
             raise ex
         
     # 尝试当yaml解析
@@ -24,7 +24,7 @@ def parse_content(content, format=None):
         return constants.YAML, data, yaml
     except Exception as ex:
         logger.warning(f'非yaml文件{ex}')
-        if format is constants.YAML:
+        if format == constants.YAML:
             raise ex
     
     return constants.UNKNOWN, None
