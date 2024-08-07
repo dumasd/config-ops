@@ -10,8 +10,8 @@ nacos:
 
 database:
   db1:
-    url: 'mysql+mysqlconnector://root:1234@localhost/test'
+    url: "mysql+mysqlconnector://root:1234@localhost/test"
 
 logging:
   level: INFO
-  format: '[%(asctime)s] %(levelname)s %(name)s %(message)s'
+  format: "[%(asctime)s] %(levelname)s %(name)s %(message)s"

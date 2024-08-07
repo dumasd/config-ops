@@ -4,9 +4,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class TestParser:
     def test_yaml_remove_extra_keys(self):
-        current_str= """# commit
+        current_str = """# commit
         key1: value1
         key2: value2
         extra_key: value_extra  # 这个键值对在 full_config.yaml 中不存在
@@ -30,10 +31,10 @@ class TestParser:
         format1, current, yaml = parser.parse_content(current_str)
         format2, full, yaml = parser.parse_content(full_str)
         parser.yaml_cpx(full, current)
-        logging.info('\n%s', parser.yaml_to_string(current, yaml))
-    
+        logging.info("\n%s", parser.yaml_to_string(current, yaml))
+
     def test_yaml_patch(self):
-        current_str= """# commit
+        current_str = """# commit
         key1: value1
         key2: value2
         extra_key: value_extra
@@ -54,8 +55,8 @@ class TestParser:
         format1, current, yaml = parser.parse_content(current_str)
         format2, patch, yaml = parser.parse_content(patch_str)
         parser.yaml_patch(patch, current)
-        logging.info('\n%s', parser.yaml_to_string(current, yaml))
-     
+        logging.info("\n%s", parser.yaml_to_string(current, yaml))
+
     def test_parse_content(self):
         cstr = """# comment
         key1=value1
@@ -67,13 +68,13 @@ class TestParser:
         nested.arr[0].key2=aaa2
         nested.arr[1].key1=bbb1
         nested.arr[1].key2=bbb2
-        """    
+        """
         format, current, yaml = parser.parse_content(cstr)
-        current['nested.key3'] = 'value3_new'
-        current['key1'] = 3333
-        logger.info(current['nested.key3'])
-        logger.info('\n%s', parser.properties_to_string(current))
-    
+        current["nested.key3"] = "value3_new"
+        current["key1"] = 3333
+        logger.info(current["nested.key3"])
+        logger.info("\n%s", parser.properties_to_string(current))
+
     def test_properties_remove_extra_keys(self):
         current_str = """#comment
         key1=value1
@@ -99,8 +100,8 @@ class TestParser:
         f1, current, yml1 = parser.parse_content(current_str)
         f2, full, yml2 = parser.parse_content(full_str)
         parser.properties_cpx(full, current)
-        logger.info('\n%s', parser.properties_to_string(current))
-     
+        logger.info("\n%s", parser.properties_to_string(current))
+
     def test_properties_patch(self):
         current_str = """#comment
         key1=value1
@@ -119,8 +120,8 @@ class TestParser:
         nested.key3=value3_new
         [section]
         nested.key-1.key-1-1=value_new
-        """            
+        """
         f1, current, yml1 = parser.parse_content(current_str)
         f2, patch, yml2 = parser.parse_content(patch_str)
         parser.properties_patch(patch, current)
-        logger.info('\n%s', parser.properties_to_string(current))
+        logger.info("\n%s", parser.properties_to_string(current))

@@ -1,5 +1,4 @@
-
-PROPERTIES = 'properties'
-YAML = 'yaml'
-JSON = 'json'
-UNKNOWN = 'unknown'
+PROPERTIES = "properties"
+YAML = "yaml"
+JSON = "json"
+UNKNOWN = "unknown"

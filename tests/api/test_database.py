@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def test_validate_sql():
     sql_script = """
     SELECT * FROM elespacio_rd_kpi;
@@ -18,8 +19,9 @@ def test_validate_sql():
     PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='地图区域表' ;
     """
-    db_config = {'url': 'mysql+mysqlconnector://root:1234@localhost/test'}
+    db_config = {"url": "mysql+mysqlconnector://root:1234@localhost/test"}
     database.validate_sql(sql_script, db_config)
+
 
 def test_execute_sql():
     sql_script = """
@@ -34,6 +36,6 @@ def test_execute_sql():
     `pid` varchar(255) NOT NULL COMMENT '父级区域id',
     PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='地图区域表' ;
-    """    
-    db_config = {'url': 'mysql+mysqlconnector://root:1234@localhost/test'}
+    """
+    db_config = {"url": "mysql+mysqlconnector://root:1234@localhost/test"}
     database.execute_sql(sql_script, db_config)
