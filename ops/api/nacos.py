@@ -39,6 +39,19 @@ def get_nacos_config(nacos_id):
     return nacosConfig
 
 
+""" 获取Nacos服务列表 """
+
+
+@bp.route("/nacos/v1/list", methods=["GET"])
+def get_nacos_list():
+    configs = current_app.config["nacos"]
+    list = []
+    for k in configs:
+        nc = configs[k]
+        list.append({"nacos_id": k, "url": nc["url"]})
+    return list
+
+
 """ 获取指定配置 """
 
 

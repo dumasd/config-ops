@@ -74,6 +74,14 @@ def get_database_config(db_id):
     configs = current_app.config["database"]
     return configs[db_id]
 
+@bp.route("/database/v1/list", methods=["GET"])
+def get_database_list():
+    configs = current_app.config["database"]
+    list = []
+    for k in configs:
+        list.append({"db_id": k})    
+    return list
+
 
 @bp.route("/database/v1/run-sql", methods=["POST"])
 def run_sql():
@@ -83,12 +91,11 @@ def run_sql():
         data = schema.load(request.get_json())
     except ValidationError as err:
         return jsonify(err.messages), 400
-
-    print(data)
-
     db_id = data.get("db_id")
     db_config = get_database_config(db_id)
     if db_config == None:
         return make_response("Database config not found", 404)
     success, result = execute_sql(data.get("sql"), db_config)
+    if not success:
+        return result, 400
     return "OK"
