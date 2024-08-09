@@ -136,7 +136,11 @@ def modify_preview():
                 parser.yaml_patch(patch, current)
             except BaseException:
                 return make_response("Patch content must be yaml", 400)
-        return {"format": format, "content": parser.yaml_to_string(current, c_yml)}
+        return {
+            "format": format,
+            "content": current_content,
+            "next_content": parser.yaml_to_string(current, c_yml)
+        }
 
     elif format == constants.PROPERTIES:
         logger.info("modify properties")
@@ -155,7 +159,11 @@ def modify_preview():
             except BaseException:
                 return make_response("Patch content muse be properties", 400)
 
-        return {"format": format, "content": parser.properties_to_string(current)}
+        return {
+            "format": format,
+            "content": current_content,
+            "next_content": parser.properties_to_string(current)
+        }
 
     else:
         return make_response("Unsupported content format", 400)
