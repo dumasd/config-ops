@@ -144,6 +144,7 @@ def modify_preview():
             "format": format,
             "content": current_content or "",
             "next_content": parser.yaml_to_string(current, c_yml),
+            "nacos_url": nacosConfig.get("url"),
         }
     elif format == constants.PROPERTIES:
         parser.properties_cpx_content(full_content, current)
@@ -160,6 +161,7 @@ def modify_preview():
             "format": format,
             "content": current_content or "",
             "next_content": parser.properties_to_string(current),
+            "nacos_url": nacosConfig.get("url"),
         }
     else:
         return make_response("Unsupported content format", 400)

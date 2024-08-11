@@ -10,7 +10,11 @@ nacos:
 
 database:
   db1:
-    url: "mysql+mysqlconnector://root:1234@localhost/test"
+    url: localhost
+    port: 3306
+    database: test
+    username: root
+    password: "1234"
 
 logging:
   level: INFO
