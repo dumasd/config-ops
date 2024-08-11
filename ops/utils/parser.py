@@ -34,7 +34,7 @@ def parse_content(content: str, format=None):
 
 
 """
-YAML: 根据当前全量配置，删除不存在的配置
+YAML 相关方法
 """
 
 
@@ -49,13 +49,11 @@ def yaml_cpx(full, current):
                 yaml_cpx(full[key], current[key])
         for key in keys_to_remove:
             del current[key]
+        for key in full:
+            if key not in current:
+                current[key] = full[key]
     # elif isinstance(current, list) and isinstance(full, list):
     # list 忽略，暂时没办法判断
-
-
-"""
-YAML: 根据增量配置，替换值或者新增配置
-"""
 
 
 def yaml_patch(patch, current):
@@ -78,6 +76,26 @@ def yaml_to_string(data, yaml):
     return output_stream.getvalue()
 
 
+def yaml_cpx_content(full_content, current):
+    if full_content is not None and len(full_content.strip()) > 0:
+        try:
+            _, full, _ = parse_content(full_content, constants.YAML)
+            yaml_cpx(full, current)
+        except BaseException:
+            return False, "Full content must be yaml"
+    return True, "OK"
+
+
+def yaml_patch_content(patch_content, current):
+    if patch_content is not None and len(patch_content.strip()) > 0:
+        try:
+            _, patch, _ = parse_content(patch_content, format=constants.YAML)
+            yaml_patch(patch, current)
+        except BaseException:
+            return False, "Full content must be yaml"
+    return True, "OK"
+
+
 """
 PROPERTIES 相关方法
 """
@@ -88,11 +106,6 @@ def properties_to_string(data):
     data.write(output_stream)
     t = output_stream.getvalue()
     return t.decode()
-
-
-"""
-PROPERTIES: 根据当前全量配置移除多余配置
-"""
 
 
 def properties_cpx(full, current):
@@ -106,9 +119,6 @@ def properties_cpx(full, current):
         del current[key]
 
 
-"""PROPERTIES: 追加配置"""
-
-
 def properties_patch(patch, current):
     for key in current:
         if key in patch:
@@ -116,3 +126,23 @@ def properties_patch(patch, current):
                 properties_patch(patch[key], current[key])
             else:
                 current[key] = patch[key]
+
+
+def properties_cpx_content(full_content, current):
+    if full_content is not None and len(full_content.strip()) > 0:
+        try:
+            _, full, _ = parse_content(full_content, constants.PROPERTIES)
+            properties_cpx(full, current)
+        except BaseException:
+            return False, "Full content must be properties"
+    return True, "OK"
+
+
+def properties_patch_content(patch_content, current):
+    if patch_content is not None and len(patch_content.strip()) > 0:
+        try:
+            _, patch, _ = parse_content(patch_content, format=constants.PROPERTIES)
+            properties_patch(patch, current)
+        except BaseException:
+            return False, "Patch content must be properties"
+    return True, "OK"

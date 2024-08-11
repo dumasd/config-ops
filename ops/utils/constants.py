@@ -1,4 +1,8 @@
 PROPERTIES = "properties"
 YAML = "yaml"
-JSON = "json"
 UNKNOWN = "unknown"
+
+
+def is_support_format(format):
+    return format != UNKNOWN
+        

@@ -81,7 +81,7 @@ def get_config():
 
     if format == constants.UNKNOWN:
         return "Unsupport format", 404
-    return {"format": format, "content": current_content}
+    return {"format": format, "content": current_content or ""}
 
 
 """ 修改预览 """
@@ -117,54 +117,50 @@ def modify_preview():
         namespace=namespace_id,
     )
     current_content = client.get_config(data_id=data_id, group=group, no_snapshot=True)
-    format, current, c_yml = parser.parse_content(current_content)
 
-    # 2. 解析full_content，比对当前配置，新增或删除
-    # 3. 解析patch_content，比对新增或删除
+    format, current, c_yml = None, None, None
+    need_cpx = True
+    if current_content is not None and len(current_content.strip()) > 0:
+        # 空内容，以full格式为准
+        format, current, c_yml = parser.parse_content(current_content)
+    elif full_content is not None and len(full_content.strip()) > 0:
+        format, current, c_yml = parser.parse_content(full_content)
+        # patch
+        need_cpx = False
+    else:
+        return make_response("Remote config and full content all blank", 400)
+
     if format == constants.YAML:
-        logger.info("modify yaml")
-        if full_content is not None and len(full_content.strip()) > 0:
-            try:
-                _, full, _ = parser.parse_content(full_content, constants.YAML)
-                parser.yaml_cpx(full, current)
-            except BaseException:
-                return make_response("Full content must be yaml", 400)
-
-        if patch_content is not None and len(patch_content.strip()) > 0:
-            try:
-                _, patch, _ = parser.parse_content(patch_content, format=constants.YAML)
-                parser.yaml_patch(patch, current)
-            except BaseException:
-                return make_response("Patch content must be yaml", 400)
+        # cpx
+        if need_cpx:
+            suc, msg = parser.yaml_cpx_content(full_content, current)
+            if suc is False:
+                return make_response(msg, 400)
+        # patch
+        suc, msg = parser.yaml_patch_content(patch_content, current)
+        if suc is False:
+            return make_response(msg, 400)
         return {
             "format": format,
-            "content": current_content,
-            "next_content": parser.yaml_to_string(current, c_yml)
+            "content": current_content or "",
+            "next_content": parser.yaml_to_string(current, c_yml),
         }
-
     elif format == constants.PROPERTIES:
-        logger.info("modify properties")
-        if full_content is not None and len(full_content.strip()) > 0:
-            try:
-                _, full, _ = parser.parse_content(full_content, constants.YAML)
-                parser.properties_cpx(full, current)
-            except BaseException:
-                return make_response("Full content must be properties", 400)
-
-        if patch_content is not None and len(patch_content.strip()) > 0:
-            try:
-                _, patch, _ = parser.parse_content(patch_content, format=constants.YAML)
-                parser.properties_patch(patch, current)
-
-            except BaseException:
-                return make_response("Patch content muse be properties", 400)
-
+        parser.properties_cpx_content(full_content, current)
+        # cpx
+        if need_cpx:
+            suc, msg = parser.properties_cpx_content(full_content, current)
+            if suc is False:
+                return make_response(msg, 400)
+        # patch
+        suc, msg = parser.properties_patch_content(patch_content, current)
+        if suc is False:
+            return make_response(msg, 400)
         return {
             "format": format,
-            "content": current_content,
-            "next_content": parser.properties_to_string(current)
+            "content": current_content or "",
+            "next_content": parser.properties_to_string(current),
         }
-
     else:
         return make_response("Unsupported content format", 400)
 
@@ -200,22 +196,21 @@ def modify_confirm():
         namespace=namespace_id,
     )
 
+    current_format, format = None, None
+
     current_content = client.get_config(data_id=data_id, group=group, no_snapshot=True)
-    format, current, c_yml = parser.parse_content(current_content)
+    if current_content is not None and len(current_content.strip()) > 0:
+        current_format, _, _ = parser.parse_content(current_content)
 
-    if format == constants.YAML:
-        try:
-            parser.parse_content(content, constants.YAML)
-        except BaseException:
-            return make_response("Content must be yaml", 400)
+    format, _, _ = parser.parse_content(content)
 
-    elif format == constants.PROPERTIES:
-        try:
-            parser.parse_content(content, constants.PROPERTIES)
-        except BaseException:
-            return make_response("Content must be properties", 400)
+    if current_format is not None and current_format != format:
+        make_response(
+            f"Current content format [{current_format}] not match new content format [{format}]",
+            400,
+        )
 
-    else:
+    if not constants.is_support_format(format):
         return make_response("Unsupported format", 400)
 
     try:
