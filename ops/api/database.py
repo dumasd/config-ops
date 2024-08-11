@@ -120,4 +120,4 @@ def run_sql():
     if not success:
         return result, 400
     print(result)
-    return {"database_url": db_config.get("url"), "result": result}
+    return {"database": db_config.get("url"), "result": result}
