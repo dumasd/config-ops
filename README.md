@@ -13,4 +13,7 @@ pip3 install -r requirements.txt
 
 # Run Tests
 python3 -m pytest ./tests
+
+# pyinstaller 打包成可执行的二进制
+pyinstaller app.spec 
 ```

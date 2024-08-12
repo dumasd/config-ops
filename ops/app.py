@@ -1,10 +1,10 @@
 from flask import Flask
 import argparse
 import logging
-from .api.nacos import bp as nacos_bp
-from .api.database import bp as database_bp
-from .config import load_config
-from .utils.logging_configurator import DefaultLoggingConfigurator
+from ops.api.nacos import bp as nacos_bp
+from ops.api.database import bp as database_bp
+from ops.config import load_config
+from ops.utils.logging_configurator import DefaultLoggingConfigurator
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +25,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the config-ops application")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="服务Host")
     parser.add_argument("--port", type=int, default="5000", help="服务端口")
-    parser.add_argument("--config", type=str, default="config.yaml", help="配置文件")
-    args = parser.parse_known_args()
-    logger.info(args)
-
-    app = create_app(args["config"])
-    app.run(host="0.0.0.0")
+    parser.add_argument("--debug", type=bool, default=False, help="是否开启Debug模式")
+    parser.add_argument(
+        "--config", type=str, default="config.yaml", help="YAML配置文件"
+    )
+    args = parser.parse_args()
+    app = create_app(args.config)
+    app.run(host=args.host, port=args.port, debug=args.debug)
     logger.info("Started flask app")
