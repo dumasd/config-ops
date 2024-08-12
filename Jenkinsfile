@@ -34,7 +34,8 @@ pipeline {
                     pyinstaller app.spec
 
                     cp config.yaml.sample dist/app
-                    tar -czf config-ops-linux-${RELEASE_VERSION}.tar.gz -C dist/app config-ops config.yaml.sample
+                    cp README.md dist/app
+                    tar -czf config-ops-linux-${RELEASE_VERSION}.tar.gz --exclude _internal -C dist/app .
                     '''
                 }
             }

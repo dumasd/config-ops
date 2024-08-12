@@ -15,6 +15,7 @@
             },
             "args": [
                 "run",
+                "--debug",
                 "--no-debugger",
                 "--no-reload"
             ],

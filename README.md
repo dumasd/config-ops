@@ -2,13 +2,43 @@
 
 * Flask: [Installation — Flask Documentation (3.0.x) (palletsprojects.com)](https://flask.palletsprojects.com/en/3.0.x/installation/)
 
-```shell
-# Virtual environments
-python3 -m venv .venv
+## 快速开始
 
+下载release文件解压，release文件中包含 `config-ops` 可执行文件和配置文件样例 `config.yaml.sample`
+
+```
+# 从sample中拷贝出一个配置文件，修改配置文件中的配置
+cp config.yaml.sample config.yaml
+
+
+# 启动程序
+./config-ops --host 127.0.0.1 --port 5000 --config config.yaml
+
+
+# 查看参数选项
+./config-ops --help
+
+```
+
+
+## 本地开发
+
+### 要求
+
+- Python3.8及以上版本
+
+### 开发环境设置
+
+```shell
+# 拉取代码 
+https://github.com/dumasd/config-ops.git
+cd config-ops
+
+# 设置python虚拟环境
+python3 -m venv .venv
 . .venv/bin/activate
 
-# Install dependencies
+# 安装依赖
 pip3 install -r requirements.txt
 
 # Run Tests
