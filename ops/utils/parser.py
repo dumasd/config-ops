@@ -11,7 +11,7 @@ def parse_content(content: str, format=None):
     # 尝试当properties解析
     try:
         prop = configobj.ConfigObj(
-            io.StringIO(content), encoding="utf-8", list_values=False
+            io.StringIO(content), encoding="utf-8", list_values=False, raise_errors=True
         )
         return constants.PROPERTIES, prop, None
     except BaseException as ex:

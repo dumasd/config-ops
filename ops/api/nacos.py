@@ -107,8 +107,6 @@ def modify_preview():
     patch_content = data.get("patch_content")
     full_content = data.get("full_content")
 
-    print(data, nacosConfig)
-
     # 1. 从nacos捞当前配置
     client = nacos.NacosClient(
         server_addresses=nacosConfig.get("url"),

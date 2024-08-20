@@ -4,17 +4,12 @@ nacos:
     url: http://localhost:8848
     username: nacos
     password: nacos
-    blacklist: # 黑名单，不允许修改的配置
-      - namespace: public
-        group: DEFAULT_GROUP
-        dataId: sss:ssss
 
 # 数据库配置
 database:
   db1: # Database ID
     url: localhost
     port: 3306
-    database: test
     username: root
     password: "1234"
 

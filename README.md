@@ -1,5 +1,7 @@
 # config-ops
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)[![Build Status](https://github.com/apache/superset/workflows/Python/badge.svg)](https://github.com/apache/superset/actions)
+
 * Flask: [Installation — Flask Documentation (3.0.x) (palletsprojects.com)](https://flask.palletsprojects.com/en/3.0.x/installation/)
 
 ## 快速开始
@@ -19,7 +21,6 @@ cp config.yaml.sample config.yaml
 ./config-ops --help
 
 ```
-
 
 ## 本地开发
 

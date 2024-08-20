@@ -4,23 +4,17 @@ from flask import Blueprint, request, make_response, jsonify, current_app
 import re, logging
 from sqlalchemy import create_engine, text
 from marshmallow import Schema, fields, ValidationError
+from ops.config import DbConfig
 
 logger = logging.getLogger(__name__)
 
 bp = Blueprint("database", __name__)
 
 
-class DbConfig(Schema):
-    url = fields.Str(required=True, default="localhost")
-    port = fields.Integer(required=True, default=3306)
-    username = fields.Str(required=True)
-    password = fields.Str(required=True)
-    database = fields.Str(required=True)
-
-
 class RunSqlSchema(Schema):
     db_id = fields.Str(required=True)
     sql = fields.Str(required=True)
+    database = fields.Str(required=True)
 
 
 def remove_comments(sql_script):
@@ -44,7 +38,7 @@ def validate_sql(sql_script: str, db_config):
         return False, f"Invalid SQL statement: {str(e)}"
 
 
-def execute_sql(sql_script, db_config):
+def execute_sql(database, sql_script, db_config):
     engine = None
     sql_commands = None
     try:
@@ -52,7 +46,6 @@ def execute_sql(sql_script, db_config):
         username = db_config.get("username")
         password = db_config.get("password")
         port = db_config.get("port")
-        database = db_config.get("database")
         conn_string = (
             f"mysql+mysqlconnector://{username}:{password}@{url}:{port}/{database}"
         )
@@ -116,7 +109,7 @@ def run_sql():
     db_config = get_database_config(db_id)
     if db_config == None:
         return make_response("Database config not found", 404)
-    success, result = execute_sql(data.get("sql"), db_config)
+    success, result = execute_sql(data.get("database"), data.get("sql"), db_config)
     if not success:
         return result, 400
     print(result)

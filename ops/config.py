@@ -1,6 +1,7 @@
 """ 配置文件 """
 
 from ruamel.yaml import YAML
+from marshmallow import Schema, fields, ValidationError
 
 
 class Config:
@@ -19,6 +20,13 @@ class Config:
             "password": "nacos",
         },
     }
+
+
+class DbConfig(Schema):
+    url = fields.Str(required=True, default="localhost")
+    port = fields.Integer(required=True, default=3306)
+    username = fields.Str(required=True)
+    password = fields.Str(required=True)
 
 
 """ 加载YAML配置 """
