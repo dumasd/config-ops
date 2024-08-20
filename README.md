@@ -14,13 +14,11 @@
 # 从sample中拷贝出一个配置文件，修改配置文件中的配置
 cp config.yaml.sample config.yaml
 
+# 查看参数选项
+./config-ops --help
 
 # 启动程序
 ./config-ops --host 127.0.0.1 --port 5000 --config config.yaml
-
-
-# 查看参数选项
-./config-ops --help
 
 ```
 
