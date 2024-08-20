@@ -2,11 +2,13 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)[![Build Status](https://github.com/apache/superset/workflows/Python/badge.svg)](https://github.com/apache/superset/actions)
 
+一款Nacos配置增量变更和数据库脚本执行的工具。
+
 * Flask: [Installation — Flask Documentation (3.0.x) (palletsprojects.com)](https://flask.palletsprojects.com/en/3.0.x/installation/)
 
 ## 快速开始
 
-下载release文件解压，release文件中包含 `config-ops` 可执行文件和配置文件样例 `config.yaml.sample`
+下载 release 文件解压，release 文件中包含 `config-ops` 可执行文件和配置文件样例 `config.yaml.sample`
 
 ```
 # 从sample中拷贝出一个配置文件，修改配置文件中的配置
