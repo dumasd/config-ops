@@ -3,6 +3,7 @@ import argparse
 import logging
 from ops.api.nacos import bp as nacos_bp
 from ops.api.database import bp as database_bp
+from ops.api.common import bp as common_bp
 from ops.config import load_config
 from ops.utils.logging_configurator import DefaultLoggingConfigurator
 
@@ -13,6 +14,7 @@ def create_app(config_file="config.yaml") -> Flask:
     app = Flask(__name__)
     app.register_blueprint(database_bp)
     app.register_blueprint(nacos_bp)
+    app.register_blueprint(common_bp)
     config = load_config(config_file)
     app.config.update(config)
     loggingConfig = DefaultLoggingConfigurator()

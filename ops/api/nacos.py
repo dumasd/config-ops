@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, make_response, request, current_app
 import nacos
 import logging
-from ops.utils import parser, constants
+from ops.utils import config_handler, constants
 from marshmallow import Schema, fields, ValidationError
+from ops.utils import nacos_client
 
 bp = Blueprint("nacos", __name__)
 
@@ -31,6 +32,7 @@ class ModifyConfirmSchema(Schema):
     group = fields.Str(required=True)
     data_id = fields.Str(required=True)
     content = fields.Str(required=True)
+    format = fields.Str(required=True)
 
 
 def get_nacos_config(nacos_id):
@@ -39,11 +41,9 @@ def get_nacos_config(nacos_id):
     return nacosConfig
 
 
-""" 获取Nacos服务列表 """
-
-
 @bp.route("/nacos/v1/list", methods=["GET"])
 def get_nacos_list():
+    """获取Nacos服务列表"""
     configs = current_app.config["nacos"]
     list = []
     for k in configs:
@@ -52,11 +52,9 @@ def get_nacos_list():
     return list
 
 
-""" 获取指定配置 """
-
-
 @bp.route("/nacos/v1/config", methods=["GET"])
 def get_config():
+    """获取指定配置"""
     schema = ModifyPreviewSchema()
     data = None
     try:
@@ -77,18 +75,55 @@ def get_config():
         namespace=namespace_id,
     )
     current_content = client.get_config(data_id=data_id, group=group, no_snapshot=True)
-    format, current, c_yml = parser.parse_content(current_content)
+    format, current, c_yml = config_handler.parse_content(current_content)
 
     if format == constants.UNKNOWN:
         return "Unsupport format", 404
     return {"format": format, "content": current_content or ""}
 
 
-""" 修改预览 """
+@bp.route("/nacos/v1/namespaces", methods=["GET"])
+def get_namespace_list():
+    """
+    获取namespace_list列表
+    """
+    nacos_id = request.args.get("nacos_id")
+    nacosConfig = get_nacos_config(nacos_id)
+    if nacosConfig == None:
+        return make_response("Nacos config not found", 404)
+    client = nacos_client.ConfigOpsNacosClient(
+        server_addresses=nacosConfig.get("url"),
+        username=nacosConfig.get("username"),
+        password=nacosConfig.get("password"),
+    )
+    resp = client.list_namespace()
+    if resp.get("code") != 200:
+        return resp.get("message"), 500
+    return resp.get("data")
+
+
+@bp.route("/nacos/v1/configs", methods=["GET"])
+def get_configs():
+    nacos_id = request.args.get("nacos_id")
+    namespace = request.args.get("namespace")
+    nacosConfig = get_nacos_config(nacos_id)
+    if nacosConfig == None:
+        return make_response("Nacos config not found", 404)
+    client = nacos_client.ConfigOpsNacosClient(
+        server_addresses=nacosConfig.get("url"),
+        username=nacosConfig.get("username"),
+        password=nacosConfig.get("password"),
+        namespace=namespace,
+    )
+    resp = client.get_configs(no_snapshot=True, page_size=9000)
+    return resp.get("pageItems")
 
 
 @bp.route("/nacos/v1/config/modify", methods=["POST"])
 def modify_preview():
+    """
+    修改预览
+    """
     schema = ModifyPreviewSchema()
     data = None
     try:
@@ -120,9 +155,9 @@ def modify_preview():
     need_cpx = True
     if current_content is not None and len(current_content.strip()) > 0:
         # 空内容，以full格式为准
-        format, current, c_yml = parser.parse_content(current_content)
+        format, current, c_yml = config_handler.parse_content(current_content)
     elif full_content is not None and len(full_content.strip()) > 0:
-        format, current, c_yml = parser.parse_content(full_content)
+        format, current, c_yml = config_handler.parse_content(full_content)
         # patch
         need_cpx = False
     else:
@@ -131,45 +166,43 @@ def modify_preview():
     if format == constants.YAML:
         # cpx
         if need_cpx:
-            suc, msg = parser.yaml_cpx_content(full_content, current)
+            suc, msg = config_handler.yaml_cpx_content(full_content, current)
             if suc is False:
                 return make_response(msg, 400)
         # patch
-        suc, msg = parser.yaml_patch_content(patch_content, current)
+        suc, msg = config_handler.yaml_patch_content(patch_content, current)
         if suc is False:
             return make_response(msg, 400)
         return {
             "format": format,
             "content": current_content or "",
-            "next_content": parser.yaml_to_string(current, c_yml),
+            "next_content": config_handler.yaml_to_string(current, c_yml),
             "nacos_url": nacosConfig.get("url"),
         }
     elif format == constants.PROPERTIES:
-        parser.properties_cpx_content(full_content, current)
+        config_handler.properties_cpx_content(full_content, current)
         # cpx
         if need_cpx:
-            suc, msg = parser.properties_cpx_content(full_content, current)
+            suc, msg = config_handler.properties_cpx_content(full_content, current)
             if suc is False:
                 return make_response(msg, 400)
         # patch
-        suc, msg = parser.properties_patch_content(patch_content, current)
+        suc, msg = config_handler.properties_patch_content(patch_content, current)
         if suc is False:
             return make_response(msg, 400)
         return {
             "format": format,
             "content": current_content or "",
-            "next_content": parser.properties_to_string(current),
+            "next_content": config_handler.properties_to_string(current),
             "nacos_url": nacosConfig.get("url"),
         }
     else:
         return make_response("Unsupported content format", 400)
 
 
-""" 修改配置 """
-
-
 @bp.route("/nacos/v1/config/modify", methods=["PUT"])
 def modify_confirm():
+    """修改配置"""
     schema = ModifyConfirmSchema()
     data = None
     try:
@@ -182,6 +215,7 @@ def modify_confirm():
     group = data.get("group")
     data_id = data.get("data_id")
     content = data.get("content")
+    format = data.get("format")
 
     if content is None or len(content.strip()) == 0:
         return make_response("Content is blank", 400)
@@ -196,22 +230,22 @@ def modify_confirm():
         namespace=namespace_id,
     )
 
-    current_format, format = None, None
+    # current_format, format = None, None
 
-    current_content = client.get_config(data_id=data_id, group=group, no_snapshot=True)
-    if current_content is not None and len(current_content.strip()) > 0:
-        current_format, _, _ = parser.parse_content(current_content)
+    # current_content = client.get_config(data_id=data_id, group=group, no_snapshot=True)
+    # if current_content is not None and len(current_content.strip()) > 0:
+    #     current_format, _, _ = config_handler.parse_content(current_content)
 
-    format, _, _ = parser.parse_content(content)
+    # format, _, _ = config_handler.parse_content(content)
 
-    if current_format is not None and current_format != format:
-        make_response(
-            f"Current content format [{current_format}] not match new content format [{format}]",
-            400,
-        )
+    # if current_format is not None and current_format != format:
+    #     make_response(
+    #         f"Current content format [{current_format}] not match new content format [{format}]",
+    #         400,
+    #     )
 
-    if not constants.is_support_format(format):
-        return make_response("Unsupported format", 400)
+    # if not constants.is_support_format(format):
+    #     return make_response("Unsupported format", 400)
 
     try:
         res = client.publish_config(

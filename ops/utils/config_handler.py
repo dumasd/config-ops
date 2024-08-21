@@ -57,6 +57,9 @@ def yaml_cpx(full, current):
 
 
 def yaml_patch(patch, current):
+    """
+    将Patch的内容追加或修改到Current
+    """
     if isinstance(current, dict) and isinstance(patch, dict):
         for key in patch:
             if key in current:
@@ -68,6 +71,21 @@ def yaml_patch(patch, current):
                     current[key] = patch[key]
             else:
                 current[key] = patch[key]
+
+
+def yaml_delete(patch, current):
+    """
+    从Current中删除Delete的内容
+    """
+    if isinstance(current, dict) and isinstance(patch, dict):
+        for key in patch:
+            if key in current:
+                if isinstance(current[key], dict) and isinstance(patch[key], dict):
+                    yaml_delete(patch[key], current[key])
+                elif not isinstance(current[key], dict) and not isinstance(
+                    patch[key], dict
+                ):
+                    del current[key]
 
 
 def yaml_to_string(data, yaml):
@@ -91,6 +109,16 @@ def yaml_patch_content(patch_content, current):
         try:
             _, patch, _ = parse_content(patch_content, format=constants.YAML)
             yaml_patch(patch, current)
+        except BaseException:
+            return False, "Full content must be yaml"
+    return True, "OK"
+
+
+def yaml_delete_content(delete_content, current):
+    if delete_content is not None and len(delete_content.strip()) > 0:
+        try:
+            _, delete, _ = parse_content(delete_content, format=constants.YAML)
+            yaml_delete(delete, current)
         except BaseException:
             return False, "Full content must be yaml"
     return True, "OK"
@@ -126,6 +154,15 @@ def properties_patch(patch, current):
                 properties_patch(patch[key], current[key])
             else:
                 current[key] = patch[key]
+    for key in patch:
+        if key not in current:
+            current[key] = patch[key]
+
+
+def properties_delete(patch, current):
+    for key in patch:
+        if key in current:
+            del current[key]
 
 
 def properties_cpx_content(full_content, current):
@@ -143,6 +180,16 @@ def properties_patch_content(patch_content, current):
         try:
             _, patch, _ = parse_content(patch_content, format=constants.PROPERTIES)
             properties_patch(patch, current)
+        except BaseException:
+            return False, "Patch content must be properties"
+    return True, "OK"
+
+
+def properties_delete_content(delete_content, current):
+    if delete_content is not None and len(delete_content.strip()) > 0:
+        try:
+            _, delete, _ = parse_content(delete_content, format=constants.PROPERTIES)
+            properties_delete(delete, current)
         except BaseException:
             return False, "Patch content must be properties"
     return True, "OK"

@@ -4,5 +4,5 @@ UNKNOWN = "unknown"
 
 
 def is_support_format(format):
-    return format != UNKNOWN
+    return format == PROPERTIES or format == YAML
         

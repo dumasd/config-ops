@@ -1,4 +1,4 @@
-from ops.utils import parser, constants
+from ops.utils import config_handler, constants
 import io
 import logging
 from jproperties import Properties
@@ -29,10 +29,10 @@ class TestParser:
             - item1
             - item2            
         """
-        format1, current, yaml = parser.parse_content(current_str)
-        format2, full, yaml = parser.parse_content(full_str)
-        parser.yaml_cpx(full, current)
-        logging.info("\n%s", parser.yaml_to_string(current, yaml))
+        format1, current, yaml = config_handler.parse_content(current_str)
+        format2, full, yaml = config_handler.parse_content(full_str)
+        config_handler.yaml_cpx(full, current)
+        logging.info("\n%s", config_handler.yaml_to_string(current, yaml))
 
     def test_yaml_patch(self):
         current_str = """# commit
@@ -53,10 +53,10 @@ class TestParser:
             - item1
             - item2            
         """
-        format1, current, yaml = parser.parse_content(current_str)
-        format2, patch, yaml = parser.parse_content(patch_str)
-        parser.yaml_patch(patch, current)
-        logging.info("\n%s", parser.yaml_to_string(current, yaml))
+        format1, current, yaml = config_handler.parse_content(current_str)
+        format2, patch, yaml = config_handler.parse_content(patch_str)
+        config_handler.yaml_patch(patch, current)
+        logging.info("\n%s", config_handler.yaml_to_string(current, yaml))
 
     def test_parse_content(self):
         cstr = """# comment
@@ -206,11 +206,11 @@ cloud-pkg.cache=220313170018000001;220313170018000001_220313170028000001;2203131
 vod.api.crypt.enable=true
 vod.api.token.enable=true
         """
-        format, current, yaml = parser.parse_content(cstr)
+        format, current, yaml = config_handler.parse_content(cstr)
         current["nested.key3"] = "value3_new"
         current["key1"] = 3333
         logger.info(current["nested.key3"])
-        logger.info("\n%s", parser.properties_to_string(current))
+        logger.info("\n%s", config_handler.properties_to_string(current))
 
     def test_properties_remove_extra_keys(self):
         current_str = """#comment
@@ -234,10 +234,10 @@ vod.api.token.enable=true
         nested.arr[1].key1=bbb_test1
         nested.arr[1].key2=bbb_test2
         """
-        f1, current, yml1 = parser.parse_content(current_str)
-        f2, full, yml2 = parser.parse_content(full_str)
-        parser.properties_cpx(full, current)
-        logger.info("\n%s", parser.properties_to_string(current))
+        f1, current, yml1 = config_handler.parse_content(current_str)
+        f2, full, yml2 = config_handler.parse_content(full_str)
+        config_handler.properties_cpx(full, current)
+        logger.info("\n%s", config_handler.properties_to_string(current))
 
     def test_properties_patch(self):
         current_str = """#comment
@@ -258,10 +258,10 @@ vod.api.token.enable=true
         [section]
         nested.key-1.key-1-1=value_new
         """
-        f1, current, yml1 = parser.parse_content(current_str)
-        f2, patch, yml2 = parser.parse_content(patch_str)
-        parser.properties_patch(patch, current)
-        logger.info("\n%s", parser.properties_to_string(current))
+        f1, current, yml1 = config_handler.parse_content(current_str)
+        f2, patch, yml2 = config_handler.parse_content(patch_str)
+        config_handler.properties_patch(patch, current)
+        logger.info("\n%s", config_handler.properties_to_string(current))
 
     def test_jproperties(self):
         current_str = """#comment
