@@ -37,12 +37,12 @@ spec:
               cpu: "100m"
               memory: "128M"
           livenessProbe:
-            tcpStocket:
+            tcpSocket:
               port: 5000
             initialDelaySeconds: 5
             timeoutSeconds: 10
           readinessProbe:
-            tcpStocket:
+            tcpSocket:
               port: 5000
             initialDelaySeconds: 5
             timeoutSeconds: 10
