@@ -23,7 +23,7 @@ spec:
       volumes:
         - name: config
           secret:
-            secretName: config.yaml
+            secretName: config-ops-config
       restartPolicy: Always
       imagePullPolicy: Always
       containers:
@@ -51,13 +51,14 @@ spec:
               value: "0.0.0.0"
             - name: PORT
               value: "5000"
+            - name: CONFIG
+              value: "conf/config.yaml"  
           ports:
             - containerPort: 5000
               name: http
           volumeMounts:
-            - mountPath: /opt/config-ops
-              name: config
-
+            - name: config
+              mountPath: /opt/config-ops/conf
 ---
 kind: Service
 apiVersion: v1
