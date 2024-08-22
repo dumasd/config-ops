@@ -46,7 +46,7 @@ spec:
             - name: PORT
               value: "5000"
             - name: CONFIGOPS_CONFIG
-              alueFrom:
+              valueFrom:
                 secretKeyRef:
                   name: config-ops-config
                   key: config.yaml
