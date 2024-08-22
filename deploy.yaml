@@ -24,8 +24,6 @@ spec:
         - name: config
           secret:
             secretName: config-ops-config
-      restartPolicy: Always
-      imagePullPolicy: Always
       containers:
         - image: $IMAGE
           name: config-ops
