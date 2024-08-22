@@ -10,16 +10,19 @@ bp = Blueprint("nacos", __name__)
 logger = logging.getLogger(__name__)
 
 
+class GetConfigsSchema(Schema):
+    nacos_id = fields.Str(required=True)
+    namespaces = fields.List(fields.Str, required=True)
+
 class GetConfigSchema(Schema):
     nacos_id = fields.Str(required=True)
     namespace_id = fields.Str(required=False)  # 不传就为public空间
     group = fields.Str(required=True)
     data_id = fields.Str(required=True)
 
-
 class ModifyPreviewSchema(Schema):
     nacos_id = fields.Str(required=True)
-    namespace_id = fields.Str(required=False)  # 不传就为public空间
+    namespace_id = fields.Str(required=True)  # 不传就为public空间
     group = fields.Str(required=True)
     data_id = fields.Str(required=True)
     patch_content = fields.Str(required=False)
@@ -28,7 +31,7 @@ class ModifyPreviewSchema(Schema):
 
 class ModifyConfirmSchema(Schema):
     nacos_id = fields.Str(required=True)
-    namespace_id = fields.Str(required=False)  # 不传就为public空间
+    namespace_id = fields.Str(required=True)  # 不传就为public空间
     group = fields.Str(required=True)
     data_id = fields.Str(required=True)
     content = fields.Str(required=True)
@@ -102,21 +105,30 @@ def get_namespace_list():
     return resp.get("data")
 
 
-@bp.route("/nacos/v1/configs", methods=["GET"])
+@bp.route("/nacos/v1/configs", methods=["POST"])
 def get_configs():
-    nacos_id = request.args.get("nacos_id")
-    namespace = request.args.get("namespace")
+    schema = GetConfigsSchema()
+    data = None
+    try:
+        data = schema.load(request.get_json())
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+    nacos_id = data.get("nacos_id")
+    namespaces = data.get("namespaces")
     nacosConfig = get_nacos_config(nacos_id)
     if nacosConfig == None:
         return make_response("Nacos config not found", 404)
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosConfig.get("url"),
         username=nacosConfig.get("username"),
-        password=nacosConfig.get("password"),
-        namespace=namespace,
+        password=nacosConfig.get("password")
     )
-    resp = client.get_configs(no_snapshot=True, page_size=9000)
-    return resp.get("pageItems")
+    result = []
+    for namespace in namespaces:
+        client.namespace = namespace
+        configs = client.get_configs(no_snapshot=True, page_size=9000)
+        result.extend(configs.get("pageItems"))
+    return result
 
 
 @bp.route("/nacos/v1/config/modify", methods=["POST"])

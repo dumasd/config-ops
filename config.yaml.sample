@@ -7,7 +7,7 @@ nacos:
 
 # 数据库配置
 database:
-  db1: # Database ID
+  local: # Database ID
     url: localhost
     port: 3306
     username: root
