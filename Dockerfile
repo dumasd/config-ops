@@ -10,4 +10,4 @@ RUN chmod 755 /opt/config-ops/startup.sh
 
 WORKDIR /opt/config-ops/
 
-ENTRYPOINT [ "startup.sh" ]
+ENTRYPOINT [ "./startup.sh" ]
