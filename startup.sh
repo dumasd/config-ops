@@ -10,8 +10,21 @@ if [ -z "${PORT}" ]; then
     PORT="5000"
 fi
 
-if [ -z "${CONFIG}" ]; then
-    CONFIG="config.yaml"
+PID_FILE=${DIR}/config-ops.pid
+
+# 停掉老进程
+if [ -s "$PID_FILE" ]; then
+    PID=$(cat $PID_FILE)
+    if [[ -n "$PID" ]]; then
+        kill -15 "$PID"
+    fi
+    rm -rf $PID_FILE
 fi
 
-$DIR/config-ops --host $HOST --port $PORT --config $CONFIG
+if [ -z "${CONFIG_OPS_CONF_FILE}" ]; then
+    $DIR/config-ops --host $HOST --port $PORT
+else
+    $DIR/config-ops --host $HOST --port $PORT --config $CONFIG_FILE
+fi
+
+echo $! >$PID_FILE

@@ -1,7 +1,12 @@
 """ 配置文件 """
 
 from ruamel.yaml import YAML
+from ops.utils.constants import CONFIG_ENV_NAME
 from marshmallow import Schema, fields, ValidationError
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -29,11 +34,19 @@ class DbConfig(Schema):
     password = fields.Str(required=True)
 
 
-""" 加载YAML配置 """
-
-
-def load_config(config_file="config.yaml"):
+def load_config(config_file=None):
+    """加载YAML配置"""
     yaml = YAML()
-    with open(config_file, "r") as file:
-        config = yaml.load(file)
-    return config
+    # 尝试读取配置文件
+    if config_file is not None and len(config_file.strip()) > 0:
+        print(f"Load config from file: {config_file}")
+        with open(config_file, "r") as file:
+            config = yaml.load(file)
+        return config
+    else:
+        conf_val = os.getenv(CONFIG_ENV_NAME)
+        if conf_val is not None and len(conf_val.strip()) > 0:
+            print(f"Load config enviroment: {CONFIG_ENV_NAME}")
+            config = yaml.load(conf_val)
+            return config
+    return None

@@ -20,10 +20,6 @@ spec:
       labels:
         app: config-ops
     spec:
-      volumes:
-        - name: config
-          secret:
-            secretName: config-ops-config
       containers:
         - image: $IMAGE
           name: config-ops
@@ -49,14 +45,15 @@ spec:
               value: "0.0.0.0"
             - name: PORT
               value: "5000"
-            - name: CONFIG
-              value: "conf/config.yaml"  
+            - name: CONFIGOPS_CONFIG
+              alueFrom:
+                secretKeyRef:
+                  name: config-ops-config
+                  key: config.yaml
           ports:
             - containerPort: 5000
               name: http
-          volumeMounts:
-            - name: config
-              mountPath: /opt/config-ops/conf
+              
 ---
 kind: Service
 apiVersion: v1

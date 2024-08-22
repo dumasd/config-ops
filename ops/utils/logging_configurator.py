@@ -36,14 +36,17 @@ class LoggingConfigurator(abc.ABC):  # pylint: disable=too-few-public-methods
 class DefaultLoggingConfigurator(  # pylint: disable=too-few-public-methods
     LoggingConfigurator
 ):
+    def configure_default(self) -> None:
+        logging.basicConfig(format="[%(asctime)s] %(levelname)s %(name)s %(message)s")
+        logging.getLogger().setLevel(logging.INFO)
+
     def configure_logging(
         self, app_config: flask.config.Config, debug_mode: bool
     ) -> None:
-        logging.getLogger("pyhive.presto").setLevel(logging.INFO)
-        log_conf = app_config.get("logging", default={})
-        level = log_conf.get("level", default="info")
+        log_conf = app_config.get("logging", {})
+        level = log_conf.get("level", "INFO")
         format = log_conf.get(
-            "format", default="[%(asctime)s] %(levelname)s %(name)s %(message)s"
+            "format", "[%(asctime)s] %(levelname)s %(name)s %(message)s"
         )
         logging.basicConfig(format=format)
         logging.getLogger().setLevel(level)

@@ -7,7 +7,19 @@
 - Nacos Yaml、Properties格式的配置文件变更。
 - MySQL 脚本执行。
 
-## 快速开始 {shell}
+## 快速开始
+
+### Docker (推荐)
+
+
+```shell
+
+docker run --name config-ops --volume ./conf:/opt/config-ops/conf -e CONFIG=conf/config.yaml wukaireign/config-ops:1.0.0
+
+
+```
+
+### 本地启动
 
 下载 release 文件解压，release 文件中包含 `config-ops` 可执行文件和配置文件样例 `config.yaml.sample`
 
