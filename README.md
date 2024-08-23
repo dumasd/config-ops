@@ -9,7 +9,7 @@
 
 ## 快速开始
 
-### Docker (推荐)
+### Docker
 
 config-ops镜像库： [wukaireign/config-ops general | Docker Hub](https://hub.docker.com/repository/docker/wukaireign/config-ops/general)
 
@@ -29,11 +29,16 @@ docker-compose -f docker-compose.yaml up -d
 # 从sample中拷贝出一个配置文件，修改配置文件中的配置
 cp config.yaml.sample config.yaml
 
-# 查看参数选项
-./config-ops --help
+# 设置配置文件变量
+export CONFIGOPS_CONFIG_FILE=config.yaml
+# 设置HOST
+# export CONFIGOPS_HOST="127.0.0.1"
+# 设置端口
+# export CONFIGOPS_PORT=5000
 
-# 启动程序
-./config-ops --host 127.0.0.1 --port 5000 --config config.yaml
+# 启动服务
+./startup.sh
+
 ```
 
 ## 本地开发
