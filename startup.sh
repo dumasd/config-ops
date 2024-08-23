@@ -14,6 +14,7 @@ RUN_ARGS="--host ${CONFIGOPS_HOST} --port ${CONFIGOPS_PORT}"
 
 if [ -n "${CONFIGOPS_CONFIG_FILE}" ]; then
     RUN_ARGS="${RUN_ARGS} --config ${CONFIGOPS_CONFIG_FILE}"
+fi
 
 PID_FILE=${DIR}/config-ops.pid
 # 停掉老进程
