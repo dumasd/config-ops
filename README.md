@@ -11,12 +11,12 @@
 
 ### Docker (推荐)
 
-
 ```shell
+git clone https://github.com/dumasd/config-ops.git
 
-docker run --name config-ops --volume ./conf:/opt/config-ops/conf -e CONFIG=conf/config.yaml wukaireign/config-ops:1.0.0
+cd config-ops
 
-
+docker-compose -f docker-compose.yaml up -d
 ```
 
 ### 本地启动
@@ -38,13 +38,13 @@ cp config.yaml.sample config.yaml
 
 ### 要求
 
-- Python3.8及以上版本
+- Python：3.8及以上版本
 
 ### 开发环境设置
 
 ```shell
 # 拉取代码 
-https://github.com/dumasd/config-ops.git
+git clone https://github.com/dumasd/config-ops.git
 cd config-ops
 
 # 设置python虚拟环境
