@@ -8,8 +8,8 @@ services:
     - "5000:5000"
     environment:
       # CONFIGOPS_CONFIG_FILE: 
-      HOST: 127.0.0.1
-      PORT: 5000
+      CONFIGOPS_HOST: 127.0.0.1
+      CONFIGOPS_PORT: 5000
       CONFIGOPS_CONFIG: |
         # Nacos配置
         nacos:

@@ -11,6 +11,8 @@
 
 ### Docker (推荐)
 
+config-ops镜像库： [wukaireign/config-ops general | Docker Hub](https://hub.docker.com/repository/docker/wukaireign/config-ops/general)
+
 ```shell
 git clone https://github.com/dumasd/config-ops.git
 
