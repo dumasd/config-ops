@@ -14,11 +14,13 @@ class GetConfigsSchema(Schema):
     nacos_id = fields.Str(required=True)
     namespaces = fields.List(fields.Str, required=True)
 
+
 class GetConfigSchema(Schema):
     nacos_id = fields.Str(required=True)
     namespace_id = fields.Str(required=False)  # 不传就为public空间
     group = fields.Str(required=True)
     data_id = fields.Str(required=True)
+
 
 class ModifyPreviewSchema(Schema):
     nacos_id = fields.Str(required=True)
@@ -121,7 +123,7 @@ def get_configs():
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosConfig.get("url"),
         username=nacosConfig.get("username"),
-        password=nacosConfig.get("password")
+        password=nacosConfig.get("password"),
     )
     result = []
     for namespace in namespaces:
@@ -235,7 +237,7 @@ def modify_confirm():
     nacosConfig = get_nacos_config(nacos_id)
     if nacosConfig == None:
         return make_response("Nacos config not found", 400)
-    client = nacos.NacosClient(
+    client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosConfig.get("url"),
         username=nacosConfig.get("username"),
         password=nacosConfig.get("password"),
@@ -260,12 +262,13 @@ def modify_confirm():
     #     return make_response("Unsupported format", 400)
 
     try:
-        res = client.publish_config(
+        res = client.publish_config_post(
             data_id=data_id, group=group, content=content, config_type=format
         )
         if not res:
             return make_response("Publish config unsuccess from nacos", 500)
     except Exception as ex:
-        return make_response("Publish config excaption", 500)
+        logger.error(f"Publish config error. {ex}")
+        return make_response(f"Publish config excaption:{ex}", 500)
 
     return "OK"
