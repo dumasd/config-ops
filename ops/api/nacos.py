@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, make_response, request, current_app
 import nacos
 import logging
-from ops.utils import config_handler, constants
+from ops.utils import constants, config_handler, config_validator
 from marshmallow import Schema, fields, ValidationError
 from ops.utils import nacos_client
 
@@ -230,6 +230,11 @@ def modify_confirm():
     data_id = data.get("data_id")
     content = data.get("content")
     format = data.get("format")
+    
+    # 格式校验
+    validation_bool, validation_msg = config_validator.validate_content(content, format)
+    if not validation_bool:
+        return make_response(validation_msg, 400)
 
     if content is None or len(content.strip()) == 0:
         return make_response("Content is blank", 400)
@@ -237,29 +242,13 @@ def modify_confirm():
     nacosConfig = get_nacos_config(nacos_id)
     if nacosConfig == None:
         return make_response("Nacos config not found", 400)
+
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosConfig.get("url"),
         username=nacosConfig.get("username"),
         password=nacosConfig.get("password"),
         namespace=namespace_id,
     )
-
-    # current_format, format = None, None
-
-    # current_content = client.get_config(data_id=data_id, group=group, no_snapshot=True)
-    # if current_content is not None and len(current_content.strip()) > 0:
-    #     current_format, _, _ = config_handler.parse_content(current_content)
-
-    # format, _, _ = config_handler.parse_content(content)
-
-    # if current_format is not None and current_format != format:
-    #     make_response(
-    #         f"Current content format [{current_format}] not match new content format [{format}]",
-    #         400,
-    #     )
-
-    # if not constants.is_support_format(format):
-    #     return make_response("Unsupported format", 400)
 
     try:
         res = client.publish_config_post(
