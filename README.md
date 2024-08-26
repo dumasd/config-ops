@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)[![Build Status](https://github.com/apache/superset/workflows/Python/badge.svg)](https://github.com/apache/superset/actions)
 
-一款 DevOps 配置工具，目前支持：
+一款 DevOps 配置工具：
 
 - Nacos Yaml、Properties格式的配置文件变更。
 - MySQL 脚本执行（后续进行扩展，执行多种类型数据库）。
