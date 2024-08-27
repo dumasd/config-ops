@@ -32,6 +32,7 @@ class DbConfig(Schema):
     port = fields.Integer(required=True, default=3306)
     username = fields.Str(required=True)
     password = fields.Str(required=True)
+    dialect = fields.Str(required=False, default="mysql")
 
 
 def load_config(config_file=None):
@@ -39,7 +40,7 @@ def load_config(config_file=None):
     yaml = YAML()
     # 尝试读取配置文件
     if config_file is None or len(config_file.strip()) == 0:
-        config_file =  os.getenv(CONFIG_FILE_ENV_NAME)
+        config_file = os.getenv(CONFIG_FILE_ENV_NAME)
 
     if config_file is not None and len(config_file.strip()) > 0:
         print(f"Load config from file: {config_file}")

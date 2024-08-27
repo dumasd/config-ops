@@ -5,6 +5,9 @@ import re, logging
 from sqlalchemy import create_engine, text
 from marshmallow import Schema, fields, ValidationError
 from ops.config import DbConfig
+from ops.utils.constants import DIALECT_DRIVER_MAP
+
+# from ops.utils import sql_util
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +49,12 @@ def execute_sql(database, sql_script, db_config):
         username = db_config.get("username")
         password = db_config.get("password")
         port = db_config.get("port")
+        dialect = db_config.get("dialect")
+        driver = DIALECT_DRIVER_MAP.get(dialect)
+        if driver is None:
+            raise Exception(f"Unsupported dialect {dialect}")
         conn_string = (
-            f"mysql+mysqlconnector://{username}:{password}@{url}:{port}/{database}"
+            f"{dialect}+{driver}://{username}:{password}@{url}:{port}/{database}"
         )
         engine = create_engine(conn_string)
         sql_script = remove_comments(sql_script)
@@ -63,11 +70,19 @@ def execute_sql(database, sql_script, db_config):
             execute_res = []
             for sql in sql_commands:
                 if sql.strip():
-                    sql_text = text(sql)
+                    sql_text = text(sql.strip())
                     logger.info(f"============ 执行SQL语句 =========\n {sql_text}")
                     result = conn.execute(sql_text)
+                    rows = []
+                    if result.returns_rows:
+                        columes = result.keys()
+                        rows = [dict(zip(columes, row)) for row in result]
                     execute_res.append(
-                        {"sql": f"{sql_text}", "rowcount": result.rowcount}
+                        {
+                            "sql": f"{sql_text}",
+                            "rowcount": result.rowcount,
+                            "rows": rows,
+                        }
                     )
             trans.commit()
             return True, execute_res

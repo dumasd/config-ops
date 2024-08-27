@@ -91,3 +91,12 @@ def delete_content():
         }
     else:
         return make_response("Unsupported content format", 400)
+
+
+@bp.route("/common/v1/sql_check", methods=["POST"])
+def check_sql():
+    """
+    检查SQL合法性
+    """
+    logger.log("SQL检查")
+    
