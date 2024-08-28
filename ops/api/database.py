@@ -1,17 +1,39 @@
 """ 执行SQL操作 """
 
-from flask import Blueprint, request, make_response, jsonify, current_app
+from flask import Blueprint, request, make_response, jsonify, current_app, Response
 import re, logging
+import collections
+from datetime import date, datetime
+from decimal import Decimal
+from enum import Enum
+import json
+import base64
 from sqlalchemy import create_engine, text
 from marshmallow import Schema, fields, ValidationError
 from ops.config import DbConfig
 from ops.utils.constants import DIALECT_DRIVER_MAP
 
-# from ops.utils import sql_util
 
 logger = logging.getLogger(__name__)
 
 bp = Blueprint("database", __name__)
+
+
+class DatabaseJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.strftime("%Y-%m-%d %H:%M:%S")
+        elif isinstance(obj, date):
+            return obj.strftime("%Y-%m-%d")
+        elif isinstance(obj, Decimal):
+            return float(obj)
+        elif isinstance(obj, Enum):
+            return obj.name
+        elif isinstance(obj, bytes):
+            return str(obj, encoding="utf-8")
+            # return base64.b64encode(obj).decode("utf-8")
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 
 class RunSqlSchema(Schema):
@@ -76,7 +98,13 @@ def execute_sql(database, sql_script, db_config):
                     rows = []
                     if result.returns_rows:
                         columes = result.keys()
-                        rows = [dict(zip(columes, row)) for row in result]
+                        for row in result:
+                            rowDict = collections.OrderedDict()
+                            index = 0
+                            for colume in columes:
+                                rowDict[colume] = row[index]
+                                index += 1
+                            rows.append(rowDict)
                     execute_res.append(
                         {
                             "sql": f"{sql_text}",
@@ -127,5 +155,9 @@ def run_sql():
     success, result = execute_sql(data.get("database"), data.get("sql"), db_config)
     if not success:
         return result, 400
-    print(result)
-    return {"database": db_config.get("url"), "result": result}
+    resp = collections.OrderedDict()
+    resp["database"] = db_config.get("url")
+    resp["result"] = result
+    resp_json = json.dumps(resp, cls=DatabaseJsonEncoder)
+    jsonify()
+    return Response(resp_json, mimetype="application/json")

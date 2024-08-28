@@ -12,6 +12,7 @@ database:
     port: 3306
     username: root
     password: "1234"
+    dialect: mysql
 
 # 日志配置
 logging:

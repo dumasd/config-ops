@@ -11,12 +11,14 @@ database:
     url: localhost
     port: 3306
     username: root
-    password: "1234"
+    password: "12345678"
+    dialect: mysql
   vod-dev:
     url: dev-mfc-rds-nj.cchbpbfoxpjz.rds.cn-northwest-1.amazonaws.com.cn
     port: 3306
     username: ziyi_user
     password: snOzqqqNedKUnL94IClf
+    dialect: mysql
 
 # 日志配置
 logging:
