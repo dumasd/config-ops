@@ -22,35 +22,47 @@ def patch_content():
         data = schema.load(request.get_json())
     except ValidationError as err:
         return jsonify(err.messages), 400
+    content = data.get("content")
     edit = data.get("edit")
-    req_format = data.get("format")
-    if not constants.is_support_format(req_format):
-        return make_response("Unsupported content format", 400)
-    format, current, c_yml = config_handler.parse_content(
-        data.get("content"), format=req_format
-    )
-    if format == constants.YAML:
-        # patch
-        suc, msg = config_handler.yaml_patch_content(edit, current)
-        if suc is False:
-            return make_response(msg, 400)
-        return {
-            "format": format,
-            "content": data.get("content"),
-            "next_content": config_handler.yaml_to_string(current, c_yml),
-        }
-    elif format == constants.PROPERTIES:
-        # patch
-        suc, msg = config_handler.properties_patch_content(edit, current)
-        if suc is False:
-            return make_response(msg, 400)
-        return {
-            "format": format,
-            "content": data.get("content"),
-            "next_content": config_handler.properties_to_string(current),
-        }
+    type = data.get("format")
+
+    needPatch = True
+    if len(content.strip()) == 0:
+        needPatch = False
+        # 内容为空
+        format, current, yml = config_handler.parse_content(edit, format=type)
     else:
-        return make_response("Unsupported content format", 400)
+        format, current, yml = config_handler.parse_content(content, format=type)
+
+    format, current, yml = config_handler.parse_content(
+        data.get("content"), format=type
+    )
+
+    if needPatch:
+        if format == constants.YAML:
+            suc, msg = config_handler.yaml_patch_content(edit, current)
+            if suc is False:
+                return make_response(msg, 400)
+            return {
+                "format": format,
+                "content": data.get("content"),
+                "next_content": config_handler.yaml_to_string(current, yml),
+            }
+        elif format == constants.PROPERTIES:
+            suc, msg = config_handler.properties_patch_content(edit, current)
+            if suc is False:
+                return make_response(msg, 400)
+            return {
+                "format": format,
+                "content": data.get("content"),
+                "next_content": config_handler.properties_to_string(current),
+            }
+        else:
+            return make_response("Unsupported patch format", 400)
+    else:
+        if format == constants.UNKNOWN:
+            format = constants.TEXT
+        return {"format": format, "content": content, "next_content": edit}
 
 
 @bp.route("/common/v1/delete_content", methods=["POST"])
@@ -61,12 +73,15 @@ def delete_content():
         data = schema.load(request.get_json())
     except ValidationError as err:
         return jsonify(err.messages), 400
+    content = data.get("content")
     edit = data.get("edit")
-    req_format = data.get("format")
-    if not constants.is_support_format(req_format):
-        return make_response("Unsupported content format", 400)
-    format, current, c_yml = config_handler.parse_content(
-        data.get("content"), format=req_format
+    type = data.get("format")
+
+    if len(content.strip()) == 0:
+        return {"format": type, "content": "", "next_content": ""}
+
+    format, current, yml = config_handler.parse_content(
+        data.get("content"), format=type
     )
 
     if format == constants.YAML:
@@ -77,7 +92,7 @@ def delete_content():
         return {
             "format": format,
             "content": data.get("content"),
-            "next_content": config_handler.yaml_to_string(current, c_yml),
+            "next_content": config_handler.yaml_to_string(current, yml),
         }
     elif format == constants.PROPERTIES:
         # patch
@@ -90,7 +105,7 @@ def delete_content():
             "next_content": config_handler.properties_to_string(current),
         }
     else:
-        return make_response("Unsupported content format", 400)
+        return make_response("Unsupported delete format", 400)
 
 
 @bp.route("/common/v1/sql_check", methods=["POST"])
@@ -99,4 +114,3 @@ def check_sql():
     检查SQL合法性
     """
     logger.log("SQL检查")
-    

@@ -1,8 +1,10 @@
 import io
 import logging
 import configobj
+import json
 from ops.utils import constants
 from ruamel import yaml as ryaml
+import xml.etree.ElementTree as ET
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,25 @@ def parse_content(content: str, format=None):
         if format == constants.YAML:
             raise ex
 
-    return constants.UNKNOWN, None
+    # 尝试当json解析
+    try:
+        data = json.load(content)
+        return constants.JSON, data, None
+    except Exception as ex:
+        logger.warning(f"非json文件{ex}")
+        if format == constants.JSON:
+            raise ex
+
+    # 尝试当xml解析
+    try:
+        data = ET.fromstring(content)
+        return constants.XML, data, None
+    except ET.ParseError as e:
+        logger.error(f"XML is invalid:{e}")
+        if format == constants.XML:
+            raise ex
+
+    return constants.UNKNOWN, None, None
 
 
 """
@@ -84,10 +104,14 @@ def yaml_delete(patch, current):
     if isinstance(current, dict) and isinstance(patch, dict):
         for key in patch:
             if key in current:
-                if isinstance(current[key], dict) and isinstance(patch[key], dict):
-                    yaml_delete(patch[key], current[key])
-                elif not isinstance(current[key], dict) and not isinstance(
-                    patch[key], dict
+                value = patch[key]
+                current_value = current[key]
+                if value is None:
+                    del current[key]
+                if isinstance(current_value, dict) and isinstance(value, dict):
+                    yaml_delete(value, current_value)
+                elif not isinstance(current_value, dict) and not isinstance(
+                    value, dict
                 ):
                     del current[key]
 

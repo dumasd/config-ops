@@ -39,7 +39,7 @@ class DatabaseJsonEncoder(json.JSONEncoder):
 class RunSqlSchema(Schema):
     db_id = fields.Str(required=True)
     sql = fields.Str(required=True)
-    database = fields.Str(required=True)
+    database = fields.Str(required=False)
 
 
 def remove_comments(sql_script):
@@ -75,9 +75,10 @@ def execute_sql(database, sql_script, db_config):
         driver = DIALECT_DRIVER_MAP.get(dialect)
         if driver is None:
             raise Exception(f"Unsupported dialect {dialect}")
-        conn_string = (
-            f"{dialect}+{driver}://{username}:{password}@{url}:{port}/{database}"
-        )
+
+        conn_string = f"{dialect}+{driver}://{username}:{password}@{url}:{port}"
+        if database is not None and len(database.strip()) > 0:
+            conn_string = conn_string + f"/{database}"
         engine = create_engine(conn_string)
         sql_script = remove_comments(sql_script)
         sql_commands = sql_script.split(";")

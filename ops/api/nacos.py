@@ -67,24 +67,35 @@ def get_config():
     except ValidationError as err:
         return jsonify(err.messages), 400
     nacos_id = data.get("nacos_id")
-    namespace_id = data.get("namespace_id")
+    namespace = data.get("namespace_id")
     group = data.get("group")
     data_id = data.get("data_id")
     nacosConfig = get_nacos_config(nacos_id)
     if nacosConfig == None:
         return make_response("Nacos config not found", 404)
-    client = nacos.NacosClient(
+
+    client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosConfig.get("url"),
         username=nacosConfig.get("username"),
         password=nacosConfig.get("password"),
-        namespace=namespace_id,
+        namespace=namespace,
     )
-    current_content = client.get_config(data_id=data_id, group=group, no_snapshot=True)
-    format, current, c_yml = config_handler.parse_content(current_content)
 
-    if format == constants.UNKNOWN:
-        return "Unsupport format", 404
-    return {"format": format, "content": current_content or ""}
+    configs = client.get_configs(no_snapshot=True, group=group)
+    pageItems = configs.get("pageItems")
+
+    for item in pageItems:
+        if item.get("dataId") == data_id:
+            return item
+    # 配置不存在，当成新配置处理
+    return {
+        "id": "",
+        "content": "",
+        "tenant": namespace,
+        "group": group,
+        "dataId": data_id,
+        "type": "",
+    }
 
 
 @bp.route("/nacos/v1/namespaces", methods=["GET"])
@@ -230,7 +241,7 @@ def modify_confirm():
     data_id = data.get("data_id")
     content = data.get("content")
     format = data.get("format")
-    
+
     # 格式校验
     validation_bool, validation_msg = config_validator.validate_content(content, format)
     if not validation_bool:
