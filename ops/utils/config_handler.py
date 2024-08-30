@@ -3,6 +3,7 @@ import logging
 import configobj
 import json
 from ops.utils import constants
+from ops.utils.exception import ConfigOpsException
 from ruamel import yaml as ryaml
 import xml.etree.ElementTree as ET
 
@@ -57,12 +58,28 @@ def parse_content(content: str, format=None):
     return constants.UNKNOWN, None, None
 
 
-"""
-YAML 相关方法
-"""
+def patch(patch, current, format):
+    if format == constants.YAML:
+        yaml_patch(patch=patch, current=current)
+    elif format == constants.PROPERTIES:
+        properties_patch(patch=patch, current=current)
+    else:
+        raise ConfigOpsException(f"Patch unsupported format: {format}")
+
+
+def to_string(format, current, y):
+    if format == constants.YAML:
+        return yaml_to_string(current, y)
+    elif format == constants.PROPERTIES:
+        return properties_to_string(current)
+    else:
+        raise ConfigOpsException(f"ToString unsupported format: {format}")
 
 
 def yaml_cpx(full, current):
+    """
+    YAML 相关方法
+    """
     # 只支持dict
     if isinstance(current, dict) and isinstance(full, dict):
         keys_to_remove = []
@@ -221,3 +238,70 @@ def properties_delete_content(delete_content, current):
         except BaseException:
             return False, "Patch content must be properties"
     return True, "OK"
+
+
+def patch_by_str(content, edit, type):
+    needPatch = True
+    if len(content.strip()) == 0:
+        needPatch = False
+        if len(edit.strip()) == 0:
+            return {
+                "format": type,
+                "content": "",
+                "nextContent": "",
+            }
+        format, current, yml = parse_content(edit, format=type)
+    else:
+        format, current, yml = parse_content(content, format=type)
+
+    if needPatch:
+        if format == constants.YAML:
+            suc, msg = yaml_patch_content(edit, current)
+            if suc is False:
+                raise ConfigOpsException(f"yaml patch error. {msg}")
+            return {
+                "format": format,
+                "content": content,
+                "nextContent": yaml_to_string(current, yml),
+            }
+        elif format == constants.PROPERTIES:
+            suc, msg = properties_patch_content(edit, current)
+            if suc is False:
+                raise ConfigOpsException(f"yaml patch error. {msg}")
+            return {
+                "format": format,
+                "content": content,
+                "nextContent": properties_to_string(current),
+            }
+        else:
+            raise ConfigOpsException(f"Unsupport patch format. {type}")
+    else:
+        if format == constants.UNKNOWN:
+            format = constants.TEXT
+        return {"format": format, "content": content, "nextContent": edit}
+
+
+def delete_by_str(content, edit, type):
+    if len(content.strip()) == 0:
+        return {"format": type, "content": "", "nextContent": ""}
+    format, current, yml = parse_content(content, format=type)
+    if format == constants.YAML:
+        suc, msg = yaml_delete_content(edit, current)
+        if suc is False:
+            raise ConfigOpsException(f"yaml delete error. {msg}")
+        return {
+            "format": format,
+            "content": content,
+            "nextContent": yaml_to_string(current, yml),
+        }
+    elif format == constants.PROPERTIES:
+        suc, msg = properties_delete_content(edit, current)
+        if suc is False:
+            raise ConfigOpsException(f"properties delete error. {msg}")
+        return {
+            "format": format,
+            "content": content,
+            "nextContent": properties_to_string(current),
+        }
+    else:
+        raise ConfigOpsException(f"Unsupported delete format. {format}")

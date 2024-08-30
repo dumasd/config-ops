@@ -24,3 +24,6 @@ database:
 logging:
   level: INFO
   format: "[%(asctime)s] %(levelname)s %(name)s %(message)s"
+
+config:
+  database-uri: mysql+mysqlconnector://root:12345678@localhost:3306/test

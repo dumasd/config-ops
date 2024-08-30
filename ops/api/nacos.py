@@ -1,9 +1,11 @@
 from flask import Blueprint, jsonify, make_response, request, current_app
-import nacos
 import logging
 from ops.utils import constants, config_handler, config_validator
 from marshmallow import Schema, fields, ValidationError
 from ops.utils import nacos_client
+from ops.utils.exception import ConfigOpsException
+from ops.changelog.nacos_change import NacosChangeLog, apply_change
+from ops.config import get_nacos_cfg
 
 bp = Blueprint("nacos", __name__)
 
@@ -11,39 +13,48 @@ logger = logging.getLogger(__name__)
 
 
 class GetConfigsSchema(Schema):
-    nacos_id = fields.Str(required=True)
+    nacosId = fields.Str(required=True)
     namespaces = fields.List(fields.Str, required=True)
 
 
-class GetConfigSchema(Schema):
-    nacos_id = fields.Str(required=True)
-    namespace_id = fields.Str(required=False)  # 不传就为public空间
-    group = fields.Str(required=True)
-    data_id = fields.Str(required=True)
-
-
 class ModifyPreviewSchema(Schema):
-    nacos_id = fields.Str(required=True)
-    namespace_id = fields.Str(required=True)  # 不传就为public空间
+    nacosId = fields.Str(required=True)
+    namespace = fields.Str(required=True)
     group = fields.Str(required=True)
-    data_id = fields.Str(required=True)
-    patch_content = fields.Str(required=False)
-    full_content = fields.Str(required=False)
+    dataId = fields.Str(required=True)
+    patchContent = fields.Str(required=False)
+    fullContent = fields.Str(required=False)
+
+
+class NacosConfigSchema(Schema):
+    namespace = fields.Str(required=True)
+    group = fields.Str(required=True)
+    dataId = fields.Str(required=True)
+    content = fields.Str(required=True)
+    format = fields.Str(required=True)
+    deleteContent = fields.Str(required=False)
+    nextContent = fields.Str(required=False)
+    patchContent = fields.Str(required=False)
 
 
 class ModifyConfirmSchema(Schema):
-    nacos_id = fields.Str(required=True)
-    namespace_id = fields.Str(required=True)  # 不传就为public空间
+    nacosId = fields.Str(required=True)
+    namespace = fields.Str(required=True)
     group = fields.Str(required=True)
-    data_id = fields.Str(required=True)
+    dataId = fields.Str(required=True)
     content = fields.Str(required=True)
     format = fields.Str(required=True)
 
 
-def get_nacos_config(nacos_id):
-    nacosConfigs = current_app.config["nacos"]
-    nacosConfig = nacosConfigs[nacos_id]
-    return nacosConfig
+class GetChangeSetSchema(Schema):
+    nacosId = fields.Str(required=True)
+    changeLogFile = fields.Str(required=True)
+
+
+class ApplyChangeSetSchema(Schema):
+    nacosId = fields.Str(required=True)
+    changeSetId = fields.Str(required=True)
+    changes = fields.List(fields.Nested(NacosConfigSchema), required=True)
 
 
 @bp.route("/nacos/v1/list", methods=["GET"])
@@ -66,11 +77,11 @@ def get_config():
         data = schema.load(request.args)
     except ValidationError as err:
         return jsonify(err.messages), 400
-    nacos_id = data.get("nacos_id")
-    namespace = data.get("namespace_id")
+    nacos_id = data.get("nacosId")
+    namespace = data.get("namespace")
     group = data.get("group")
-    data_id = data.get("data_id")
-    nacosConfig = get_nacos_config(nacos_id)
+    data_id = data.get("dataId")
+    nacosConfig = get_nacos_cfg(nacos_id)
     if nacosConfig == None:
         return make_response("Nacos config not found", 404)
 
@@ -80,12 +91,14 @@ def get_config():
         password=nacosConfig.get("password"),
         namespace=namespace,
     )
-
+    client.get_config_detail()
     configs = client.get_configs(no_snapshot=True, group=group)
     pageItems = configs.get("pageItems")
 
     for item in pageItems:
         if item.get("dataId") == data_id:
+            item["format"] = item["type"]
+            item["namespace"] = item["tenant"]
             return item
     # 配置不存在，当成新配置处理
     return {
@@ -95,6 +108,7 @@ def get_config():
         "group": group,
         "dataId": data_id,
         "type": "",
+        "format": "",
     }
 
 
@@ -103,8 +117,8 @@ def get_namespace_list():
     """
     获取namespace_list列表
     """
-    nacos_id = request.args.get("nacos_id")
-    nacosConfig = get_nacos_config(nacos_id)
+    nacos_id = request.args.get("nacosId")
+    nacosConfig = get_nacos_cfg(nacos_id)
     if nacosConfig == None:
         return make_response("Nacos config not found", 404)
     client = nacos_client.ConfigOpsNacosClient(
@@ -126,21 +140,25 @@ def get_configs():
         data = schema.load(request.get_json())
     except ValidationError as err:
         return jsonify(err.messages), 400
-    nacos_id = data.get("nacos_id")
+    nacos_id = data.get("nacosId")
     namespaces = data.get("namespaces")
-    nacosConfig = get_nacos_config(nacos_id)
-    if nacosConfig == None:
+    nacosCfg = get_nacos_cfg(nacos_id)
+    if nacosCfg == None:
         return make_response("Nacos config not found", 404)
     client = nacos_client.ConfigOpsNacosClient(
-        server_addresses=nacosConfig.get("url"),
-        username=nacosConfig.get("username"),
-        password=nacosConfig.get("password"),
+        server_addresses=nacosCfg.get("url"),
+        username=nacosCfg.get("username"),
+        password=nacosCfg.get("password"),
     )
     result = []
     for namespace in namespaces:
         client.namespace = namespace
         configs = client.get_configs(no_snapshot=True, page_size=9000)
         result.extend(configs.get("pageItems"))
+    for item in result:
+        item["format"] = item["type"]
+        item["namespace"] = item["tenant"]
+
     return result
 
 
@@ -156,22 +174,22 @@ def modify_preview():
     except ValidationError as err:
         return jsonify(err.messages), 400
 
-    nacos_id = data.get("nacos_id")
-    nacosConfig = get_nacos_config(nacos_id)
-    if nacosConfig == None:
+    nacos_id = data.get("nacosId")
+    nacosCfg = get_nacos_cfg(nacos_id)
+    if nacosCfg == None:
         return "Nacos config not found", 404
 
     namespace_id = data.get("namespace_id")
     group = data.get("group")
-    data_id = data.get("data_id")
-    patch_content = data.get("patch_content")
-    full_content = data.get("full_content")
+    data_id = data.get("dataId")
+    patch_content = data.get("patchContent")
+    full_content = data.get("fullContent")
 
     # 1. 从nacos捞当前配置
-    client = nacos.NacosClient(
-        server_addresses=nacosConfig.get("url"),
-        username=nacosConfig.get("username"),
-        password=nacosConfig.get("password"),
+    client = nacos_client.ConfigOpsNacosClient(
+        server_addresses=nacosCfg.get("url"),
+        username=nacosCfg.get("username"),
+        password=nacosCfg.get("password"),
         namespace=namespace_id,
     )
     current_content = client.get_config(data_id=data_id, group=group, no_snapshot=True)
@@ -201,8 +219,8 @@ def modify_preview():
         return {
             "format": format,
             "content": current_content or "",
-            "next_content": config_handler.yaml_to_string(current, c_yml),
-            "nacos_url": nacosConfig.get("url"),
+            "nextContent": config_handler.yaml_to_string(current, c_yml),
+            "nacosUrl": nacosCfg.get("url"),
         }
     elif format == constants.PROPERTIES:
         config_handler.properties_cpx_content(full_content, current)
@@ -218,8 +236,8 @@ def modify_preview():
         return {
             "format": format,
             "content": current_content or "",
-            "next_content": config_handler.properties_to_string(current),
-            "nacos_url": nacosConfig.get("url"),
+            "nextContent": config_handler.properties_to_string(current),
+            "nacosUrl": nacosCfg.get("url"),
         }
     else:
         return make_response("Unsupported content format", 400)
@@ -235,10 +253,10 @@ def modify_confirm():
     except ValidationError as err:
         return jsonify(err.messages), 400
 
-    nacos_id = data.get("nacos_id")
-    namespace_id = data.get("namespace_id")
+    nacos_id = data.get("nacosId")
+    namespace = data.get("namespace")
     group = data.get("group")
-    data_id = data.get("data_id")
+    data_id = data.get("dataId")
     content = data.get("content")
     format = data.get("format")
 
@@ -250,15 +268,15 @@ def modify_confirm():
     if content is None or len(content.strip()) == 0:
         return make_response("Content is blank", 400)
 
-    nacosConfig = get_nacos_config(nacos_id)
-    if nacosConfig == None:
+    nacosCfg = get_nacos_cfg(nacos_id)
+    if nacosCfg == None:
         return make_response("Nacos config not found", 400)
 
     client = nacos_client.ConfigOpsNacosClient(
-        server_addresses=nacosConfig.get("url"),
-        username=nacosConfig.get("username"),
-        password=nacosConfig.get("password"),
-        namespace=namespace_id,
+        server_addresses=nacosCfg.get("url"),
+        username=nacosCfg.get("username"),
+        password=nacosCfg.get("password"),
+        namespace=namespace,
     )
 
     try:
@@ -271,4 +289,95 @@ def modify_confirm():
         logger.error(f"Publish config error. {ex}")
         return make_response(f"Publish config excaption:{ex}", 500)
 
+    return "OK"
+
+
+@bp.route("/nacos/v1/get_change_set", methods=["POST"])
+def get_change_set():
+    schema = GetChangeSetSchema()
+    data = None
+    try:
+        data = schema.load(request.get_json())
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    nacos_id = data["nacosId"]
+
+    nacosCfg = get_nacos_cfg(nacos_id)
+    if nacosCfg is None:
+        return make_response("Nacos cfg not found", 404)
+
+    client = nacos_client.ConfigOpsNacosClient(
+        server_addresses=nacosCfg.get("url"),
+        username=nacosCfg.get("username"),
+        password=nacosCfg.get("password"),
+    )
+
+    nacosChangeLog = NacosChangeLog(changelogFile=data["changeLogFile"])
+    result = nacosChangeLog.fetch_current(client, nacos_id)
+    if result is None:
+        return make_response("Not found executable change set!!!!", 400)
+    return result
+
+
+@bp.route("/nacos/v1/apply_change_set", methods=["POST"])
+def apply_change_set():
+    schema = ApplyChangeSetSchema()
+    data = None
+    try:
+        data = schema.load(request.get_json())
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+    nacos_id = data.get("nacosId")
+    change_set_id = data.get("changeSetId")
+    changes = data.get("changes")
+
+    nacosCfg = get_nacos_cfg(nacos_id)
+    if nacosCfg == None:
+        return make_response("Nacos config not found", 404)
+    client = nacos_client.ConfigOpsNacosClient(
+        server_addresses=nacosCfg.get("url"),
+        username=nacosCfg.get("username"),
+        password=nacosCfg.get("password"),
+    )
+
+    def push_changes():
+        pass
+        for change in changes:
+            namespace = change.get("namespace")
+            group = change.get("group")
+            data_id = change.get("dataId")
+            content = change.get("content")
+            format = change.get("format")
+            if content is None or len(content.strip()) == 0:
+                raise ConfigOpsException(
+                    f"Push content is empty. namespace:{namespace}, group:{group}, data_id:{data_id}"
+                )
+            validation_bool, validation_msg = config_validator.validate_content(
+                content, format
+            )
+            if not validation_bool:
+                raise ConfigOpsException(
+                    f"Push content format invalid. namespace:{namespace}, group:{group}, data_id:{data_id}, format:{format}. {validation_msg}"
+                )
+
+        for change in changes:
+            namespace = change.get("namespace")
+            group = change.get("group")
+            data_id = change.get("dataId")
+            content = change.get("content")
+            format = change.get("format")
+            res = client.publish_config_post(
+                data_id=data_id, group=group, content=content, config_type=format
+            )
+            if not res:
+                raise ConfigOpsException(
+                    f"Push config fail. namespace:{namespace}, group:{group}, data_id:{data_id}"
+                )
+
+    try:
+        apply_change(change_set_id, nacos_id, push_changes)
+    except Exception as ex:
+        logger.error(f"Apply config error. {ex}")
+        return make_response(f"Apply config error:{ex}", 500)
     return "OK"

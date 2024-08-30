@@ -1,14 +1,15 @@
 from flask import Flask
 import argparse
 import logging
+import os
 from ops.api.nacos import bp as nacos_bp
 from ops.api.database import bp as database_bp
 from ops.api.common import bp as common_bp
 from ops.config import load_config
 from ops.utils.logging_configurator import DefaultLoggingConfigurator
+from ops.database import db
 
 logger = logging.getLogger(__name__)
-
 
 def create_app(config_file=None) -> Flask:
     loggingConfig = DefaultLoggingConfigurator()
@@ -20,6 +21,7 @@ def create_app(config_file=None) -> Flask:
     config = load_config(config_file)
     if config is not None:
         app.config.update(config)
+    db.init(app)
     loggingConfig.configure_logging(app.config, debug_mode=False)
     return app
 

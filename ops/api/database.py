@@ -10,7 +10,7 @@ import json
 import base64
 from sqlalchemy import create_engine, text
 from marshmallow import Schema, fields, ValidationError
-from ops.config import DbConfig
+from ops.config import get_database_cfg
 from ops.utils.constants import DIALECT_DRIVER_MAP
 
 
@@ -37,7 +37,7 @@ class DatabaseJsonEncoder(json.JSONEncoder):
 
 
 class RunSqlSchema(Schema):
-    db_id = fields.Str(required=True)
+    dbId = fields.Str(required=True)
     sql = fields.Str(required=True)
     database = fields.Str(required=False)
 
@@ -123,15 +123,6 @@ def execute_sql(database, sql_script, db_config):
             trans.close()
 
 
-def get_database_config(db_id):
-    configs = current_app.config["database"]
-    db_config = configs[db_id]
-    if db_config == None:
-        return None
-    schema = DbConfig()
-    return schema.load(db_config)
-
-
 @bp.route("/database/v1/list", methods=["GET"])
 def get_database_list():
     configs = current_app.config["database"]
@@ -149,8 +140,8 @@ def run_sql():
         data = schema.load(request.get_json())
     except ValidationError as err:
         return jsonify(err.messages), 400
-    db_id = data.get("db_id")
-    db_config = get_database_config(db_id)
+    db_id = data.get("dbId")
+    db_config = get_database_cfg(db_id)
     if db_config == None:
         return make_response("Database config not found", 404)
     success, result = execute_sql(data.get("database"), data.get("sql"), db_config)

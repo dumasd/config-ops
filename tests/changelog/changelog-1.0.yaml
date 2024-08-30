@@ -1,0 +1,25 @@
+nacosChangeLog:
+  - changeSet:
+      id: 1 # ID不能重复
+      author: bruce.wu
+      comment: 注释
+      ignore: false
+      changes:
+        # namespace+group+dataId不能重复
+        - namespace: blue
+          group: group
+          dataId: config.yaml
+          format: yaml # 只支持yaml和properties
+          patchContent: |-
+            spring: 
+              application: 
+                name: blue
+          deleteContent: |-
+            notice:
+        - namespace: blue
+          group: group
+          dataId: config.properties
+          format: properties
+          patchContent: |-
+
+          deleteContent: |-

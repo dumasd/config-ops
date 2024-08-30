@@ -1,3 +1,5 @@
+from enum import Enum
+
 PROPERTIES = "properties"
 YAML = "yaml"
 JSON = "json"
@@ -11,6 +13,25 @@ CONFIG_FILE_ENV_NAME = "CONFIGOPS_CONFIG_FILE"
 MYSQL = "mysql"
 POSTGRESQL = "postgresql"
 ORACLE = "oracle"
+
+
+CHANGE_LOG_EXEXTYPE_EXECUTED = "EXECUTED"
+
+
+class CHANGE_LOG_EXEXTYPE(str, Enum):
+    INIT = "INIT"
+    EXECUTED = "EXECUTED"
+    FAILED = "FAILED"
+    # RERUN = "RERUN"
+
+    def matches(self, value: str | None) -> bool:
+        return self.value == value
+
+
+class SYSTEM_TYPE(str, Enum):
+    NACOS = "NACOS"
+    DATABASE = "DATABASE"
+    REDIS = "REDIS"
 
 
 DIALECT_DRIVER_MAP = {

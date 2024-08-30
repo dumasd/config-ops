@@ -1,0 +1,29 @@
+nacosChangeLog:
+  - changeSet:
+      id: 3   # ID不能重复
+      author: bruce.wu 
+      comment: 注释
+      ignore: false
+      changes:
+        # namespace+group+dataId不能重复
+        - namespace: blue   
+          group: group
+          dataId: config.yaml
+          format: yaml  # 目前只支持yaml和properties
+          # 追加内容
+          patchContent: |-
+            spring:
+              application:
+                name: blue-gogo
+          # 删除内容      
+          deleteContent: |-
+            notice:
+        - namespace: blue
+          group: group
+          dataId: config.properties
+          format: properties
+          patchContent: |-
+
+          deleteContent: |-
+  
+

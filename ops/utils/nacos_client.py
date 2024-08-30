@@ -47,6 +47,14 @@ class ConfigOpsNacosClient(nacos.NacosClient):
         except Exception as e:
             logger.exception("[list-namespace] exception %s occur" % str(e))
             raise
+    
+    def get_config_detail(self, data_id, group):
+        configs = self.get_configs(no_snapshot=True, group=group)
+        pageItems = configs.get("pageItems")
+        for item in pageItems:
+            if item.get("dataId") == data_id:
+                return item
+        return None
 
     def publish_config_post(
         self, data_id, group, content, app_name=None, config_type=None, timeout=None
