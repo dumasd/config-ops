@@ -367,6 +367,7 @@ def apply_change_set():
             data_id = change.get("dataId")
             content = change.get("content")
             format = change.get("format")
+            client.namespace = namespace
             res = client.publish_config_post(
                 data_id=data_id, group=group, content=content, config_type=format
             )

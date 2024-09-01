@@ -25,5 +25,32 @@ nacosChangeLog:
           patchContent: |-
 
           deleteContent: |-
-  
 
+  - changeSet:
+      id: 20240830-3127   # ID不能重复
+      author: bruce.wu 
+      comment: 注释
+      ignore: false
+      changes:
+        # namespace+group+dataId不能重复
+        - namespace: blue   
+          group: group
+          dataId: config.yaml
+          format: yaml  # 目前只支持yaml和properties
+          # 追加内容
+          patchContent: |-
+            spring:
+              application:
+                name: blue-prod
+        - namespace: vod-mfc
+          group: vod-meta
+          dataId: vod.meta.dev.connect.properties
+          format: properties
+          patchContent: |-
+            statistics.out.log = true
+          deleteContent: |-  
+            hotkey.app=vod-meta-api
+            hotkey.configcenter.type=etcd
+            hotkey.configcenter.adders=http://3.133.134.75:2379
+            hotkey.configcenter.username=root
+            hotkey.configcenter.password=etcd@sit
