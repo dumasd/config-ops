@@ -1,11 +1,11 @@
 nacosChangeLog:
   - changeSet:
-      id: 1 # ID不能重复
+      id: 20240810 # 所有changeSet的ID不可重复
       author: bruce.wu
       comment: 注释
       ignore: false
       changes:
-        # namespace+group+dataId不能重复
+        # namespace+group+dataId的组合在changes中不能重复
         - namespace: blue
           group: group
           dataId: config.yaml
@@ -21,5 +21,5 @@ nacosChangeLog:
           dataId: config.properties
           format: properties
           patchContent: |-
-
-          deleteContent: |-
+            delete.aaa = 9
+            delete.ccc = fff

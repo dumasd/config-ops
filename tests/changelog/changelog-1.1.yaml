@@ -1,21 +1,21 @@
 nacosChangeLog:
   - changeSet:
-      id: 3   # ID不能重复
-      author: bruce.wu 
+      id: 20240830 # 所有changeSet的ID不可重复
+      author: bruce.wu
       comment: 注释
-      ignore: false
+      ignore: false # 是否忽略此changeSet
       changes:
-        # namespace+group+dataId不能重复
-        - namespace: blue   
+        # namespace+group+dataId的组合在changes中不能重复
+        - namespace: blue
           group: group
           dataId: config.yaml
-          format: yaml  # 目前只支持yaml和properties
+          format: yaml # 目前只支持yaml和properties
           # 追加内容
           patchContent: |-
             spring:
               application:
                 name: blue-gogo
-          # 删除内容      
+          # 删除内容
           deleteContent: |-
             notice:
         - namespace: blue
@@ -23,34 +23,8 @@ nacosChangeLog:
           dataId: config.properties
           format: properties
           patchContent: |-
-
+            patch.bbb = 1
+            patch.ccc = req
           deleteContent: |-
-
-  - changeSet:
-      id: 20240830-3127   # ID不能重复
-      author: bruce.wu 
-      comment: 注释
-      ignore: false
-      changes:
-        # namespace+group+dataId不能重复
-        - namespace: blue   
-          group: group
-          dataId: config.yaml
-          format: yaml  # 目前只支持yaml和properties
-          # 追加内容
-          patchContent: |-
-            spring:
-              application:
-                name: blue-prod
-        - namespace: vod-mfc
-          group: vod-meta
-          dataId: vod.meta.dev.connect.properties
-          format: properties
-          patchContent: |-
-            statistics.out.log = true
-          deleteContent: |-  
-            hotkey.app=vod-meta-api
-            hotkey.configcenter.type=etcd
-            hotkey.configcenter.adders=http://3.133.134.75:2379
-            hotkey.configcenter.username=root
-            hotkey.configcenter.password=etcd@sit
+            delete.aaa = 9
+            delete.ccc = fff
