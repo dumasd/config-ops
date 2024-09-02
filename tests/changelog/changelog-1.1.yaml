@@ -1,6 +1,6 @@
 nacosChangeLog:
   - changeSet:
-      id: 20240830 # 所有changeSet的ID不可重复
+      id: 20240831 # 所有changeSet的ID不可重复
       author: bruce.wu
       comment: 注释
       ignore: false # 是否忽略此changeSet

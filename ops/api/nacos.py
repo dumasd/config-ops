@@ -316,7 +316,7 @@ def get_change_set():
     nacosChangeLog = NacosChangeLog(changelogFile=data["changeLogFile"])
     result = nacosChangeLog.fetch_current(client, nacos_id)
     if result is None:
-        return make_response("Not found executable change set!!!!", 400)
+        return {}
     return result
 
 
