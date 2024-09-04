@@ -1,6 +1,6 @@
 import logging
 import os
-from ops.utils import config_handler, config_validator, constants
+from ops.utils import config_handler, config_validator
 from ops.utils.constants import CHANGE_LOG_EXEXTYPE, SYSTEM_TYPE
 from ops.utils.exception import ChangeLogException
 from ruamel import yaml as ryaml

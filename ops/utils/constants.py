@@ -15,20 +15,17 @@ POSTGRESQL = "postgresql"
 ORACLE = "oracle"
 
 
-CHANGE_LOG_EXEXTYPE_EXECUTED = "EXECUTED"
-
-
-class CHANGE_LOG_EXEXTYPE(str, Enum):
+class CHANGE_LOG_EXEXTYPE(Enum):
     INIT = "INIT"
     EXECUTED = "EXECUTED"
     FAILED = "FAILED"
     # RERUN = "RERUN"
 
-    def matches(self, value: str | None) -> bool:
+    def matches(self, value):
         return self.value == value
 
 
-class SYSTEM_TYPE(str, Enum):
+class SYSTEM_TYPE(Enum):
     NACOS = "NACOS"
     DATABASE = "DATABASE"
     REDIS = "REDIS"
