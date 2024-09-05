@@ -4,7 +4,7 @@ LABEL MATAINER="Bruce Wu"
 
 WORKDIR /opt/config-ops/
 
-ADD ops/ .
+ADD ops/ ./ops/
 ADD requirements.txt ./requirements.txt
 ADD config.yaml.sample ./config.yaml
 
