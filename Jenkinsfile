@@ -87,7 +87,7 @@ pipeline {
                 }
             }
             steps {
-                withKubeConfig(credentialsId: kubeCredential, serverUrl: '') {
+                withKubeConfig(credentialsId: kubeCredential) {
                     container('kubectl') {
                         unstash 'deployFile'
                         sh '''

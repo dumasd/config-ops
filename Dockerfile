@@ -2,12 +2,12 @@ FROM docker.io/python:3.10.14
 
 LABEL MATAINER="Bruce Wu"
 
-ADD dist/app/config-ops /opt/config-ops/
-ADD dist/app/_internal/ /opt/config-ops/_internal/
-ADD config.yaml.sample /opt/config-ops/config.yaml
-ADD startup.sh /opt/config-ops/
-RUN chmod 755 /opt/config-ops/startup.sh
-
 WORKDIR /opt/config-ops/
 
-ENTRYPOINT [ "./startup.sh" ]
+ADD ops/ .
+ADD requirements.txt ./requirements.txt
+ADD config.yaml.sample ./config.yaml
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+ENTRYPOINT ["python3", "-m", "flask", "--app", "ops/app.py", "run"]

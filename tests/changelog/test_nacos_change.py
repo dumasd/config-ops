@@ -62,7 +62,7 @@ nacosChangeLog:
 
     def test_nacos_change(self):
         nacosChangeLog = nacos_change.NacosChangeLog(
-            changelogFile="/Users/wukai/IdeaProjects/Opensource/config-ops/tests/changelog/master.yaml"
+            changelogFile="/Users/wukai/IdeaProjects/Opensource/config-ops/tests/changelog/changelog-root.yaml"
         )
         logger.info(nacosChangeLog.changeSets)
         client = nacos_client.ConfigOpsNacosClient(

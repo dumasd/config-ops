@@ -29,9 +29,9 @@ def create_app(config_file=None) -> Flask:
 if __name__ == "__main__":
     logger.info("Starting flask app")
     parser = argparse.ArgumentParser(description="Run the config-ops application")
-    parser.add_argument("--host", type=str, default="127.0.0.1", help="服务Host")
-    parser.add_argument("--port", type=int, default="5000", help="服务端口")
-    parser.add_argument("--debug", help="是否开启Debug模式")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="服务Host", required=False)
+    parser.add_argument("--port", type=int, default="5000", help="服务端口", required=False)
+    parser.add_argument("--debug", help="是否开启Debug模式", required=False)
     parser.add_argument("--config", type=str, help="YAML配置文件", required=False)
     args = parser.parse_args()
     debug = False

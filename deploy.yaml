@@ -41,9 +41,9 @@ spec:
             initialDelaySeconds: 5
             timeoutSeconds: 10
           env:
-            - name: CONFIGOPS_HOST
+            - name: FLASK_RUN_HOST
               value: "0.0.0.0"
-            - name: CONFIGOPS_PORT
+            - name: FLASK_RUN_PORT
               value: "5000"
             - name: CONFIGOPS_CONFIG
               valueFrom:

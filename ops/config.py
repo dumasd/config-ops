@@ -50,17 +50,26 @@ def load_config(config_file=None):
     if config_file is None or len(config_file.strip()) == 0:
         config_file = os.getenv(CONFIG_FILE_ENV_NAME)
 
-    if config_file is not None and len(config_file.strip()) > 0:
+    if config_file and os.path.isfile(config_file):
         print(f"Load config from file: {config_file}")
         with open(config_file, "r") as file:
             config = yaml.load(file)
         return config
 
     conf_val = os.getenv(CONFIG_ENV_NAME)
-    if conf_val is not None and len(conf_val.strip()) > 0:
+    if conf_val and len(conf_val.strip()) > 0:
         print(f"Load config enviroment: {CONFIG_ENV_NAME}")
         config = yaml.load(conf_val)
         return config
+
+    # 读取默认的config.yaml
+    config_file = "config.yaml"
+    if os.path.isfile(config_file):
+        print(f"Load config from file: {config_file}")
+        with open(config_file, "r") as file:
+            config = yaml.load(file)
+        return config
+
     return None
 
 

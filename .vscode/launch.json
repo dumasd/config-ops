@@ -12,7 +12,7 @@
             "env": {
                 "FLASK_APP": "ops/app.py",
                 "FLASK_DEBUG": "1",
-                "CONFIGOPS_CONFIG_FILE": "${workspaceFolder}/config.yaml",
+                // "CONFIGOPS_CONFIG_FILE": "${workspaceFolder}/config.yaml",
             },
             "args": [
                 "run",
