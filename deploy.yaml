@@ -53,7 +53,7 @@ spec:
           ports:
             - containerPort: 5000
               name: http
-              
+
 ---
 kind: Service
 apiVersion: v1
