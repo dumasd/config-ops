@@ -1,3 +1,4 @@
+/* groovylint-disable LineLength, NestedBlockDepth, DuplicateStringLiteral */
 pipeline {
     agent {
         kubernetes {
@@ -5,10 +6,22 @@ pipeline {
         }
     }
 
+    parameters {
+        gitParameter(name: 'TAG',
+            defaultValue: 'v0.0.1',
+            quickFilterEnabled: true,
+            requiredParameter: true,
+            selectedValue: 'NONE',
+            sortMode: 'NONE',
+            tagFilter: '*',
+            type: 'GitParameterDefinition')
+    }
+
     environment {
-        REPOSITORY_URI = 'docker-bk.agileforge.tech/devops'
+        REPOSITORY_URI = 'docker.io'
         REPOSITORY_PROTOCOL = 'https'
-        NEXUS_CRED = credentials('nexus-registry')
+        // DOCKER_CRED = credentials('nexus-cred')
+        DOCKER_CRED = credentials('devops-docker-cred')
         GROUP_ID = 'tech.bitkernel.devops'
         git_url = 'https://github.com/dumasd/config-ops.git'
         gitCredential = 'thinkerwolf'
@@ -16,19 +29,14 @@ pipeline {
     }
 
     stages {
-        stage('Env') {
-            steps {
-                script {
-                    def version = new Date().format('yyyyMMddHHmmss') + "-${env.BUILD_ID}"
-                    env.RELEASE_VERSION = version
-                }
-            }
-        }
-
         stage('SCM Checkout') {
             steps {
                 container('git') {
-                    git branch: 'main', credentialsId: gitCredential, url: "${git_url}"
+                    checkout scmGit(
+                        branches: [[name: "refs/tags/${TAG}"]],
+                        extensions: [cloneOption(shallow: true)],
+                        userRemoteConfigs: [[credentialsId: gitCredential, url: "${git_url}"]]
+                    )
                 }
             }
         }
@@ -36,6 +44,7 @@ pipeline {
         stage('Build') {
             steps {
                 container('python') {
+                    echo "Build tag: ${TAG}"
                     sh '''
                     python3 -m venv .venv
                     . .venv/bin/activate
@@ -45,24 +54,18 @@ pipeline {
 
                     cp config.yaml.sample dist/app
                     cp README.md dist/app
+                    cp startup.sh dist/app
+                    cp docker-compose.yaml dist/app
 
-                    tar -czf config-ops-linux-${RELEASE_VERSION}.tar.gz --exclude _internal -C dist/app .
+                    tar -czf config-ops-linux.tar.gz -C dist/app .
                     '''
-
-                    nexusArtifactPublish(
-                        serverId: 'nexus',
-                        repository: 'raw-public',
-                        groupId: "${GROUP_ID}",
-                        artifactId: 'config-ops',
-                        version: "${RELEASE_VERSION}",
-                        includes: "config-ops-linux-${RELEASE_VERSION}.tar.gz")
                 }
                 container('buildah') {
                     script {
-                        def imageName = "${REPOSITORY_URI}/config-ops:${RELEASE_VERSION}"
+                        def imageName = "${REPOSITORY_URI}/config-ops:${TAG}"
                         env.IMAGE = imageName
                         sh '''
-                            buildah login -u $NEXUS_CRED_USR -p $NEXUS_CRED_PSW $REPOSITORY_PROTOCOL://$REPOSITORY_URI
+                            buildah login -u $DOCKER_CRED_USR -p $DOCKER_CRED_PSW $REPOSITORY_PROTOCOL://$REPOSITORY_URI
                             buildah build  --storage-driver vfs -t $IMAGE -f Dockerfile .
                             buildah push --storage-driver vfs $IMAGE
                         '''
@@ -87,7 +90,7 @@ pipeline {
                 }
             }
             steps {
-                withKubeConfig(credentialsId: kubeCredential) {
+                withKubeConfig(credentialsId: kubeCredential, serverUrl: '') {
                     container('kubectl') {
                         unstash 'deployFile'
                         sh '''
