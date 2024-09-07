@@ -1,3 +1,8 @@
+# 日志配置
+logging:
+  level: INFO
+  format: "[%(asctime)s] %(levelname)s %(name)s %(message)s"
+
 # Nacos配置
 nacos:
   default: # Nacos ID
@@ -14,10 +19,14 @@ database:
     password: "1234"
     dialect: mysql
 
-# 日志配置
-logging:
-  level: INFO
-  format: "[%(asctime)s] %(levelname)s %(name)s %(message)s"
-
+# 应用配置
 config:
   database-uri: sqlite:///configops.db
+  # 手动指定java-home目录，java版本必须在11及以上
+  java-home-dir: 
+  # Liquibase 运行配置文件
+  liquibase:
+    # 配置文件
+    defaults-file: 
+    # 用户提供的 jdbc 驱动目录
+    jdbc-drivers-dir: 

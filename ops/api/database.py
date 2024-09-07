@@ -1,18 +1,14 @@
 """ 执行SQL操作 """
 
 from flask import Blueprint, request, make_response, jsonify, current_app, Response
-import re, logging
-import collections
+import re, logging, os, json, collections, subprocess
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
-import json
-import base64
 from sqlalchemy import create_engine, text
 from marshmallow import Schema, fields, ValidationError
-from ops.config import get_database_cfg
+from ops.config import get_database_cfg, get_java_home_dir, get_liquibase_cfg
 from ops.utils.constants import DIALECT_DRIVER_MAP
-
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +36,12 @@ class RunSqlSchema(Schema):
     dbId = fields.Str(required=True)
     sql = fields.Str(required=True)
     database = fields.Str(required=False)
+
+
+class RunLiquibaseCmdSchema(Schema):
+    dbId = fields.Str(required=False)
+    command = fields.Str(required=True)
+    args = fields.Str(required=False)
 
 
 def remove_comments(sql_script):
@@ -153,3 +155,54 @@ def run_sql():
     resp_json = json.dumps(resp, cls=DatabaseJsonEncoder)
     jsonify()
     return Response(resp_json, mimetype="application/json")
+
+
+@bp.route("/database/v1/run-liquibase", methods=["POST"])
+def run_liquibase():
+    """
+    执行liquibase命令
+    """
+    data = None
+    try:
+        schema = RunLiquibaseCmdSchema()
+        data = schema.load(request.get_json())
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    cmd_args_str = "liquibase " + data["command"]
+
+    db_id = data.get("dbId")
+    if db_id:
+        db_config = get_database_cfg(db_id)
+        if db_config == None:
+            return make_response("Database config not found", 404)
+        # jdbc:database_type://hostname:port/database_name
+        dialect = db_config["dialect"]
+        host = db_config["url"]
+        port = db_config["port"]
+        username = db_config["username"]
+        password = db_config["password"]
+        cmd_args_str = (
+            cmd_args_str
+            + f" --url jdbc:{dialect}://{host}:{port} --username {username} --password {password}"
+        )
+
+    if data.get("args"):
+        cmd_args_str = cmd_args_str + " " + data.get("args")
+    args = re.split(r"\s+", cmd_args_str.strip())
+
+    custom_env = os.environ.copy()
+    # 设置JavaHome
+    java_home = get_java_home_dir(current_app)
+    if java_home:
+        custom_env["JAVA_HOME"] = java_home
+
+    completed_process = subprocess.run(args, capture_output=True, env=custom_env)
+    stdout = completed_process.stdout.decode()
+    stderr = completed_process.stderr.decode()
+    if stdout:
+        logger.info(f"Liqubase run stdout. \n{stdout}")
+    if stderr:
+        logger.info(f"Liqubase run stderr. \n{stderr}")
+
+    return {"stdout": stdout, "stderr": stderr}

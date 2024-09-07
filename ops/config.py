@@ -95,3 +95,26 @@ def get_database_cfg(db_id):
         return None
     schema = DbConfig()
     return schema.load(db_cfg)
+
+
+def get_java_home_dir(app):
+    """
+    获取java_home 路径
+    """
+    cfg = app.config.get("config")
+    if cfg:
+        java_home = cfg.get("java-home-dir")
+        if java_home and len(java_home.strip()) > 0:
+            return java_home
+    return None
+
+
+def get_liquibase_cfg(app):
+    """
+    获取liquibase配置
+    """
+    cfg = app.config.get("config")
+    if cfg:
+        liquibase_cfg = cfg.get("liquibase")
+        return liquibase_cfg
+    return None

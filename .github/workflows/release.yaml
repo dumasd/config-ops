@@ -30,7 +30,6 @@ jobs:
           cp config.yaml.sample dist/app
           cp README.md dist/app
           cp startup.sh dist/app
-          cp docker-compose.yaml dist/app
           tar -czf config-ops-linux.tar.gz -C dist/app .
 
       - name: Create GitHub Release
