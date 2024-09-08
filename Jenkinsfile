@@ -24,7 +24,7 @@ pipeline {
                   - cat
                 tty: true
               - name: gh
-                image: ghcr.io/github/cli/gh:latest
+                image: maniator/gh:latest
                 command:
                   - cat
                 tty: true
