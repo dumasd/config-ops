@@ -61,6 +61,21 @@ pipeline {
 
                     tar -czf config-ops-linux.tar.gz -C dist/app .
                     '''
+                    createGitHubRelease(
+                        credentialId: gitCredential,
+                        repository: 'dumasd/config-ops',
+                        tag: "${TAG}",
+                        draft: true
+                    )
+
+                    uploadGithubReleaseAsset(
+                        credentialId: gitCredential,
+                        repository: 'dumasd/config-ops',
+                        tagName: "${TAG}",
+                        uploadAssets: [
+                            [filePath: 'config-ops-linux.tar.gz'],
+                        ]
+                    )
                 }
                 container('buildah') {
                     script {
