@@ -196,6 +196,15 @@ def run_liquibase():
     java_home = get_java_home_dir(current_app)
     if java_home:
         custom_env["JAVA_HOME"] = java_home
+    # 设置classpath 和 defaultsFile
+    liquibase_cfg = get_liquibase_cfg(current_app)
+    if liquibase_cfg:
+        defaultsFile = liquibase_cfg.get("defaults-file")
+        jdbcDriverDir = liquibase_cfg.get("jdbc-drivers-dir")
+        if defaultsFile and os.path.exists(defaultsFile):
+            custom_env["LIQUIBASE_DEFAULTS_FILE"] = os.path.abspath(defaultsFile)
+        if jdbcDriverDir and os.path.exists(jdbcDriverDir):
+            custom_env["LIQUIBASE_CLASSPATH"] = os.path.abspath(jdbcDriverDir)        
 
     completed_process = subprocess.run(args, capture_output=True, env=custom_env)
     stdout = completed_process.stdout.decode()

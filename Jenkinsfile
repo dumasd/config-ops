@@ -53,10 +53,11 @@ pipeline {
                     pip3 install pyinstaller
                     pyinstaller app.spec
 
+                    mkdir -p dist/app/jdbc-drivers
                     cp config.yaml.sample dist/app
-                    cp README.md dist/app
                     cp startup.sh dist/app
-                    cp docker-compose.yaml dist/app
+                    cp jdbc-drivers/* dist/app/jdbc-drivers
+                    cp README.md dist/app
 
                     tar -czf config-ops-linux.tar.gz -C dist/app .
                     '''

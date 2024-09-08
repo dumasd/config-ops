@@ -29,4 +29,4 @@ config:
     # 配置文件
     defaults-file: 
     # 用户提供的 jdbc 驱动目录
-    jdbc-drivers-dir: 
+    jdbc-drivers-dir: jdbc-drivers
