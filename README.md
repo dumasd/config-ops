@@ -5,14 +5,35 @@
 一款 DevOps 配置工具：
 
 - Nacos Yaml、Properties格式的配置文件变更。
-- MySQL 脚本执行（后续进行扩展，执行多种类型数据库）。
-- Redis 脚本执行（待规划）。
+- 使用 Liquibase 执行数据库版本脚本。
 
 结合 [dumasd/jenkins-config-ops-plugin (github.com)](https://github.com/dumasd/jenkins-config-ops-plugin) 插件实现与Jenkins的集成。
 
 ## 快速开始
 
-### Docker
+### 部署Liquibase
+
+Liquibase安装文档: https://docs.liquibase.com/start/install/home.html
+
+### 部署Config-Ops
+
+#### 本地部署
+
+下载 [Config-Ops Release](https://github.com/dumasd/config-ops/releases/latest/download/config-ops-linux.tar.gz)  文件解压，release 文件中包含 `config-ops` 可执行文件和配置文件样例 `config.yaml.sample`
+
+```shell
+# 从sample中拷贝出一个配置文件，修改配置文件中的配置
+cp config.yaml.sample config.yaml
+
+# 修改配置
+vim config.yaml
+
+# 启动服务
+./startup.sh
+
+```
+
+#### Docker部署
 
 config-ops镜像库： [wukaireign/config-ops general | Docker Hub](https://hub.docker.com/repository/docker/wukaireign/config-ops/general)
 
@@ -28,34 +49,11 @@ vim docker-compose.yaml
 docker-compose -f docker-compose.yaml up -d
 ```
 
-### 本地启动
-
-下载 release 文件解压，release 文件中包含 `config-ops` 可执行文件和配置文件样例 `config.yaml.sample`
-
-```shell
-# 从sample中拷贝出一个配置文件，修改配置文件中的配置
-cp config.yaml.sample config.yaml
-
-# 修改配置
-vim config.yaml
-
-# 设置配置文件变量
-export CONFIGOPS_CONFIG_FILE=config.yaml
-# 设置HOST（可选)
-# export CONFIGOPS_HOST="127.0.0.1"
-# 设置端口（可选)
-# export CONFIGOPS_PORT=5000
-
-# 启动服务
-./startup.sh
-
-```
-
 ## 本地开发
 
 ### 要求
 
-- Python：3.8及以上版本
+- Python：3.9及以上版本
 
 ### 开发环境设置
 

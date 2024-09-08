@@ -101,18 +101,20 @@ pipeline {
 
                 container('buildah') {
                     script {
-                        def imageName = "${REPOSITORY_URI}/config-ops:${TAG}"
-                        env.IMAGE = imageName
-                        sh '''
+                        def tagImageName = "${REPOSITORY_URI}/config-ops:${TAG}"
+                        def latestImageName = "${REPOSITORY_URI}/config-ops:latest"
+                        sh """
                             buildah login -u $DOCKER_CRED_USR -p $DOCKER_CRED_PSW $REPOSITORY_PROTOCOL://$REPOSITORY_URI
-                            buildah build  --storage-driver vfs -t $IMAGE -f Dockerfile .
-                            buildah push --storage-driver vfs $IMAGE
-                        '''
+                            buildah build  --storage-driver vfs -t ${tagImageName} -f Dockerfile .
+                            buildah tag ${tagImageName} ${latestImageName}
+                            buildah push --storage-driver vfs ${tagImageName}
+                            buildah push --storage-driver vfs ${latestImageName}
+                        """
                         def deployFilePath = 'deploy.yaml'
                         // 替换k8s文件镜像
                         contentReplace(configs:[
                             fileContentReplaceConfig(configs: [
-                                fileContentReplaceItemConfig(replace: imageName, search: '\\$IMAGE')
+                                fileContentReplaceItemConfig(replace: tagImageName, search: '\\$IMAGE')
                             ], fileEncoding: 'UTF-8', filePath: deployFilePath, lineSeparator: 'Unix')
                         ])
                         // 存放文件，用于不同agent共享
