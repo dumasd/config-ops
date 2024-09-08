@@ -8,7 +8,7 @@ pipeline {
 
     parameters {
         gitParameter(name: 'TAG',
-            type: 'PT_TAG'
+            type: 'PT_TAG',
             defaultValue: 'v0.0.1',
             tagFilter: '*',
             quickFilterEnabled: true,
