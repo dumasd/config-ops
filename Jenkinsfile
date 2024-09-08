@@ -92,11 +92,10 @@ pipeline {
 
                 container('gh') {
                     sh """
-                    echo ${GITHUB_TOKEN} > .github_token
-                    gh auth login --with-token < .github_token
                     gh release create ${TAG} *.tar.gz \
-                          --repo  dumasd/config-ops \
-                          --target main
+                          --repo dumasd/config-ops \
+                          --target main \
+                          --title 'Release ${TAG}'
                     """
                 }
 
