@@ -23,3 +23,5 @@ def get_jar_classpath(directory):
 directory_path = 'jdbc-drivers'  # 替换为你的 JAR 文件所在目录
 classpath = get_jar_classpath(directory_path)
 print(f"Classpath: {classpath}")
+
+print(os.getcwd())

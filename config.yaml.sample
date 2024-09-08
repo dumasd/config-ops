@@ -26,6 +26,8 @@ config:
   java-home-dir: 
   # Liquibase 运行配置文件
   liquibase:
+    # Liquibase DATABASECHANGELOG 和 DATABASECHANGELOGLOCK 表存储在哪个schema
+    schema-name: liquibase
     # 配置文件
     defaults-file: 
     # 用户提供的 jdbc 驱动目录

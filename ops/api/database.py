@@ -42,6 +42,8 @@ class RunLiquibaseCmdSchema(Schema):
     dbId = fields.Str(required=False)
     command = fields.Str(required=True)
     args = fields.Str(required=False)
+    # 命令运行在哪个目录下
+    cwd = fields.Str(required=False)
 
 
 def remove_comments(sql_script):
@@ -177,7 +179,7 @@ def run_liquibase():
         if db_config == None:
             return make_response("Database config not found", 404)
         # jdbc:database_type://hostname:port/database_name
-        dialect = db_config["dialect"]
+        dialect = db_config.get("dialect", "mysql")
         host = db_config["url"]
         port = db_config["port"]
         username = db_config["username"]
@@ -225,7 +227,16 @@ def run_liquibase():
     if java_home:
         custom_env["JAVA_HOME"] = java_home
 
-    completed_process = subprocess.run(args, capture_output=True, env=custom_env)
+    working_dir = os.getcwd()
+    if data.get("cwd"):
+        working_dir = data.get("cwd")
+
+    completed_process = subprocess.run(
+        args,
+        cwd=working_dir,
+        capture_output=True,
+        env=custom_env,
+    )
     stdout = completed_process.stdout.decode()
     stderr = completed_process.stderr.decode()
     if stdout:
