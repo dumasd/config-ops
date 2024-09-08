@@ -2,14 +2,20 @@ import os
 import platform
 
 def get_jar_classpath(directory):
+    print(os.path.abspath(directory))
+    base = os.path.abspath(directory)
     # 获取操作系统类型
     separator = ';' if platform.system() == 'Windows' else ':'
     
     # 遍历目录下的 JAR 文件
-    jar_files = [f for f in os.listdir(directory) if f.endswith('.jar')]
+    jar_files = [f for f in os.listdir(base) if f.endswith('.jar')]
+    
+    for jar in jar_files:
+        print(jar)
+
     
     # 构造 classpath 字符串
-    classpath = separator.join(os.path.abspath(jar) for jar in jar_files)
+    classpath = separator.join(os.path.join(base, jar) for jar in jar_files)
     
     return classpath
 

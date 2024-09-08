@@ -208,8 +208,12 @@ def run_liquibase():
 
         if jdbcDriverDir and os.path.exists(jdbcDriverDir) and classpathOpt:
             separator = ";" if platform.system() == "Windows" else ":"
+            base = os.path.abspath(jdbcDriverDir)
+
             jar_files = [f for f in os.listdir(jdbcDriverDir) if f.endswith(".jar")]
-            classpath = separator.join(os.path.abspath(jar) for jar in jar_files)
+
+            classpath = separator.join(os.path.join(base, jar) for jar in jar_files)
+
             cmd_args_str = cmd_args_str + " --classpath " + classpath
 
     logger.info(f"Liquibase command: {cmd_args_str}")
