@@ -1,7 +1,7 @@
 """ 执行SQL操作 """
 
 from flask import Blueprint, request, make_response, jsonify, current_app, Response
-import re, logging, os, json, collections, subprocess
+import re, logging, os, json, collections, subprocess, platform
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
@@ -207,10 +207,12 @@ def run_liquibase():
             )
 
         if jdbcDriverDir and os.path.exists(jdbcDriverDir) and classpathOpt:
-            cmd_args_str = (
-                cmd_args_str + " --classpath " + os.path.abspath(jdbcDriverDir)
-            )
+            separator = ";" if platform.system() == "Windows" else ":"
+            jar_files = [f for f in os.listdir(jdbcDriverDir) if f.endswith(".jar")]
+            classpath = separator.join(os.path.abspath(jar) for jar in jar_files)
+            cmd_args_str = cmd_args_str + " --classpath " + classpath
 
+    logger.info(f"Liquibase command: {cmd_args_str}")
     args = re.split(r"\s+", cmd_args_str.strip())
 
     custom_env = os.environ.copy()
