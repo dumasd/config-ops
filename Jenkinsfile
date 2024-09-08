@@ -64,7 +64,7 @@ pipeline {
                     createGitHubRelease(
                         credentialId: gitCredential,
                         repository: "dumasd/config-ops",
-                        commitish: "main"
+                        commitish: "main",
                         tag: "${TAG}",
                         draft: true
                     )
