@@ -19,7 +19,7 @@ pipeline {
     }
 
     environment {
-        REPOSITORY_URI = 'docker.io'
+        REPOSITORY_URI = 'docker.io/wukaireign'
         REPOSITORY_PROTOCOL = 'https'
         // DOCKER_CRED = credentials('nexus-cred')
         DOCKER_CRED = credentials('devops-docker-cred')
