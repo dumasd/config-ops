@@ -2,7 +2,33 @@
 pipeline {
     agent {
         kubernetes {
-            inheritFrom 'python3.9'
+            yaml '''
+            apiVersion: v1
+            kind: Pod
+            spec:
+              containers:
+              - name: python
+                image: wukaireign/python:3.9-ubuntu-18
+                imagePullPolicy: Always
+                command:
+                  - cat
+                tty: true
+              - name: git
+                image: bitnami/git:latest
+                command:
+                  - cat
+                tty: true
+              - name: buildah
+                image: quay.io/buildah/stable:latest
+                command:
+                  - cat
+                tty: true
+              - name: gh
+                image: ghcr.io/github/cli/gh:latest
+                command:
+                  - cat
+                tty: true
+            '''
         }
     }
 
@@ -24,6 +50,7 @@ pipeline {
         // DOCKER_CRED = credentials('nexus-cred')
         DOCKER_CRED = credentials('devops-docker-cred')
         GROUP_ID = 'tech.bitkernel.devops'
+        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         git_url = 'https://github.com/dumasd/config-ops.git'
         gitCredential = 'thinkerwolf'
         kubeCredential = 'bik-devops-kubeconfig'
@@ -61,23 +88,18 @@ pipeline {
 
                     tar -czf config-ops-linux.tar.gz -C dist/app .
                     '''
-                    createGitHubRelease(
-                        credentialId: 'GITHUB_TOKEN',
-                        repository: "dumasd/config-ops",
-                        commitish: "main",
-                        tag: "${TAG}",
-                        draft: true
-                    )
-
-                    uploadGithubReleaseAsset(
-                        credentialId: 'GITHUB_TOKEN',
-                        repository: "dumasd/config-ops",
-                        tagName: "${TAG}",
-                        uploadAssets: [
-                            [filePath: 'config-ops-linux.tar.gz'],
-                        ]
-                    )
                 }
+
+                container('gh') {
+                    sh """
+                    echo ${GITHUB_TOKEN} > .github_token
+                    gh auth login --with-token < .github_token
+                    gh release create ${TAG} *.tar.gz \
+                          --repo  dumasd/config-ops \
+                          --target main
+                    """
+                }
+
                 container('buildah') {
                     script {
                         def imageName = "${REPOSITORY_URI}/config-ops:${TAG}"
