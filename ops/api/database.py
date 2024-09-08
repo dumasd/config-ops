@@ -244,4 +244,4 @@ def run_liquibase():
     if stderr:
         logger.info(f"Liqubase run stderr. \n{stderr}")
 
-    return {"stdout": stdout, "stderr": stderr}
+    return {"stdout": stdout, "stderr": stderr, "retcode": completed_process.returncode}
