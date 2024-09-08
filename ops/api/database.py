@@ -189,6 +189,28 @@ def run_liquibase():
 
     if data.get("args"):
         cmd_args_str = cmd_args_str + " " + data.get("args")
+
+    # 设置classpath 和 defaultsFile
+    liquibase_cfg = get_liquibase_cfg(current_app)
+    if liquibase_cfg:
+        defaultsFile = liquibase_cfg.get("defaults-file")
+        jdbcDriverDir = liquibase_cfg.get("jdbc-drivers-dir")
+        defaultsFileOpt = (
+            cmd_args_str.find("--defaults-file") < 0
+            or cmd_args_str.find("--defaultsFile") < 0
+        )
+        classpathOpt = cmd_args_str.find("--classpath") < 0
+
+        if defaultsFile and os.path.exists(defaultsFile) and defaultsFileOpt:
+            cmd_args_str = (
+                cmd_args_str + " --defaults-file " + os.path.abspath(defaultsFile)
+            )
+
+        if jdbcDriverDir and os.path.exists(jdbcDriverDir) and classpathOpt:
+            cmd_args_str = (
+                cmd_args_str + " --classpath " + os.path.abspath(jdbcDriverDir)
+            )
+
     args = re.split(r"\s+", cmd_args_str.strip())
 
     custom_env = os.environ.copy()
@@ -196,15 +218,6 @@ def run_liquibase():
     java_home = get_java_home_dir(current_app)
     if java_home:
         custom_env["JAVA_HOME"] = java_home
-    # 设置classpath 和 defaultsFile
-    liquibase_cfg = get_liquibase_cfg(current_app)
-    if liquibase_cfg:
-        defaultsFile = liquibase_cfg.get("defaults-file")
-        jdbcDriverDir = liquibase_cfg.get("jdbc-drivers-dir")
-        if defaultsFile and os.path.exists(defaultsFile):
-            custom_env["LIQUIBASE_DEFAULTS_FILE"] = os.path.abspath(defaultsFile)
-        if jdbcDriverDir and os.path.exists(jdbcDriverDir):
-            custom_env["LIQUIBASE_CLASSPATH"] = os.path.abspath(jdbcDriverDir)        
 
     completed_process = subprocess.run(args, capture_output=True, env=custom_env)
     stdout = completed_process.stdout.decode()
