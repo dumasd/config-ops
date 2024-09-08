@@ -63,14 +63,15 @@ pipeline {
                     '''
                     createGitHubRelease(
                         credentialId: gitCredential,
-                        repository: 'dumasd/config-ops',
+                        repository: "dumasd/config-ops",
+                        commitish: "main"
                         tag: "${TAG}",
                         draft: true
                     )
 
                     uploadGithubReleaseAsset(
                         credentialId: gitCredential,
-                        repository: 'dumasd/config-ops',
+                        repository: "dumasd/config-ops",
                         tagName: "${TAG}",
                         uploadAssets: [
                             [filePath: 'config-ops-linux.tar.gz'],
