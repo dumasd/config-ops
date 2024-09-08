@@ -62,7 +62,7 @@ pipeline {
                     tar -czf config-ops-linux.tar.gz -C dist/app .
                     '''
                     createGitHubRelease(
-                        credentialId: gitCredential,
+                        credentialId: 'GITHUB_TOKEN',
                         repository: "dumasd/config-ops",
                         commitish: "main",
                         tag: "${TAG}",
@@ -70,7 +70,7 @@ pipeline {
                     )
 
                     uploadGithubReleaseAsset(
-                        credentialId: gitCredential,
+                        credentialId: 'GITHUB_TOKEN',
                         repository: "dumasd/config-ops",
                         tagName: "${TAG}",
                         uploadAssets: [
