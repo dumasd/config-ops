@@ -18,6 +18,8 @@ database:
     username: root
     password: "1234"
     dialect: mysql
+    # liquibase的数据库变更日志表放入哪个schmea中，默认为liquibase
+    changelogschema: liquibase
 
 # 应用配置
 config:
@@ -26,8 +28,6 @@ config:
   java-home-dir: 
   # Liquibase 运行配置文件
   liquibase:
-    # Liquibase DATABASECHANGELOG 和 DATABASECHANGELOGLOCK 表存储在哪个schema
-    schema-name: liquibase
     # 配置文件
     defaults-file: 
     # 用户提供的 jdbc 驱动目录

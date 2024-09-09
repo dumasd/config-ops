@@ -188,6 +188,8 @@ def run_liquibase():
             cmd_args_str
             + f" --url jdbc:{dialect}://{host}:{port} --username {username} --password {password}"
         )
+        changelogSchema = db_config.get("changelogschema", "liquibase")
+        cmd_args_str = cmd_args_str + f" --liquibase-schema-name {changelogSchema}"
 
     if data.get("args"):
         cmd_args_str = cmd_args_str + " " + data.get("args")

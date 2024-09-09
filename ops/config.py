@@ -35,6 +35,7 @@ class DbConfig(Schema):
     username = fields.Str(required=True)
     password = fields.Str(required=True)
     dialect = fields.Str(required=False, dump_default="mysql")
+    changelogschema = fields.Str(required=False, dump_default="liquibase")
 
 
 class NacosConfig(Schema):

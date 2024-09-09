@@ -18,12 +18,8 @@ database:
     username: root
     password: "12345678"
     dialect: mysql
-  vod-dev:
-    url: dev-mfc-rds-nj.cchbpbfoxpjz.rds.cn-northwest-1.amazonaws.com.cn
-    port: 3306
-    username: ziyi_user
-    password: snOzqqqNedKUnL94IClf
-    dialect: mysql
+    # liquibase的数据库变更日志表放入哪个schmea中，默认为liquibase
+    changelogschema: liquibase
 
 config:
   database-uri: mysql+mysqlconnector://root:12345678@localhost:3306/test
