@@ -4,7 +4,7 @@ from ops.utils import constants, config_handler, config_validator
 from marshmallow import Schema, fields, ValidationError
 from ops.utils import nacos_client
 from ops.utils.exception import ConfigOpsException
-from ops.changelog.nacos_change import NacosChangeLog, apply_change
+from ops.changelog.nacos_change import NacosChangeLog, apply_change, apply_changes
 from ops.config import get_nacos_cfg
 
 bp = Blueprint("nacos", __name__)
@@ -27,6 +27,7 @@ class ModifyPreviewSchema(Schema):
 
 
 class NacosConfigSchema(Schema):
+    id = fields.Str(required=False)
     namespace = fields.Str(required=True)
     group = fields.Str(required=True)
     dataId = fields.Str(required=True)
@@ -49,11 +50,13 @@ class ModifyConfirmSchema(Schema):
 class GetChangeSetSchema(Schema):
     nacosId = fields.Str(required=True)
     changeLogFile = fields.Str(required=True)
+    count = fields.Int(required=False)
 
 
 class ApplyChangeSetSchema(Schema):
     nacosId = fields.Str(required=True)
-    changeSetId = fields.Str(required=True)
+    changeSetId = fields.Str(required=False)
+    changeSetIds = fields.List(fields.Str(), required=True)
     changes = fields.List(fields.Nested(NacosConfigSchema), required=True)
 
 
@@ -312,12 +315,11 @@ def get_change_set():
         username=nacosCfg.get("username"),
         password=nacosCfg.get("password"),
     )
-
+    count = data.get("count", 0)
     nacosChangeLog = NacosChangeLog(changelogFile=data["changeLogFile"])
-    result = nacosChangeLog.fetch_current(client, nacos_id)
-    if result is None:
-        return {}
-    return result
+    result = nacosChangeLog.fetch_multi(client, nacos_id, count)
+    keys = ["ids", "changes"]
+    return dict(zip(keys, result))
 
 
 @bp.route("/nacos/v1/apply_change_set", methods=["POST"])
@@ -329,7 +331,7 @@ def apply_change_set():
     except ValidationError as err:
         return jsonify(err.messages), 400
     nacos_id = data.get("nacosId")
-    change_set_id = data.get("changeSetId")
+    change_set_ids = data.get("changeSetIds")
     changes = data.get("changes")
 
     nacosCfg = get_nacos_cfg(nacos_id)
@@ -377,7 +379,7 @@ def apply_change_set():
                 )
 
     try:
-        apply_change(change_set_id, nacos_id, push_changes)
+        apply_changes(change_set_ids, nacos_id, push_changes)
     except Exception as ex:
         logger.error(f"Apply config error. {ex}")
         return make_response(f"Apply config error:{ex}", 500)

@@ -305,3 +305,17 @@ def delete_by_str(content, edit, type):
         }
     else:
         raise ConfigOpsException(f"Unsupported delete format. {format}")
+
+
+def delete_patch_by_str(content, type, deleteContent="", patchContent=""):
+    delete_res = delete_by_str(
+        content,
+        deleteContent,
+        type,
+    )
+    res = patch_by_str(
+        delete_res["nextContent"],
+        patchContent,
+        type,
+    )
+    return res

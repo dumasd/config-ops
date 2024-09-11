@@ -347,6 +347,121 @@ class NacosChangeLog:
         resultChangeSet["changes"] = resultConfigs
         return resultChangeSet
 
+    def fetch_multi(self, client: ConfigOpsNacosClient, nacos_id: str, count=0):
+        """
+        获取多个当前需要执行的changeset
+        """
+        idx = 0
+        remoteConfigsCache = {}
+        resultChangeConfigDict = {}
+        changeSetIds = []
+        for changeSetObj in self.changeSets:
+            id = str(changeSetObj["id"])
+            log = (
+                db.session.query(ConfigOpsChangeLog)
+                .filter_by(
+                    change_set_id=id,
+                    system_id=nacos_id,
+                    system_type=SYSTEM_TYPE.NACOS.value,
+                )
+                .first()
+            )
+            if (
+                log is None
+                or CHANGE_LOG_EXEXTYPE.FAILED.matches(log.exectype)
+                or CHANGE_LOG_EXEXTYPE.INIT.matches(log.exectype)
+            ):
+                logger.info(f"Found change set log: {id}")
+                if log is None:
+                    log = ConfigOpsChangeLog()
+                    log.change_set_id = id
+                    log.system_type = SYSTEM_TYPE.NACOS.value
+                    log.system_id = nacos_id
+                    log.exectype = CHANGE_LOG_EXEXTYPE.INIT.value
+                    log.author = changeSetObj.get("author", "")
+                    log.comment = changeSetObj.get("comment", "")
+                    db.session.add(log)
+                    db.session.commit()
+
+                changeSetIds.append(id)
+
+                for change in changeSetObj["changes"]:
+                    logger.info(f"current change: {change}")
+                    nacosConfig = change.copy()
+                    namespace = nacosConfig["namespace"]
+                    group = nacosConfig["group"]
+                    dataId = nacosConfig["dataId"]
+                    format = nacosConfig["format"]
+
+                    nacosConfig["content"] = ""
+                    nacosConfig["id"] = ""
+
+                    remoteConfig, _ = self._get_remote_config(
+                        remoteConfigsCache, namespace, group, dataId, client
+                    )
+                    if remoteConfig:
+                        if remoteConfig["type"] != format:
+                            raise ChangeLogException(
+                                f"Format does not match. namespace:{namespace}, group:{group}, dataId:{dataId}"
+                            )
+                        nacosConfig["content"] = remoteConfig["content"]
+                        nacosConfig["id"] = remoteConfig["id"]
+
+                    configKey = f"{namespace}/{group}/{dataId}"
+
+                    nextContent = nacosConfig.get("content")
+                    previousConfig = resultChangeConfigDict.get(configKey)
+                    if previousConfig:
+                        nextContent = previousConfig["nextContent"]
+
+                    # 直接追加内容，放到 nextContent
+                    nextContentRes = config_handler.delete_patch_by_str(
+                        nextContent,
+                        format,
+                        nacosConfig.get("deleteContent", ""),
+                        nacosConfig.get("patchContent", ""),
+                    )
+                    nacosConfig["nextContent"] = nextContentRes["nextContent"]
+
+                    # 所有patch和delete也聚合在一起
+                    if previousConfig:
+                        res = config_handler.patch_by_str(
+                            previousConfig.get("deleteContent", ""),
+                            nacosConfig.get("deleteContent", ""),
+                            format,
+                        )
+                        nacosConfig["deleteContent"] = res["nextContent"]
+
+                        res = config_handler.patch_by_str(
+                            previousConfig.get("patchContent", ""),
+                            nacosConfig.get("patchContent", ""),
+                            format,
+                        )
+                        nacosConfig["patchContent"] = res["nextContent"]
+
+                    resultChangeConfigDict[configKey] = nacosConfig
+
+            idx += 1
+            if count > 0 and idx >= count:
+                break
+
+        return changeSetIds, list(resultChangeConfigDict.values())
+
+    def _get_remote_config(
+        self, remoteConfigsCache, namespace, group, dataId, client: ConfigOpsNacosClient
+    ):
+        namespaceGroup = f"{namespace}/{group}"
+        remoteConfigs = remoteConfigsCache.get(namespaceGroup)
+        if remoteConfigs is None:
+            client.namespace = namespace
+            resp = client.get_configs(no_snapshot=True, group=group)
+            remoteConfigs = resp.get("pageItems")
+            remoteConfigsCache[namespaceGroup] = remoteConfigs
+        for item in remoteConfigs:
+            if item.get("dataId") == dataId:
+                return item, remoteConfigs
+        return None, remoteConfigs
+
 
 def apply_change(change_set_id: str, nacos_id: str, func):
     log = (
@@ -368,6 +483,34 @@ def apply_change(change_set_id: str, nacos_id: str, func):
     try:
         func()
         log.exectype = CHANGE_LOG_EXEXTYPE.EXECUTED.value
+    except Exception as e:
+        log.exectype = CHANGE_LOG_EXEXTYPE.FAILED.value
+        raise e
+    finally:
+        db.session.commit()
+
+
+def apply_changes(change_set_ids, nacos_id: str, func):
+    logs = (
+        db.session.query(ConfigOpsChangeLog)
+        .filter(
+            ConfigOpsChangeLog.change_set_id.in_(change_set_ids),
+            ConfigOpsChangeLog.system_id == nacos_id,
+            ConfigOpsChangeLog.system_type == SYSTEM_TYPE.NACOS.value,
+        )
+        .all()
+    )
+
+    if logs is None or len(logs) == 0:
+        raise ChangeLogException(
+            f"Change log not found. change_set_ids:{change_set_ids}"
+        )
+
+    # 执行操作
+    try:
+        func()
+        for log in logs:
+            log.exectype = CHANGE_LOG_EXEXTYPE.EXECUTED.value
     except Exception as e:
         log.exectype = CHANGE_LOG_EXEXTYPE.FAILED.value
         raise e
