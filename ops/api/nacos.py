@@ -51,6 +51,7 @@ class GetChangeSetSchema(Schema):
     nacosId = fields.Str(required=True)
     changeLogFile = fields.Str(required=True)
     count = fields.Int(required=False)
+    contexts = fields.Str(required=False)
 
 
 class ApplyChangeSetSchema(Schema):
@@ -316,8 +317,9 @@ def get_change_set():
         password=nacosCfg.get("password"),
     )
     count = data.get("count", 0)
+    contexts = data.get("contexts")
     nacosChangeLog = NacosChangeLog(changelogFile=data["changeLogFile"])
-    result = nacosChangeLog.fetch_multi(client, nacos_id, count)
+    result = nacosChangeLog.fetch_multi(client, nacos_id, count, contexts)
     keys = ["ids", "changes"]
     return dict(zip(keys, result))
 

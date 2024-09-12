@@ -21,11 +21,29 @@ schema = {
                     "properties": {
                         "changeSet": {
                             "type": "object",
+                            "description": "The change set",
                             "properties": {
-                                "id": {"type": ["string", "number"]},
-                                "author": {"type": "string"},
-                                "comment": {"type": "string"},
-                                "ignore": {"type": "boolean", "default": "false"},
+                                "id": {
+                                    "type": ["string", "number"],
+                                    "description": "The change set id",
+                                },
+                                "author": {
+                                    "type": "string",
+                                    "description": "The change set author",
+                                },
+                                "comment": {
+                                    "type": "string",
+                                    "description": "The change set comment",
+                                },
+                                "ignore": {
+                                    "type": "boolean",
+                                    "default": "false",
+                                    "description": "The change set is ignored",
+                                },
+                                "context": {
+                                    "type": "string",
+                                    "description": "The change set context. Multiple are separated by commas",
+                                },
                                 "changes": {
                                     "type": "array",
                                     "items": [
@@ -347,7 +365,13 @@ class NacosChangeLog:
         resultChangeSet["changes"] = resultConfigs
         return resultChangeSet
 
-    def fetch_multi(self, client: ConfigOpsNacosClient, nacos_id: str, count=0):
+    def fetch_multi(
+        self,
+        client: ConfigOpsNacosClient,
+        nacos_id: str,
+        count: int = 0,
+        contexts: str = None,
+    ):
         """
         获取多个当前需要执行的changeset
         """
@@ -357,6 +381,11 @@ class NacosChangeLog:
         changeSetIds = []
         for changeSetObj in self.changeSets:
             id = str(changeSetObj["id"])
+            # 判断是否在指定的contexts里面
+            changeSetCtx = changeSetObj.get("context")
+            if not self._is_ctx_included(contexts, changeSetCtx):
+                continue
+
             log = (
                 db.session.query(ConfigOpsChangeLog)
                 .filter_by(
@@ -366,6 +395,7 @@ class NacosChangeLog:
                 )
                 .first()
             )
+            # 判断是否已经执行过了
             if (
                 log is None
                 or CHANGE_LOG_EXEXTYPE.FAILED.matches(log.exectype)
@@ -461,6 +491,19 @@ class NacosChangeLog:
             if item.get("dataId") == dataId:
                 return item, remoteConfigs
         return None, remoteConfigs
+
+    def _is_ctx_included(self, contexts: str, changeSetCtx: str) -> bool:
+        # 判断是否在指定的contexts里面
+        if contexts:
+            contextList = contexts.split(",")
+            if changeSetCtx:
+                changeSetCtxList = changeSetCtx.split(",")
+                for changeSetCtx in changeSetCtxList:
+                    if changeSetCtx in contextList:
+                        return True
+            return False
+        else:
+            return True
 
 
 def apply_change(change_set_id: str, nacos_id: str, func):
