@@ -5,6 +5,7 @@ nacosChangeLog:
       comment: 注释
       ignore: false # 是否忽略此changeSet
       context: dev,prod
+      runOnChange: true
       changes:
         # namespace+group+dataId的组合在changes中不能重复
         - namespace: blue
@@ -15,7 +16,7 @@ nacosChangeLog:
           patchContent: |-
             spring:
               application:
-                name: blue-gogo
+                name: blue-gogogof
           # 删除内容
           deleteContent: |-
             notice:

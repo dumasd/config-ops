@@ -39,6 +39,7 @@ class ConfigOpsChangeLog(Base):
     system_id = mapped_column(String(32), nullable=False, comment="系统ID")
     system_type = mapped_column(String(30), nullable=False, comment="系统类型")
     exectype = mapped_column(String(30), nullable=False, comment="执行类型")
+    checksum = mapped_column(String(128), nullable=False, comment="checksum")
     author = mapped_column(String(128))
     filename = mapped_column(String(1024))
     comment = mapped_column(String(2048))
