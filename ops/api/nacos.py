@@ -52,7 +52,7 @@ class GetChangeSetSchema(Schema):
     changeLogFile = fields.Str(required=True)
     count = fields.Int(required=False)
     contexts = fields.Str(required=False)
-    vairables = fields.Dict()
+    vars = fields.Dict()
 
 
 class ApplyChangeSetSchema(Schema):
@@ -319,23 +319,19 @@ def get_change_set():
     )
     count = data.get("count", 0)
     contexts = data.get("contexts")
-    vairables = data.get("vairables", {})
+    vars = data.get("vars", {})
 
     try:
         nacosChangeLog = NacosChangeLog(changelogFile=data["changeLogFile"])
-        result = nacosChangeLog.fetch_multi(
-            client, nacos_id, count, contexts, vairables
-        )
+        result = nacosChangeLog.fetch_multi(client, nacos_id, count, contexts, vars)
         keys = ["ids", "changes"]
         return dict(zip(keys, result))
     except jsonschema.ValidationError as err:
         logger.error("Invalid changelog file", exc_info=True)
-        return make_response(
-            f"Invalid changelog file. {err}", 400
-        )
+        return make_response(f"Invalid changelog file. {err}", 400)
     except KeyError as err:
-        logger.error("Vairables missing key", exc_info=True)
-        return make_response(f"Vairables missing key: {err}", 400)
+        logger.error("Vars missing key", exc_info=True)
+        return make_response(f"Vars missing key: {err}", 400)
 
 
 @bp.route("/nacos/v1/apply_change_set", methods=["POST"])

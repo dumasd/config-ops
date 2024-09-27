@@ -240,7 +240,7 @@ class NacosChangeLog:
         nacos_id: str,
         count: int = 0,
         contexts: str = None,
-        vairables: dict = {},
+        vars: dict = {},
     ):
         """
         获取多个当前需要执行的changeset
@@ -302,13 +302,13 @@ class NacosChangeLog:
                     logger.info(f"current change: {change}")
 
                     namespaceTemplate = string.Template(change["namespace"])
-                    namespace = namespaceTemplate.substitute(vairables)
+                    namespace = namespaceTemplate.substitute(vars)
 
                     groupTemplate = string.Template(change["group"])
-                    group = groupTemplate.substitute(vairables)
+                    group = groupTemplate.substitute(vars)
 
                     dataIdTemplate = string.Template(change["dataId"])
-                    dataId = dataIdTemplate.substitute(vairables)
+                    dataId = dataIdTemplate.substitute(vars)
 
                     format = change["format"]
 
