@@ -6,9 +6,9 @@ nacosChangeLog:
       ignore: false
       changes:
         # namespace+group+dataId的组合在changes中不能重复
-        - namespace: blue
-          group: group
-          dataId: config.yaml
+        - namespace: ${NAMESPACE}
+          group: ${GROUP}
+          dataId: config-${ENV}.yaml
           format: yaml # 只支持yaml和properties
           patchContent: |-
             spring: 

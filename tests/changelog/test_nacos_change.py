@@ -59,15 +59,3 @@ nacosChangeLog:
 
         except ValidationError as e:
             logger.error(f"YAML 数据校验失败 {e}")
-
-    def test_nacos_change(self):
-        nacosChangeLog = nacos_change.NacosChangeLog(
-            changelogFile="/Users/wukai/IdeaProjects/Opensource/config-ops/tests/changelog/changelog-root.yaml"
-        )
-        logger.info(nacosChangeLog.changeSets)
-        client = nacos_client.ConfigOpsNacosClient(
-            server_addresses="http://127.0.0.1:8848",
-            username="nacos",
-            password="nacos",
-        )
-        nacosChangeLog.fetch_current(client, "default")

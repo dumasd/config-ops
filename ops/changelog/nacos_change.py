@@ -1,4 +1,4 @@
-import logging, os, yaml, hashlib
+import logging, os, yaml, hashlib, string
 from ops.utils import config_handler, config_validator
 from ops.utils.constants import CHANGE_LOG_EXEXTYPE, SYSTEM_TYPE
 from ops.utils.exception import ChangeLogException
@@ -73,8 +73,8 @@ schema = {
                                         }
                                     ],
                                 },
-                                "required": ["id", "author", "changes"],
                             },
+                            "required": ["id", "author", "changes"],
                         }
                     },
                 },
@@ -92,8 +92,8 @@ schema = {
                 },
             ],
         },
-        "required": ["nacosChangeLog"],
     },
+    "required": ["nacosChangeLog"],
 }
 
 
@@ -215,50 +215,6 @@ class NacosChangeLog:
                 if not ignore:
                     changeSets.append(changeSetObj)
 
-                    """
-                    for change in changes:
-                        namespace = change.get("namespace", "")
-                        group = change["group"]
-                        dataId = change["dataId"]
-                        format = change["format"]
-                        patchContent = change.get("patchContent", "")
-                        deleteContent = change.get("deleteContent", "")
-
-                        if len(patchContent.strip()) > 0:
-                            suc, msg = config_validator.validate_content(
-                                patchContent, format
-                            )
-                            if not suc:
-                                raise ChangeLogException(
-                                    f"patchContent is not valid [{format}] type. {msg}"
-                                )
-
-                        if len(deleteContent.strip()) > 0:
-                            suc, msg = config_validator.validate_content(
-                                deleteContent, format
-                            )
-                            if not suc:
-                                raise ChangeLogException(
-                                    f"deleteContent is not valid [{format}] type. {msg}"
-                                )
-                        nacosConfig = {
-                            "id": "",
-                            "tenant": namespace,
-                            "group": group,
-                            "dataId": dataId,
-                            "type": format,
-                            "content": "",
-                            "patchContent": patchContent,
-                            "deleteContent": deleteContent,
-                        }
-
-                        config_key = f"{namespace}/{group}/{dataId}"
-                        exists = nacosConfigDict.get(config_key)
-                        if exists is None:
-                            nacosConfigDict[config_key] = nacosConfig
-                        else:
-                            self.__append_nacos_config(exists, nacosConfig)
-                    """
             elif includeObj:
                 file = includeObj["file"]
                 childLog = NacosChangeLog(changelogFile=f"{base_dir}/{file}")
@@ -270,17 +226,6 @@ class NacosChangeLog:
 
                 changeSets.extend(childLog.changeSets)
 
-                """
-                for key in childLog.nacosConfigDict:
-                    child = childLog.nacosConfigDict[key]
-                    if key in nacosConfigDict:
-                        # 合并
-                        parent = nacosConfigDict[key]
-                        self.__append_nacos_config(parent, child)
-                    else:
-                        nacosConfigDict[key] = child
-                """
-
             self.nacosConfigDict = nacosConfigDict
             self.changeSetDict = changeSetDict
             self.changeSets = changeSets
@@ -289,95 +234,13 @@ class NacosChangeLog:
         changes_str = yaml.dump(changes, sort_keys=True)
         return hashlib.sha256(changes_str.encode()).hexdigest()
 
-    def fetch_current(self, client: ConfigOpsNacosClient, nacos_id: str):
-        """
-        获取当前需要执行的changeset
-        """
-
-        currentChangeSet = None
-        for changeSetObj in self.changeSets:
-            id = str(changeSetObj["id"])
-            log = (
-                db.session.query(ConfigOpsChangeLog)
-                .filter_by(
-                    change_set_id=id,
-                    system_id=nacos_id,
-                    system_type=SYSTEM_TYPE.NACOS.value,
-                )
-                .first()
-            )
-            if (
-                log is None
-                or CHANGE_LOG_EXEXTYPE.FAILED.matches(log.exectype)
-                or CHANGE_LOG_EXEXTYPE.INIT.matches(log.exectype)
-            ):
-                currentChangeSet = changeSetObj
-                if log is None:
-                    log = ConfigOpsChangeLog()
-                    log.change_set_id = id
-                    log.system_type = SYSTEM_TYPE.NACOS.value
-                    log.system_id = nacos_id
-                    log.exectype = CHANGE_LOG_EXEXTYPE.INIT.value
-                    log.author = changeSetObj.get("author", "")
-                    log.comment = changeSetObj.get("comment", "")
-                    db.session.add(log)
-                    db.session.commit()
-                break
-
-        if currentChangeSet is None:
-            return None
-
-        resultConfigs = []
-        remoteConfigsCache = {}
-        changes = currentChangeSet["changes"]
-        for change in changes:
-            logger.info(f"current change: {change}")
-            nacosConfig = change.copy()
-            namespace = nacosConfig["namespace"]
-            group = nacosConfig["group"]
-            dataId = nacosConfig["dataId"]
-            format = nacosConfig["format"]
-            namespaceGroup = f"{namespace}/{group}"
-
-            remoteConfigs = remoteConfigsCache.get(namespaceGroup)
-            if remoteConfigs is None:
-                client.namespace = namespace
-                resp = client.get_configs(no_snapshot=True, group=group)
-                remoteConfigs = resp.get("pageItems")
-                remoteConfigsCache[namespaceGroup] = remoteConfigs
-
-            nacosConfig["content"] = ""
-            nacosConfig["id"] = ""
-            for item in remoteConfigs:
-                if item.get("dataId") == dataId:
-                    if item["type"] != format:
-                        raise ChangeLogException(
-                            f"Format does not match. namespace:{namespace}, group:{group}, dataId:{dataId}"
-                        )
-                    nacosConfig["content"] = item["content"]
-                    nacosConfig["id"] = item["id"]
-                    break
-
-            # 直接追加内容，放到 nextContent
-            delete_res = config_handler.delete_by_str(
-                nacosConfig["content"], nacosConfig.get("deleteContent", ""), format
-            )
-            res = config_handler.patch_by_str(
-                delete_res["nextContent"], nacosConfig.get("patchContent", ""), format
-            )
-            nacosConfig["nextContent"] = res["nextContent"]
-            resultConfigs.append(nacosConfig)
-
-        resultChangeSet = currentChangeSet.copy()
-        resultChangeSet["changes"] = resultConfigs
-        return resultChangeSet
-
     def fetch_multi(
         self,
         client: ConfigOpsNacosClient,
         nacos_id: str,
         count: int = 0,
         contexts: str = None,
+        vairables: dict = {},
     ):
         """
         获取多个当前需要执行的changeset
@@ -437,12 +300,22 @@ class NacosChangeLog:
 
                 for change in changeSetObj["changes"]:
                     logger.info(f"current change: {change}")
-                    nacosConfig = change.copy()
-                    namespace = nacosConfig["namespace"]
-                    group = nacosConfig["group"]
-                    dataId = nacosConfig["dataId"]
-                    format = nacosConfig["format"]
 
+                    namespaceTemplate = string.Template(change["namespace"])
+                    namespace = namespaceTemplate.substitute(vairables)
+
+                    groupTemplate = string.Template(change["group"])
+                    group = groupTemplate.substitute(vairables)
+
+                    dataIdTemplate = string.Template(change["dataId"])
+                    dataId = dataIdTemplate.substitute(vairables)
+
+                    format = change["format"]
+
+                    nacosConfig = change.copy()
+                    nacosConfig["namespace"] = namespace
+                    nacosConfig["group"] = group
+                    nacosConfig["dataId"] = dataId
                     nacosConfig["content"] = ""
                     nacosConfig["id"] = ""
 
