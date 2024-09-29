@@ -4,10 +4,10 @@ LABEL MATAINER="Bruce Wu"
 
 WORKDIR /opt/config-ops/
 
-ADD ops/ ./ops/
+ADD configops/ ./configops/
 ADD requirements.txt ./requirements.txt
 ADD config.yaml.sample ./config.yaml
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENTRYPOINT ["python3", "-m", "flask", "--app", "ops/app.py", "run"]
+ENTRYPOINT ["python3", "-m", "flask", "--app", "configops/app.py", "run"]

@@ -1,0 +1,2 @@
+[console_scripts]
+configops = configops.cli.main:cli
