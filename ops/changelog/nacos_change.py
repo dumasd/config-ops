@@ -167,14 +167,7 @@ class NacosChangeLog:
                 changeSetObj["ignore"] = ignore
                 if changeSetDict.get(id) is not None:
                     raise ChangeLogException(f"Repeat change set id {id}")
-                """
-                changeSet = {
-                    "id": id,
-                    "author": author,
-                    "comment": comment,
-                    "ignore": ignore,
-                }
-                """
+
                 changeSetDict[id] = changeSetObj
                 changes = changeSetObj["changes"]
 

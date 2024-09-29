@@ -65,13 +65,3 @@ def init(app):
     db.init_app(app)
     with app.app_context():
         db.create_all()
-        # new_test = Test(name="Bruce Wu")
-        # db.session.add(new_test)
-        # db.session.commit()
-        # tests = Test.query.all()
-        # res = (
-        #     db.session.query(ConfigOpsChangeLog)
-        #     .filter_by(change_set_id="1", system_id="default", system_type="NACOS")
-        #     .first()
-        # )
-        # logger.info(f"res {res.id}")

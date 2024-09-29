@@ -3,8 +3,8 @@ import logging, jsonschema
 from ops.utils import constants, config_handler, config_validator
 from marshmallow import Schema, fields, ValidationError
 from ops.utils import nacos_client
-from ops.utils.exception import ConfigOpsException
-from ops.changelog.nacos_change import NacosChangeLog, apply_change, apply_changes
+from ops.utils.exception import ConfigOpsException, ChangeLogException
+from ops.changelog.nacos_change import NacosChangeLog, apply_changes
 from ops.config import get_nacos_cfg
 
 bp = Blueprint("nacos", __name__)
@@ -88,7 +88,7 @@ def get_config():
     data_id = data.get("dataId")
     nacosConfig = get_nacos_cfg(nacos_id)
     if nacosConfig == None:
-        return make_response("Nacos config not found", 404)
+        return make_response("Nacos instance not found", 404)
 
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosConfig.get("url"),
@@ -125,7 +125,7 @@ def get_namespace_list():
     nacos_id = request.args.get("nacosId")
     nacosConfig = get_nacos_cfg(nacos_id)
     if nacosConfig == None:
-        return make_response("Nacos config not found", 404)
+        return make_response("Nacos instance not found", 404)
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosConfig.get("url"),
         username=nacosConfig.get("username"),
@@ -182,7 +182,7 @@ def modify_preview():
     nacos_id = data.get("nacosId")
     nacosCfg = get_nacos_cfg(nacos_id)
     if nacosCfg == None:
-        return "Nacos config not found", 404
+        return "Nacos instance not found", 404
 
     namespace_id = data.get("namespace_id")
     group = data.get("group")
@@ -275,7 +275,7 @@ def modify_confirm():
 
     nacosCfg = get_nacos_cfg(nacos_id)
     if nacosCfg == None:
-        return make_response("Nacos config not found", 400)
+        return make_response("Nacos instance not found", 400)
 
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosCfg.get("url"),
@@ -310,7 +310,7 @@ def get_change_set():
 
     nacosCfg = get_nacos_cfg(nacos_id)
     if nacosCfg is None:
-        return make_response("Nacos cfg not found", 404)
+        return make_response("Nacos instance not found", 404)
 
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosCfg.get("url"),
@@ -327,8 +327,11 @@ def get_change_set():
         keys = ["ids", "changes"]
         return dict(zip(keys, result))
     except jsonschema.ValidationError as err:
-        logger.error("Invalid changelog file", exc_info=True)
-        return make_response(f"Invalid changelog file. {err}", 400)
+        logger.error("Nacos changelog format invalid", exc_info=True)
+        return make_response(f"Changelog format invalid. {err}", 400)
+    except ChangeLogException as err:
+        logger.error("Nacos changelog content invalid.", exc_info=True)
+        return make_response(f"Changelog content invalid. {err}", 400)
     except KeyError as err:
         logger.error("Vars missing key", exc_info=True)
         return make_response(f"Vars missing key: {err}", 400)
@@ -348,7 +351,7 @@ def apply_change_set():
 
     nacosCfg = get_nacos_cfg(nacos_id)
     if nacosCfg == None:
-        return make_response("Nacos config not found", 404)
+        return make_response("Nacos instance not found", 404)
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosCfg.get("url"),
         username=nacosCfg.get("username"),
