@@ -1,4 +1,4 @@
-from ops.utils import config_handler, constants
+from configops.utils import config_handler, constants
 import io
 import logging
 from jproperties import Properties

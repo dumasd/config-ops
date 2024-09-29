@@ -7,8 +7,8 @@ from decimal import Decimal
 from enum import Enum
 from sqlalchemy import create_engine, text
 from marshmallow import Schema, fields, ValidationError
-from ops.config import get_database_cfg, get_java_home_dir, get_liquibase_cfg
-from ops.utils.constants import DIALECT_DRIVER_MAP
+from configops.config import get_database_cfg, get_java_home_dir, get_liquibase_cfg
+from configops.utils.constants import DIALECT_DRIVER_MAP
 
 logger = logging.getLogger(__name__)
 

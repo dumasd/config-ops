@@ -1,12 +1,12 @@
 from flask import Flask
 import argparse
 import logging
-from ops.api.nacos import bp as nacos_bp
-from ops.api.database import bp as database_bp
-from ops.api.common import bp as common_bp
-from ops.config import load_config
-from ops.utils.logging_configurator import DefaultLoggingConfigurator
-from ops.database import db
+from configops.api.nacos import bp as nacos_bp
+from configops.api.database import bp as database_bp
+from configops.api.common import bp as common_bp
+from configops.config import load_config
+from configops.utils.logging_configurator import DefaultLoggingConfigurator
+from configops.database import db
 import jsonschema
 
 logger = logging.getLogger(__name__)

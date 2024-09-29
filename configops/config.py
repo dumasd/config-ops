@@ -2,7 +2,7 @@
 
 from flask import current_app
 from ruamel.yaml import YAML
-from ops.utils.constants import CONFIG_ENV_NAME, CONFIG_FILE_ENV_NAME
+from configops.utils.constants import CONFIG_ENV_NAME, CONFIG_FILE_ENV_NAME
 from marshmallow import Schema, fields, ValidationError
 import os
 import logging

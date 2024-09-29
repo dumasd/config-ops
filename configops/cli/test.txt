@@ -1,0 +1,2 @@
+PYTHONPATH=. python ops/cli/main.py update-nacos --changelog-file /Users/wukai/IdeaProjects/Opensource/config-ops/tests/changelog/changelog-root.yaml --url http://localhost:8848 --username nacos --password nacos
+PYTHONPATH=. python ops/cli/main.py check-nacos --changelog-file /Users/wukai/IdeaProjects/Opensource/config-ops/tests/changelog/changelog-root.yaml --url http://localhost:8848 --username nacos --password nacos

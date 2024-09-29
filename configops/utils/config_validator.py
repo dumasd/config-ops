@@ -3,7 +3,7 @@ import logging
 import configparser
 import configobj
 import json
-from ops.utils import constants
+from configops.utils import constants
 from ruamel import yaml as ryaml
 import xml.etree.ElementTree as ET
 

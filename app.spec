@@ -2,8 +2,8 @@
 
 
 a = Analysis(
-    ['ops/app.py'],
-    pathex=['ops'],
+    ['configops/app.py'],
+    pathex=['configops'],
     binaries=[],
     datas=[],
     hiddenimports=['jsonschema', 'sqlite3'],

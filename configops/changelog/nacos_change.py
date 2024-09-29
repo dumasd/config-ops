@@ -1,11 +1,11 @@
 import logging, os, yaml, hashlib, string
-from ops.utils import config_handler, config_validator
-from ops.utils.constants import CHANGE_LOG_EXEXTYPE, SYSTEM_TYPE
-from ops.utils.exception import ChangeLogException
+from configops.utils import config_handler, config_validator
+from configops.utils.constants import CHANGE_LOG_EXEXTYPE, SYSTEM_TYPE
+from configops.utils.exception import ChangeLogException
 from ruamel import yaml as ryaml
 from jsonschema import Draft7Validator, ValidationError
-from ops.utils.nacos_client import ConfigOpsNacosClient
-from ops.database.db import db, ConfigOpsChangeLog
+from configops.utils.nacos_client import ConfigOpsNacosClient
+from configops.database.db import db, ConfigOpsChangeLog
 
 logger = logging.getLogger(__name__)
 
@@ -148,8 +148,7 @@ class NacosChangeLog:
                 validator = Draft7Validator(schema)
                 validator.validate(changeLogData)
             except ValidationError as e:
-                logger.error(f"NacosChangeLog validation error {e}")
-                raise
+                raise ChangeLogException(f"Validation error: {self.changelogFile} \n{e}")
 
         base_dir = os.path.dirname(self.changelogFile)
         nacosConfigDict = {}

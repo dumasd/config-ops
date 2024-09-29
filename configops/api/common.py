@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, make_response, request, current_app
 import logging
 from marshmallow import Schema, fields, ValidationError
-from ops.utils import config_handler, constants
+from configops.utils import config_handler, constants
 
 bp = Blueprint("common", __name__)
 

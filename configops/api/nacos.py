@@ -1,11 +1,11 @@
 from flask import Blueprint, jsonify, make_response, request, current_app
 import logging, jsonschema
-from ops.utils import constants, config_handler, config_validator
+from configops.utils import constants, config_handler, config_validator
 from marshmallow import Schema, fields, ValidationError
-from ops.utils import nacos_client
-from ops.utils.exception import ConfigOpsException, ChangeLogException
-from ops.changelog.nacos_change import NacosChangeLog, apply_changes
-from ops.config import get_nacos_cfg
+from configops.utils import nacos_client
+from configops.utils.exception import ConfigOpsException, ChangeLogException
+from configops.changelog.nacos_change import NacosChangeLog, apply_changes
+from configops.config import get_nacos_cfg
 
 bp = Blueprint("nacos", __name__)
 
@@ -326,12 +326,9 @@ def get_change_set():
         result = nacosChangeLog.fetch_multi(client, nacos_id, count, contexts, vars)
         keys = ["ids", "changes"]
         return dict(zip(keys, result))
-    except jsonschema.ValidationError as err:
-        logger.error("Nacos changelog format invalid", exc_info=True)
-        return make_response(f"Changelog format invalid. {err}", 400)
     except ChangeLogException as err:
-        logger.error("Nacos changelog content invalid.", exc_info=True)
-        return make_response(f"Changelog content invalid. {err}", 400)
+        logger.error("Nacos changelog invalid.", exc_info=True)
+        return make_response(f"Nacos changelog invalid. {err}", 400)
     except KeyError as err:
         logger.error("Vars missing key", exc_info=True)
         return make_response(f"Vars missing key: {err}", 400)

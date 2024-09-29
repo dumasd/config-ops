@@ -1,4 +1,4 @@
-from ops.utils.nacos_client import ConfigOpsNacosClient
+from configops.utils.nacos_client import ConfigOpsNacosClient
 import logging
 
 logger = logging.getLogger(__name__)

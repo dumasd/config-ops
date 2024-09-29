@@ -1,4 +1,4 @@
-from ops.utils import config_validator, constants
+from configops.utils import config_validator, constants
 import logging
 
 logger = logging.getLogger(__name__)

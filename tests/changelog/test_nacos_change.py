@@ -1,11 +1,11 @@
 import logging
 from ruamel import yaml as ryaml
-from ops.changelog import nacos_change
-from ops.utils import nacos_client
+from configops.changelog import nacos_change
+from configops.utils import nacos_client
 from jsonschema import Draft7Validator, ValidationError
 import json
 import unittest
-from ops.app import app
+from configops.app import app
 
 logger = logging.getLogger(__name__)
 

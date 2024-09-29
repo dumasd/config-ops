@@ -2,8 +2,8 @@ import io
 import logging
 import configobj
 import json
-from ops.utils import constants
-from ops.utils.exception import ConfigOpsException
+from configops.utils import constants
+from configops.utils.exception import ConfigOpsException
 from ruamel import yaml as ryaml
 import xml.etree.ElementTree as ET
 
