@@ -22,7 +22,6 @@ def parse_content(content: str, format=None):
         )
         return constants.PROPERTIES, prop, None
     except BaseException as ex:
-        logger.warning(f"非properties文件{ex}")
         if format == constants.PROPERTIES:
             raise ex
 
@@ -33,7 +32,6 @@ def parse_content(content: str, format=None):
         data = yaml.load(content)
         return constants.YAML, data, yaml
     except Exception as ex:
-        logger.warning(f"非yaml文件{ex}")
         if format == constants.YAML:
             raise ex
 
@@ -42,7 +40,6 @@ def parse_content(content: str, format=None):
         data = json.load(content)
         return constants.JSON, data, None
     except Exception as ex:
-        logger.warning(f"非json文件{ex}")
         if format == constants.JSON:
             raise ex
 
@@ -50,8 +47,7 @@ def parse_content(content: str, format=None):
     try:
         data = ET.fromstring(content)
         return constants.XML, data, None
-    except ET.ParseError as e:
-        logger.error(f"XML is invalid:{e}")
+    except ET.ParseError as ex:
         if format == constants.XML:
             raise ex
 

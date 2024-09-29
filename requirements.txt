@@ -19,7 +19,6 @@ mysql-connector-python==8.0.30
 sqlfluff>=3.1.1
 psycopg2-binary==2.9.9
 jsonschema==4.23.0
-pyliquibase>=2.3.0
 pytest
 pytest-cov
 pytest-mock

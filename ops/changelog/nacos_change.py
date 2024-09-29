@@ -234,6 +234,7 @@ class NacosChangeLog:
         count: int = 0,
         contexts: str = None,
         vars: dict = {},
+        check_log: bool = True,
     ):
         """
         获取多个当前需要执行的changeset
@@ -252,39 +253,39 @@ class NacosChangeLog:
             # 计算checksum
             checksum = self.__change_set_checksum({"changes": changeSetObj["changes"]})
 
-            # 查询log
-            log = (
-                db.session.query(ConfigOpsChangeLog)
-                .filter_by(
-                    change_set_id=id,
-                    system_id=nacos_id,
-                    system_type=SYSTEM_TYPE.NACOS.value,
-                )
-                .first()
-            )
-
             is_execute = True
-            if log is None:
-                log = ConfigOpsChangeLog()
-                log.change_set_id = id
-                log.system_type = SYSTEM_TYPE.NACOS.value
-                log.system_id = nacos_id
-                log.exectype = CHANGE_LOG_EXEXTYPE.INIT.value
-                log.author = changeSetObj.get("author", "")
-                log.comment = changeSetObj.get("comment", "")
-                log.checksum = checksum
-                db.session.add(log)
-            elif CHANGE_LOG_EXEXTYPE.FAILED.matches(
-                log.exectype
-            ) or CHANGE_LOG_EXEXTYPE.INIT.matches(log.exectype):
-                log.checksum = checksum
-            else:
-                runOnChange = changeSetObj.get("runOnChange", False)
-                if runOnChange and log.checksum != checksum:
+            # 查询log
+            if check_log:
+                log = (
+                    db.session.query(ConfigOpsChangeLog)
+                    .filter_by(
+                        change_set_id=id,
+                        system_id=nacos_id,
+                        system_type=SYSTEM_TYPE.NACOS.value,
+                    )
+                    .first()
+                )
+                if log is None:
+                    log = ConfigOpsChangeLog()
+                    log.change_set_id = id
+                    log.system_type = SYSTEM_TYPE.NACOS.value
+                    log.system_id = nacos_id
                     log.exectype = CHANGE_LOG_EXEXTYPE.INIT.value
+                    log.author = changeSetObj.get("author", "")
+                    log.comment = changeSetObj.get("comment", "")
+                    log.checksum = checksum
+                    db.session.add(log)
+                elif CHANGE_LOG_EXEXTYPE.FAILED.matches(
+                    log.exectype
+                ) or CHANGE_LOG_EXEXTYPE.INIT.matches(log.exectype):
                     log.checksum = checksum
                 else:
-                    is_execute = False
+                    runOnChange = changeSetObj.get("runOnChange", False)
+                    if runOnChange and log.checksum != checksum:
+                        log.exectype = CHANGE_LOG_EXEXTYPE.INIT.value
+                        log.checksum = checksum
+                    else:
+                        is_execute = False
 
             if is_execute:
                 logger.info(f"Found change set log: {id}")
@@ -361,7 +362,8 @@ class NacosChangeLog:
             if count > 0 and idx >= count:
                 break
 
-        db.session.commit()
+        if check_log:
+            db.session.commit()
         return changeSetIds, list(resultChangeConfigDict.values())
 
     def _get_remote_config(
