@@ -74,4 +74,11 @@ python3 -m pytest ./tests
 
 # pyinstaller 打包成可执行的二进制
 pyinstaller app.spec 
+
+# 发布到pipy
+pip3 install --upgrade setuptools wheel twine
+python3 setup.py sdist bdist_wheel
+python3 -m twine upload dist/*
+
+
 ```
