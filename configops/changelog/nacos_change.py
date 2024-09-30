@@ -148,7 +148,9 @@ class NacosChangeLog:
                 validator = Draft7Validator(schema)
                 validator.validate(changeLogData)
             except ValidationError as e:
-                raise ChangeLogException(f"Validation error: {self.changelogFile} \n{e}")
+                raise ChangeLogException(
+                    f"Validation error: {self.changelogFile} \n{e}"
+                )
 
         base_dir = os.path.dirname(self.changelogFile)
         nacosConfigDict = {}
@@ -234,6 +236,7 @@ class NacosChangeLog:
         contexts: str = None,
         vars: dict = {},
         check_log: bool = True,
+        spec_changesets=[],
     ):
         """
         获取多个当前需要执行的changeset
@@ -253,6 +256,13 @@ class NacosChangeLog:
             checksum = self.__change_set_checksum({"changes": changeSetObj["changes"]})
 
             is_execute = True
+            if (
+                spec_changesets
+                and len(spec_changesets) > 0
+                and id not in spec_changesets
+            ):
+                is_execute = False
+
             # 查询log
             if check_log:
                 log = (

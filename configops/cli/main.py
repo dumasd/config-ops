@@ -12,19 +12,30 @@ def cli() -> None:
     pass
 
 
-@cli.command(name="update-nacos", help="Apply nacos config changes")
+@cli.command(
+    name="update-nacos", help="Update nacos config changes in the changelog file"
+)
 @click.option("--changelog-file", required=True, help="The changelog file")
-@click.option("--contexts", required=False, help="Changeset contexts to match")
+@click.option("--url", required=True, help="The nacos connection URL")
+@click.option("--username", required=True, help="The nacos username")
+@click.option("--password", required=True, help="The nacos password")
+@click.option(
+    "--changesets",
+    required=False,
+    help="The specific changeset id to match. Use commas for multiple values",
+)
+@click.option(
+    "--contexts",
+    required=False,
+    help="The specific contexts to match. Use commas for multiple values",
+)
 @click.option(
     "--var",
     required=False,
     multiple=True,
-    help="The vairables used in changelog file. [key]=[value]",
+    help="The vairable used in changelog file. This parameter can be used multiple times for multiple vairable. [key]=[value]",
 )
-@click.option("--url", required=True, help="The nacos connection URL")
-@click.option("--username", required=True, help="The nacos username")
-@click.option("--password", required=True, help="The nacos password")
-def update_nacos(changelog_file, contexts, var, url, username, password):
+def update_nacos(changelog_file, url, username, password, changesets, contexts, var):
     vars = dict(item.split("=") for item in var)
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=url,
@@ -33,8 +44,14 @@ def update_nacos(changelog_file, contexts, var, url, username, password):
     )
 
     try:
+        spec_changesets = []
+        if changesets:
+            spec_changesets = [item for item in changesets.split(",") if item]
+
         nacosChangeLog = NacosChangeLog(changelogFile=changelog_file)
-        result = nacosChangeLog.fetch_multi(client, "", 0, contexts, vars, False)
+        result = nacosChangeLog.fetch_multi(
+            client, "", 0, contexts, vars, False, spec_changesets
+        )
         click.echo(f"Change set ids:{result[0]}")
         nacosConfigs = result[1]
         for nacosConfig in nacosConfigs:
@@ -63,19 +80,26 @@ def update_nacos(changelog_file, contexts, var, url, username, password):
         click.echo(f"Vars missing key: {err}", err=True)
 
 
-@cli.command(name="check-nacos", help="Check nacos config changes")
+@cli.command(
+    name="update-nacos-check",
+    help="Generate nacos config changes in the changelog file",
+)
 @click.option("--changelog-file", required=True, help="The changelog file")
-@click.option("--contexts", required=False, help="Changeset contexts to match")
+@click.option("--url", required=True, help="The Nacos connection URL")
+@click.option("--username", required=True, help="The nacos username")
+@click.option("--password", required=True, help="The nacos password")
+@click.option(
+    "--contexts",
+    required=False,
+    help="The specific contexts to match. Use commas for multiple values",
+)
 @click.option(
     "--var",
     required=False,
     multiple=True,
-    help="The vairables used in changelog file. [key]=[value]",
+    help="The vairable used in changelog file. This parameter can be used multiple times for multiple vairable. [key]=[value]",
 )
-@click.option("--url", required=True, help="The Nacos connection URL")
-@click.option("--username", required=True, help="The nacos username")
-@click.option("--password", required=True, help="The nacos password")
-def check_nacos(changelog_file, contexts, var, url, username, password):
+def update_nacos_check(changelog_file, url, username, password, contexts, var):
     vars = dict(item.split("=") for item in var)
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=url,
