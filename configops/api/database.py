@@ -6,7 +6,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from sqlalchemy import create_engine, text
-from marshmallow import Schema, fields, ValidationError
+from marshmallow import Schema, fields, ValidationError, EXCLUDE
 from configops.config import get_database_cfg, get_java_home_dir, get_liquibase_cfg
 from configops.utils.constants import DIALECT_DRIVER_MAP
 
@@ -37,6 +37,9 @@ class RunSqlSchema(Schema):
     sql = fields.Str(required=True)
     database = fields.Str(required=False)
 
+    class Meta:
+        unknown = EXCLUDE
+
 
 class RunLiquibaseCmdSchema(Schema):
     dbId = fields.Str(required=False)
@@ -44,6 +47,9 @@ class RunLiquibaseCmdSchema(Schema):
     args = fields.Str(required=False)
     # 命令运行在哪个目录下
     cwd = fields.Str(required=False)
+
+    class Meta:
+        unknown = EXCLUDE
 
 
 def remove_comments(sql_script):

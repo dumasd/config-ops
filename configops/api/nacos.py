@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, make_response, request, current_app
 import logging, jsonschema
 from configops.utils import constants, config_handler, config_validator
-from marshmallow import Schema, fields, ValidationError
+from marshmallow import Schema, fields, ValidationError, EXCLUDE
 from configops.utils import nacos_client
 from configops.utils.exception import ConfigOpsException, ChangeLogException
 from configops.changelog.nacos_change import NacosChangeLog, apply_changes
@@ -16,6 +16,9 @@ class GetConfigsSchema(Schema):
     nacosId = fields.Str(required=True)
     namespaces = fields.List(fields.Str, required=True)
 
+    class Meta:
+        unknown = EXCLUDE
+
 
 class ModifyPreviewSchema(Schema):
     nacosId = fields.Str(required=True)
@@ -24,6 +27,9 @@ class ModifyPreviewSchema(Schema):
     dataId = fields.Str(required=True)
     patchContent = fields.Str(required=False)
     fullContent = fields.Str(required=False)
+
+    class Meta:
+        unknown = EXCLUDE
 
 
 class NacosConfigSchema(Schema):
@@ -37,6 +43,9 @@ class NacosConfigSchema(Schema):
     nextContent = fields.Str(required=False)
     patchContent = fields.Str(required=False)
 
+    class Meta:
+        unknown = EXCLUDE
+
 
 class ModifyConfirmSchema(Schema):
     nacosId = fields.Str(required=True)
@@ -46,6 +55,9 @@ class ModifyConfirmSchema(Schema):
     content = fields.Str(required=True)
     format = fields.Str(required=True)
 
+    class Meta:
+        unknown = EXCLUDE
+
 
 class GetChangeSetSchema(Schema):
     nacosId = fields.Str(required=True)
@@ -54,12 +66,18 @@ class GetChangeSetSchema(Schema):
     contexts = fields.Str(required=False)
     vars = fields.Dict()
 
+    class Meta:
+        unknown = EXCLUDE
+
 
 class ApplyChangeSetSchema(Schema):
     nacosId = fields.Str(required=True)
     changeSetId = fields.Str(required=False)
     changeSetIds = fields.List(fields.Str(), required=True)
     changes = fields.List(fields.Nested(NacosConfigSchema), required=True)
+
+    class Meta:
+        unknown = EXCLUDE
 
 
 @bp.route("/nacos/v1/list", methods=["GET"])
