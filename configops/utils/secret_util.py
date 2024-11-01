@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 botocore_lock = threading.Lock()
 botocore_client_map = {}
 
+
 @dataclass
 class SecretData:
     password: str
@@ -50,6 +51,8 @@ def __get_or_create_botocore_cache(profile: str) -> SecretCache:
 
 def get_secret_data(cfg: map) -> SecretData:
     secret_mgt = cfg.get("secretmanager", None)
+    aws_config = configops_config.get_aws_cfg()
+    logger.info(f"aws info {aws_config}")
     if secret_mgt:
         aws_secret_mgt = secret_mgt.get("aws", None)
         # 从aws secretmanager获取
