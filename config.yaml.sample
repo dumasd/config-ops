@@ -9,6 +9,13 @@ nacos:
     url: http://localhost:8848
     username: nacos
     password: nacos
+    # 使用了三方平台管理密码
+    # secretmanager:
+    #  aws:
+    #      # 使用哪个 aws config profile访问aws-secretmanager
+    #      profile: default
+    #      # 密钥名称
+    #      secretid: secret_name
 
 # 数据库配置
 database:
@@ -20,6 +27,20 @@ database:
     dialect: mysql
     # liquibase的数据库变更日志表放入哪个schmea中，默认为liquibase
     changelogschema: liquibase
+    # 使用了三方平台管理密码
+    # secretmanager:
+    #  aws:
+    #      # 使用哪个 aws config profile访问aws-secretmanager
+    #      profile: "default"
+    #      # 密钥ID
+    #      secretid: "secret_id"
+
+# aws 配置
+aws:
+  # aws credentials文件位置，不配置默认 ~/.aws/credentials
+  credentials: ~/.aws/credentials
+  # aws config文件位置，不配置默认 ~/.aws/config
+  config: ~/.aws/config
 
 # 应用配置
 config:

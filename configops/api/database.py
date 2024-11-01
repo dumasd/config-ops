@@ -9,6 +9,7 @@ from sqlalchemy import create_engine, text
 from marshmallow import Schema, fields, ValidationError, EXCLUDE
 from configops.config import get_database_cfg, get_java_home_dir, get_liquibase_cfg
 from configops.utils.constants import DIALECT_DRIVER_MAP
+from configops.utils import secret_util
 
 logger = logging.getLogger(__name__)
 
@@ -184,12 +185,16 @@ def run_liquibase():
         db_config = get_database_cfg(db_id)
         if db_config == None:
             return make_response("Database config not found", 404)
-        # jdbc:database_type://hostname:port/database_name
+
         dialect = db_config.get("dialect", "mysql")
         host = db_config["url"]
         port = db_config["port"]
         username = db_config["username"]
-        password = db_config["password"]
+
+        secret_data = secret_util.get_secret_data(db_config)
+        password = secret_data.password
+
+        # jdbc:database_type://hostname:port/database_name
         cmd_args_str = (
             cmd_args_str
             + f" --url jdbc:{dialect}://{host}:{port} --username {username} --password {password}"
