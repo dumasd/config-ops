@@ -29,11 +29,11 @@ database:
     changelogschema: liquibase
     # 使用了三方平台管理密码
     # secretmanager:
-    #  aws:
-    #      # 使用哪个 aws profile访问aws-secretsmanager，不填默认default
-    #      profile: "default"
-    #      # 密钥ID
-    #      secretid: "secret_id"
+    #   aws:
+    #     # 使用哪个 aws profile访问aws-secretsmanager，不填默认default
+    #     profile: "default"
+    #     # 密钥ID
+    #     secretid: "secret_id"
 
 # aws 配置
 aws:
@@ -50,10 +50,10 @@ aws:
 config:
   database-uri: sqlite:///configops.db
   # 手动指定java-home目录，java版本必须在11及以上
-  java-home-dir: 
+  java-home-dir:
   # Liquibase 运行配置文件
   liquibase:
     # 配置文件
-    defaults-file: 
+    defaults-file:
     # 用户提供的 jdbc 驱动目录
     jdbc-drivers-dir: jdbc-drivers
