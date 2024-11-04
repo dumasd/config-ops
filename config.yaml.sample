@@ -30,17 +30,21 @@ database:
     # 使用了三方平台管理密码
     # secretmanager:
     #  aws:
-    #      # 使用哪个 aws config profile访问aws-secretmanager
+    #      # 使用哪个 aws profile访问aws-secretsmanager，不填默认default
     #      profile: "default"
     #      # 密钥ID
     #      secretid: "secret_id"
 
 # aws 配置
 aws:
-  # aws credentials文件位置，不配置默认 ~/.aws/credentials
+  # aws credentials 文件位置，不配置默认 ~/.aws/credentials
   credentials: ~/.aws/credentials
   # aws config文件位置，不配置默认 ~/.aws/config
   config: ~/.aws/config
+  # 或者直接使用access_key+secret_key+region
+  access_key: "ak"
+  secret_key: "sk"
+  region: "us-east-2"
 
 # 应用配置
 config:

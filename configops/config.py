@@ -31,6 +31,9 @@ class Config:
 class AwsConfig(Schema):
     credentials = fields.Str(required=False)
     config = fields.Str(required=False)
+    access_key = fields.Str(required=False)
+    secret_key = fields.Str(required=False)
+    region = fields.Str(required=False)
 
 
 class AwsSecretManager(Schema):
@@ -131,7 +134,7 @@ def get_database_cfg(db_id):
     :return: database info
     """
     db_cfgs = current_app.config["database"]
-    db_cfg = db_cfgs[db_id]
+    db_cfg = db_cfgs.get(db_id, None)
     if db_cfg == None:
         return None
     schema = DbConfig()

@@ -184,7 +184,7 @@ def run_liquibase():
     if db_id:
         db_config = get_database_cfg(db_id)
         if db_config == None:
-            return make_response("Database config not found", 404)
+            return make_response("Database not found", 404)
 
         dialect = db_config.get("dialect", "mysql")
         host = db_config["url"]

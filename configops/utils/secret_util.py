@@ -1,6 +1,6 @@
 # AWS secret manager 工具
 
-import threading, logging, json
+import threading, logging, json, os
 import botocore
 import botocore.session
 from dataclasses import dataclass
@@ -28,43 +28,49 @@ def __get_or_create_botocore_cache(profile: str) -> SecretCache:
     :return: aws_secretsmanager_caching
     """
     aws_config = configops_config.get_aws_cfg()
+
     with botocore_lock:
-        if profile not in botocore_client_map:
-            aws_env_vars = {}
-            aws_env_vars["AWS_DEFAULT_PROFILE"] = profile
+        profile_key = "prifile_" + profile
+        if profile_key not in botocore_client_map:
+            os.environ["AWS_PROFILE"] = profile
+            access_key = None
+            secret_key = None
+            region = None
             if aws_config:
                 if "credentials" in aws_config:
-                    aws_env_vars["AWS_SHARED_CREDENTIALS_FILE"] = aws_config[
+                    os.environ["AWS_SHARED_CREDENTIALS_FILE"] = aws_config[
                         "credentials"
                     ]
                 if "config" in aws_config:
-                    aws_env_vars["AWS_CONFIG_FILE"] = aws_config["config"]
+                    os.environ["AWS_CONFIG_FILE"] = aws_config["config"]
 
-            client = botocore.session.get_session(aws_env_vars).create_client(
-                "secretsmanager"
+                access_key = aws_config.get("access_key", None)
+                secret_key = aws_config.get("secret_key", None)
+                region = aws_config.get("region", None)
+
+            client = botocore.session.get_session().create_client(
+                "secretsmanager",
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                region_name=region,
             )
             cache_config = SecretCacheConfig()  # See below for defaults
             cache = SecretCache(config=cache_config, client=client)
-            botocore_client_map[profile] = cache
-            return cache
+            botocore_client_map[profile_key] = cache
+
+        return botocore_client_map[profile_key]
 
 
 def get_secret_data(cfg: map) -> SecretData:
     secret_mgt = cfg.get("secretmanager", None)
-    aws_config = configops_config.get_aws_cfg()
-    logger.info(f"aws info {aws_config}")
     if secret_mgt:
         aws_secret_mgt = secret_mgt.get("aws", None)
         # 从aws secretmanager获取
         if aws_secret_mgt:
-            try:
-                profile = aws_secret_mgt.get("profile", "default")
-                secretid = aws_secret_mgt["secretid"]
-                secret_cache = __get_or_create_botocore_cache(profile)
-                secret_string = secret_cache.get_secret_string(secretid)
-                db_info = json.loads(secret_string)
-                return SecretData(password=db_info["password"])
-            except Exception as e:
-                logger.warning(f"Search . {e}")
-
+            profile = aws_secret_mgt.get("profile", "default")
+            secretid = aws_secret_mgt["secretid"]
+            secret_cache = __get_or_create_botocore_cache(profile)
+            secret_string = secret_cache.get_secret_string(secretid)
+            db_info = json.loads(secret_string)
+            return SecretData(password=db_info["password"])
     return SecretData(password=cfg["password"])

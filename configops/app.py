@@ -7,15 +7,23 @@ from configops.api.common import bp as common_bp
 from configops.config import load_config
 from configops.utils.logging_configurator import DefaultLoggingConfigurator
 from configops.database import db
-import jsonschema
 
 logger = logging.getLogger(__name__)
 
+error_handler_logger = logging.getLogger("error_handler_logger")
 
-def create_app(config_file=None) -> Flask:
+
+def create_app(config_file=None):
     loggingConfig = DefaultLoggingConfigurator()
     loggingConfig.configure_default()
     app = Flask(__name__)
+
+    @app.errorhandler(Exception)
+    def handle_exception(error):
+        error_handler_logger.error("f Catch exception {error}", exc_info=True)
+        type_name = type(error).__name__
+        return f"{type_name}: {error}", 500
+
     app.register_blueprint(database_bp)
     app.register_blueprint(nacos_bp)
     app.register_blueprint(common_bp)
@@ -24,6 +32,7 @@ def create_app(config_file=None) -> Flask:
         app.config.update(config)
     loggingConfig.configure_logging(app.config, debug_mode=False)
     db.init(app)
+
     return app
 
 
@@ -44,4 +53,5 @@ if __name__ == "__main__":
         debug = True
     app = create_app(config_file=args.config)
     app.run(host=args.host, port=args.port, debug=debug)
+
     logger.info("Started flask app")
