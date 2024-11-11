@@ -1,0 +1,94 @@
+### 参数: APP_NAME, APP_PORT, APP_CFG, NAMESPACE, VERSION, REPLICAS, IMAGE, IMAGE_PULL_SECRETS, REQUESTS_CPU, REQUESTS_MEMORY, LIMITS_CPU, LIMITS_MEMORY, RESTART_TIME
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{APP_NAME}}-{{VERSION}}
+  namespace: {{NAMESPACE}}
+  labels:
+    app: {{APP_NAME}}
+    version: {{VERSION}}
+  annotations:
+    kubesphere.io/creator: goose
+spec:
+  replicas: {{REPLICAS}}
+  selector:
+    matchLabels: # 匹配带有什么标签的pod 需配置 要和下面的labels保持一致
+      app: {{APP_NAME}}
+      version: {{VERSION}}
+  template:
+    metadata:
+      labels: # 创建出来的pod带哪些标签 需配置
+        app: {{APP_NAME}}
+        version: {{VERSION}}
+      annotations:
+        kubesphere.io/creator: goose
+        kubectl.kubernetes.io/restartedAt: "{{RESTART_TIME}}"
+    spec:
+      volumes:
+        - name: host-time
+          hostPath:
+            path: /etc/localtime
+            type: ""
+        {% for cv in CONFIGMAP_VOLUMNS %}
+        - name: {{cv.VOLUMN_NAME}}
+          configMap:
+            name: {{cv.CONFIGMAP_NAME}}
+            defaultMode: 420
+        {% endfor %}    
+      restartPolicy: Always
+      containers:
+        - name: {{APP_NAME}} # 容器名 需要随机生成 需配置
+          image: {{IMAGE}} # 镜像地址 需配置
+          imagePullPolicy: Always
+          ports:
+            - name: http-0
+              containerPort: {{APP_PORT}} # 容器端口 需配置
+              protocol: TCP
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+          resources: #  需配置
+            requests: # 容器在节点上需要的最小资源量
+              cpu: {{REQUESTS_CPU}}
+              memory: {{REQUESTS_MEMORY}}
+            limits: # 容器可以使用的最大资源量
+              cpu: {{LIMITS_CPU}} # 容器可以使用的最大 CPU 是 100 毫核
+              memory: {{LIMITS_MEMORY}} # 容器可以使用的最大内存是 2000 MiB
+          volumeMounts:
+            - name: host-time
+              readOnly: true
+              mountPath: /etc/localtime
+            {% for cv in CONFIGMAP_VOLUMNS %}
+            - name: {{cv.VOLUMN_NAME}}
+              readOnly: true
+              mountPath: {{cv.MOUNT_PATH}}
+            {% endfor %}  
+          livenessProbe:
+            tcpSocket:
+              port: {{APP_PORT}} # 存活探针端口 需配置
+            initialDelaySeconds: {{INITIAL_DELAY_SECONDS}}
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 10
+            periodSeconds: 5
+          readinessProbe:
+            tcpSocket:
+              port: {{APP_PORT}} # 就绪探针端口 需配置
+            initialDelaySeconds: {{INITIAL_DELAY_SECONDS}}
+            timeoutSeconds: 10
+            successThreshold: 2
+            failureThreshold: 10
+            periodSeconds: 5
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        environment: {{K8S_ENV}}
+      imagePullSecrets:
+        - name: {{IMAGE_PULL_SECRETS}}
+  strategy:
+    type: RollingUpdate # 滚动更新 需配置
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
