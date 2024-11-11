@@ -29,8 +29,8 @@ spec:
           hostPath:
             path: /etc/localtime
             type: ""
-        {% for cv in CONFIGMAP_VOLUMNS %}
-        - name: {{cv.VOLUMN_NAME}}
+        {% for cv in CONFIGMAP_VOLUMES %}
+        - name: {{cv.VOLUME_NAME}}
           configMap:
             name: {{cv.CONFIGMAP_NAME}}
             defaultMode: 420
@@ -58,8 +58,8 @@ spec:
             - name: host-time
               readOnly: true
               mountPath: /etc/localtime
-            {% for cv in CONFIGMAP_VOLUMNS %}
-            - name: {{cv.VOLUMN_NAME}}
+            {% for cv in CONFIGMAP_VOLUMES %}
+            - name: {{cv.VOLUME_NAME}}
               readOnly: true
               mountPath: {{cv.MOUNT_PATH}}
             {% endfor %}  
