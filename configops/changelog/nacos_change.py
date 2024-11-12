@@ -74,7 +74,7 @@ schema = {
                                     ],
                                 },
                             },
-                            "required": ["id", "author", "changes"],
+                            "required": ["id", "changes"],
                         }
                     },
                 },

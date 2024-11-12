@@ -5,6 +5,7 @@ import json
 from configops.utils import constants
 from configops.utils.exception import ConfigOpsException
 from ruamel import yaml as ryaml
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 import xml.etree.ElementTree as ET
 
 logger = logging.getLogger(__name__)
@@ -97,6 +98,36 @@ def yaml_patch(patch, current):
     """
     将Patch的内容追加或修改到Current
     """
+    if patch.ca.comment:
+        current.ca.comment = patch.ca.comment
+
+    for key in patch:
+        if key in current:
+            if isinstance(current[key], CommentedMap) and isinstance(
+                patch[key], CommentedMap
+            ):
+                yaml_patch(patch[key], current[key])
+            elif isinstance(current[key], CommentedSeq) and isinstance(
+                patch[key], CommentedSeq
+            ):
+                for idx, item in enumerate(patch[key]):
+                    if item not in current[key]:
+                        current[key].append(item)
+                        if patch[key].ca.items.get(idx):
+                            current[key].ca.items[len(current[key]) - 1] = patch[
+                                key
+                            ].ca.items[idx]
+            else:
+                # 保留键的注释
+                current[key] = patch[key]
+                if patch.ca.items.get(key):
+                    current.ca.items[key] = patch.ca.items[key]
+        else:
+            current[key] = patch[key]
+            # 添加新键的注释
+            if patch.ca.items.get(key):
+                current.ca.items[key] = patch.ca.items[key]
+    """
     if isinstance(current, dict) and isinstance(patch, dict):
         for key in patch:
             if key in current:
@@ -108,6 +139,7 @@ def yaml_patch(patch, current):
                     current[key] = patch[key]
             else:
                 current[key] = patch[key]
+    """
 
 
 def yaml_delete(patch, current):
@@ -195,9 +227,16 @@ def properties_patch(patch, current):
                 properties_patch(patch[key], current[key])
             else:
                 current[key] = patch[key]
+                # 若增量内容中有注释，则将其添加到全量内容中
+                if patch.comments.get(key):
+                    current.comments[key] = patch.comments[key]
+
     for key in patch:
         if key not in current:
             current[key] = patch[key]
+            # 若增量内容中有注释，则将其添加到全量内容中
+            if patch.comments.get(key):
+                current.comments[key] = patch.comments[key]
 
 
 def properties_delete(patch, current):

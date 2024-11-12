@@ -21,7 +21,8 @@ class TestConfigHandler:
             - extra_item  # 这个项在 full_config.yaml 中不存在
         """
         full_str = """
-        key1: value1
+        # ** 根据环境实际值修改 create by xxxx **
+        key1: value1 # gogo
         key2: value2
         nested:
             key3: value3
@@ -35,23 +36,27 @@ class TestConfigHandler:
         logging.info("\n%s", config_handler.yaml_to_string(current, yaml))
 
     def test_yaml_patch(self):
-        current_str = """# commit
-        key1: value1
-        key2: value2
-        extra_key: value_extra
-        nested:
-            key3: value3
-            extra_nested_key: value_extra_nested
-        list_key:
-            - item1
-            - item2
-            - extra_item
+        current_str = """
+key1: value1
+key2: value2
+extra_key: value_extra
+nested:
+  key3: value3
+  extra_nested_key: value_extra_nested
+list_key:
+  - item1
+  - item2
+  - extra_item
         """
-        patch_str = """
-        key1: value1_new
-        list_key:
-            - item1
-            - item2            
+        patch_str = """        
+# comment        
+# ** 根据环境实际值修改 create by xxxx **
+key1: value1_new
+# ** 根据环境实际值修改 create by xxxx **
+key2: value2_new
+list_key:
+  - item1
+  - item3         
         """
         format1, current, yaml = config_handler.parse_content(current_str)
         format2, patch, yaml = config_handler.parse_content(patch_str)
@@ -115,6 +120,7 @@ mfc.detail.es.cluster.server.serverName =
         key1=value1_new
         nested.key3=value3_new
         [section]
+        # values_new good 依然
         nested.key-1.key-1-1=value_new
         """
         f1, current, yml1 = config_handler.parse_content(current_str)
