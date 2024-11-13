@@ -20,12 +20,12 @@ database:
     dialect: mysql
     # liquibase的数据库变更日志表放入哪个schmea中，默认为liquibase
     changelogschema: liquibase
-    secretmanager:
-     aws:
-        # 使用哪个 aws config profile访问aws-secretmanager
-        profile: "default"
-        # 密钥ID
-        secretid: "arn:aws:secretsmanager:us-east-2:126026337867:secret:sit-meta-db-secret-V04N5t"    
+    # secretmanager:
+    #  aws:
+    #     # 使用哪个 aws config profile访问aws-secretmanager
+    #     profile: "default"
+    #     # 密钥ID
+    #     secretid: "arn:aws:secretsmanager:us-east-2:126026337867:secret:sit-meta-db-secret-V04N5t"    
 
 config:
   database-uri: mysql+mysqlconnector://root:12345678@localhost:3306/test

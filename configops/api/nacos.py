@@ -338,9 +338,10 @@ def get_change_set():
     count = data.get("count", 0)
     contexts = data.get("contexts")
     vars = data.get("vars", {})
+    changelogFile = data.get("changeLogFile")
 
     try:
-        nacosChangeLog = NacosChangeLog(changelogFile=data["changeLogFile"])
+        nacosChangeLog = NacosChangeLog(changelogFile=changelogFile)
         result = nacosChangeLog.fetch_multi(client, nacos_id, count, contexts, vars)
         keys = ["ids", "changes"]
         return dict(zip(keys, result))

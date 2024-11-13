@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: maven-example-1.1.1-release
+      author: henry.hua
+      labels: gradle-example
+      context: gradle-example
+      comment: example-comment
+      runOnChange: true
+      changes:
+        - sql:
+            sql: |-
+              DELETE FROM company WHERE id > 100;

@@ -1,3 +1,4 @@
+import re
 from enum import Enum
 
 PROPERTIES = "properties"
@@ -39,3 +40,13 @@ DIALECT_DRIVER_MAP = {
 
 def is_support_format(format):
     return format == PROPERTIES or format == YAML
+
+
+def extract_version(name):
+    match = re.search(r"(\d+\.\d+(?:\.\d+){0,2})(?:-([a-zA-Z0-9]+))?", name)
+    if match:
+        # 将版本号分割为整数元组，例如 '1.2.3' -> (1, 2, 3)
+        version_numbers = tuple(map(int, match.group(1).split(".")))
+        suffix = match.group(2) or ""
+        return version_numbers, suffix
+    return (0,), ""  # 默认返回最小版本

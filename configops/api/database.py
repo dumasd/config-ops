@@ -1,14 +1,14 @@
 """ 执行SQL操作 """
 
 from flask import Blueprint, request, make_response, jsonify, current_app, Response
-import re, logging, os, json, collections, subprocess, platform
+import re, logging, os, json, collections, subprocess, platform, string, random
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from sqlalchemy import create_engine, text
 from marshmallow import Schema, fields, ValidationError, EXCLUDE
 from configops.config import get_database_cfg, get_java_home_dir, get_liquibase_cfg
-from configops.utils.constants import DIALECT_DRIVER_MAP
+from configops.utils.constants import DIALECT_DRIVER_MAP, extract_version
 from configops.utils import secret_util
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,7 @@ class RunLiquibaseCmdSchema(Schema):
     dbId = fields.Str(required=False)
     command = fields.Str(required=True)
     args = fields.Str(required=False)
+    changeLogFile = fields.Str(required=False)
     # 命令运行在哪个目录下
     cwd = fields.Str(required=False)
 
@@ -231,30 +232,75 @@ def run_liquibase():
 
             cmd_args_str = cmd_args_str + " --classpath " + classpath
 
+    # 解析changelogFile
+    tmpChangelogRoot = None
+    changelogFile = data.get("changeLogFile")
+    if changelogFile:
+        if not os.path.exists(changelogFile):
+            return make_response(
+                f"error: changeLogFile {changelogFile} not found ", 400
+            )
+
+        if os.path.isdir(changelogFile):
+            # 文件夹下面的changelog文件，聚合成一个change-root.yaml
+            changelogfiles = []
+            for _, _, filenames in os.walk(changelogFile):
+                for filename in filenames:
+                    if filename.endswith((".yaml", ".yml", ".xml")):
+                        changelogfiles.append(filename)
+            changelogfiles = sorted(changelogfiles, key=extract_version)
+
+            if len(changelogfiles) > 0:
+                suffix = "".join(
+                    random.sample(string.ascii_lowercase + string.digits, 10)
+                )
+                rootFileName = f"changelog_root_{suffix}.yaml"
+                rootFileContent = "databaseChangeLog:"
+                for file in changelogfiles:
+                    rootFileContent = (
+                        rootFileContent + f"\n  - include:\n      file: {file}"
+                    )
+                tmpChangelogRoot = os.path.join(changelogFile, rootFileName)
+                with open(tmpChangelogRoot, "w") as file:
+                    file.write(rootFileContent)
+
+                cmd_args_str = cmd_args_str + " --changelog-file " + rootFileName
+
+        elif os.path.isfile(changelogFile):
+            cmd_args_str = cmd_args_str + " --changelog-file " + changelogFile
+
     logger.info(f"Liquibase command: {cmd_args_str}")
     args = re.split(r"\s+", cmd_args_str.strip())
 
-    custom_env = os.environ.copy()
-    # 设置JavaHome
-    java_home = get_java_home_dir(current_app)
-    if java_home:
-        custom_env["JAVA_HOME"] = java_home
+    try:
+        custom_env = os.environ.copy()
+        # 设置JavaHome
+        java_home = get_java_home_dir(current_app)
+        if java_home:
+            custom_env["JAVA_HOME"] = java_home
 
-    working_dir = os.getcwd()
-    if data.get("cwd"):
-        working_dir = data.get("cwd")
+        working_dir = os.getcwd()
+        if data.get("cwd"):
+            working_dir = data.get("cwd")
 
-    completed_process = subprocess.run(
-        args,
-        cwd=working_dir,
-        capture_output=True,
-        env=custom_env,
-    )
-    stdout = completed_process.stdout.decode()
-    stderr = completed_process.stderr.decode()
-    if stdout:
-        logger.info(f"Liqubase run stdout. \n{stdout}")
-    if stderr:
-        logger.info(f"Liqubase run stderr. \n{stderr}")
-
-    return {"stdout": stdout, "stderr": stderr, "retcode": completed_process.returncode}
+        completed_process = subprocess.run(
+            args,
+            cwd=working_dir,
+            capture_output=True,
+            env=custom_env,
+        )
+        stdout = completed_process.stdout.decode()
+        stderr = completed_process.stderr.decode()
+        if stderr:
+            logger.info(f"Liqubase run stderr. \n{stderr}")
+        if stdout:
+            logger.info(f"Liqubase run stdout. \n{stdout}")
+        return {
+            "stdout": stdout,
+            "stderr": stderr,
+            "retcode": completed_process.returncode,
+        }
+    finally:
+        # 临时文件删除掉
+        if tmpChangelogRoot:
+            os.remove(tmpChangelogRoot)

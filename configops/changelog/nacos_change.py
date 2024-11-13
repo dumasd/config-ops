@@ -1,6 +1,6 @@
-import logging, os, yaml, hashlib, string
+import logging, os, yaml, hashlib, string, re
 from configops.utils import config_handler, config_validator
-from configops.utils.constants import CHANGE_LOG_EXEXTYPE, SYSTEM_TYPE
+from configops.utils.constants import CHANGE_LOG_EXEXTYPE, SYSTEM_TYPE, extract_version
 from configops.utils.exception import ChangeLogException
 from ruamel import yaml as ryaml
 from jsonschema import Draft7Validator, ValidationError
@@ -98,131 +98,116 @@ schema = {
 
 
 class NacosChangeLog:
-    def __init__(self, changelogFile):
+    def __init__(self, changelogFile=None):
         self.changelogFile = changelogFile
         self.__init_change_log()
 
-    def __append_nacos_config(self, parent, child):
-        pass
-        # 合并
-        format = parent["type"]
-        if format != child["type"]:
-            raise ChangeLogException(f"Format not equal ")
-        patchContent = child["patchContent"]
-        deleteContent = child["deleteContent"]
-
-        currentPatchContent = parent["patchContent"]
-        currentDeleteContent = parent["deleteContent"]
-
-        if len(patchContent.strip()) > 0:
-            if len(currentPatchContent.strip()) > 0:
-                _, current, ym = config_handler.parse_content(
-                    currentPatchContent, format
-                )
-                _, patch, _ = config_handler.parse_content(patchContent, format)
-                config_handler.patch(patch, current, format)
-                parent["patchContent"] = config_handler.to_string(format, current, ym)
-            else:
-                parent["patchContent"] = patchContent
-
-            if len(deleteContent.strip()) > 0:
-                if len(currentDeleteContent.strip()) > 0:
-                    _, current, ym = config_handler.parse_content(
-                        currentDeleteContent, format
-                    )
-                    _, patch, _ = config_handler.parse_content(deleteContent, format)
-                    config_handler.patch(patch, current, format)
-                    parent["deleteContent"] = config_handler.to_string(
-                        format, current, ym
-                    )
-            else:
-                parent["deleteContent"] = patchContent
-
     def __init_change_log(self):
-        changeLogData = None
-        with open(self.changelogFile, "r") as file:
-            try:
-                yaml = ryaml.YAML()
-                yaml.preserve_quotes = True
-                changeLogData = yaml.load(file)
-                validator = Draft7Validator(schema)
-                validator.validate(changeLogData)
-            except ValidationError as e:
-                raise ChangeLogException(
-                    f"Validation error: {self.changelogFile} \n{e}"
-                )
-
-        base_dir = os.path.dirname(self.changelogFile)
-        nacosConfigDict = {}
         changeSetDict = {}
         changeSets = []
 
-        items = changeLogData["nacosChangeLog"]
-        for item in items:
-            # 引用了其他文件
-            changeSetObj = item.get("changeSet")
-            includeObj = item.get("include")
-            if changeSetObj:
-                id = str(changeSetObj["id"])
-                ignore = changeSetObj.get("ignore", False)
-                changeSetObj["ignore"] = ignore
-                if changeSetDict.get(id) is not None:
-                    raise ChangeLogException(f"Repeat change set id {id}")
+        if os.path.isfile(self.changelogFile):
+            changeLogData = None
+            with open(self.changelogFile, "r") as file:
+                try:
+                    yaml = ryaml.YAML()
+                    yaml.preserve_quotes = True
+                    changeLogData = yaml.load(file)
+                    validator = Draft7Validator(schema)
+                    validator.validate(changeLogData)
+                except ValidationError as e:
+                    raise ChangeLogException(
+                        f"Validation error: {self.changelogFile} \n{e}"
+                    )
 
-                changeSetDict[id] = changeSetObj
-                changes = changeSetObj["changes"]
+            base_dir = os.path.dirname(self.changelogFile)
 
-                changeSetChangeDict = {}
-                for change in changes:
-                    namespace = change.get("namespace", "")
-                    group = change["group"]
-                    dataId = change["dataId"]
-                    format = change["format"]
-                    patchContent = change.get("patchContent", "")
-                    deleteContent = change.get("deleteContent", "")
-                    config_key = f"{namespace}/{group}/{dataId}"
+            items = changeLogData["nacosChangeLog"]
+            for item in items:
+                changeSetObj = item.get("changeSet")
+                includeObj = item.get("include")
+                if changeSetObj:
+                    id = str(changeSetObj["id"])
+                    ignore = changeSetObj.get("ignore", False)
+                    changeSetObj["ignore"] = ignore
+                    if changeSetDict.get(id) is not None:
+                        raise ChangeLogException(f"Repeat change set id {id}")
 
-                    if changeSetChangeDict.get(config_key) is not None:
-                        raise ChangeLogException(
-                            f"Repeated nacos change. changeSetId:{id}, namespace:{namespace}, group:{group}, dataId:{dataId}"
-                        )
-                    changeSetChangeDict[config_key] = change
+                    changeSetDict[id] = changeSetObj
+                    changes = changeSetObj["changes"]
 
-                    if len(patchContent.strip()) > 0:
-                        suc, msg = config_validator.validate_content(
-                            patchContent, format
-                        )
-                        if not suc:
+                    changeSetChangeDict = {}
+                    for change in changes:
+                        namespace = change.get("namespace", "")
+                        group = change["group"]
+                        dataId = change["dataId"]
+                        format = change["format"]
+                        patchContent = change.get("patchContent", "")
+                        deleteContent = change.get("deleteContent", "")
+                        config_key = f"{namespace}/{group}/{dataId}"
+
+                        if changeSetChangeDict.get(config_key) is not None:
                             raise ChangeLogException(
-                                f"patchContent is not valid. changeSetId:{id}, namespace:{namespace}, group:{group}, dataId:{dataId}, [{format}] type. {msg}"
+                                f"Repeated nacos change. changeSetId:{id}, namespace:{namespace}, group:{group}, dataId:{dataId}"
                             )
+                        changeSetChangeDict[config_key] = change
 
-                    if len(deleteContent.strip()) > 0:
-                        suc, msg = config_validator.validate_content(
-                            deleteContent, format
-                        )
-                        if not suc:
-                            raise ChangeLogException(
-                                f"deleteContent is not valid. changeSetId:{id}, namespace:{namespace}, group:{group}, dataId:{dataId}, [{format}] type. {msg}"
+                        if len(patchContent.strip()) > 0:
+                            suc, msg = config_validator.validate_content(
+                                patchContent, format
                             )
+                            if not suc:
+                                raise ChangeLogException(
+                                    f"patchContent is not valid. changeSetId:{id}, namespace:{namespace}, group:{group}, dataId:{dataId}, [{format}] type. {msg}"
+                                )
 
-                if not ignore:
-                    changeSets.append(changeSetObj)
+                        if len(deleteContent.strip()) > 0:
+                            suc, msg = config_validator.validate_content(
+                                deleteContent, format
+                            )
+                            if not suc:
+                                raise ChangeLogException(
+                                    f"deleteContent is not valid. changeSetId:{id}, namespace:{namespace}, group:{group}, dataId:{dataId}, [{format}] type. {msg}"
+                                )
 
-            elif includeObj:
-                file = includeObj["file"]
-                childLog = NacosChangeLog(changelogFile=f"{base_dir}/{file}")
+                    if not ignore:
+                        changeSets.append(changeSetObj)
+
+                elif includeObj:
+                    # 引用了其他文件
+                    file = includeObj["file"]
+                    childLog = NacosChangeLog(changelogFile=f"{base_dir}/{file}")
+                    for id in childLog.changeSetDict:
+                        if id in changeSetDict:
+                            raise ChangeLogException(f"Repeat change set id {id}")
+                        else:
+                            changeSetDict[id] = childLog.changeSetDict[id]
+                    changeSets.extend(childLog.changeSets)
+
+        elif os.path.isdir(self.changelogFile):
+            changelogfiles = []
+            for dirpath, dirnames, filenames in os.walk(self.changelogFile):
+                for filename in filenames:
+                    if filename.endswith((".yaml", ".yml")):
+                        changelogfiles.append(os.path.join(dirpath, filename))
+            # 根据文件名排序
+            sorted_changelogfiles = sorted(changelogfiles, key=extract_version)
+            for file in sorted_changelogfiles:
+                childLog = NacosChangeLog(changelogFile=file)
                 for id in childLog.changeSetDict:
                     if id in changeSetDict:
                         raise ChangeLogException(f"Repeat change set id {id}")
                     else:
                         changeSetDict[id] = childLog.changeSetDict[id]
-
                 changeSets.extend(childLog.changeSets)
 
-            self.nacosConfigDict = nacosConfigDict
-            self.changeSetDict = changeSetDict
-            self.changeSets = changeSets
+        else:
+            raise ChangeLogException(
+                f"Changelog file or folder does not exists: {self.changelogFile}"
+            )
+
+        self.changeSetDict = changeSetDict
+        self.changeSets = changeSets
 
     def __change_set_checksum(self, changes):
         changes_str = yaml.dump(changes, sort_keys=True)
