@@ -15,6 +15,7 @@ configops/api/common.py
 configops/api/database.py
 configops/api/nacos.py
 configops/changelog/__init__.py
+configops/changelog/database_change.py
 configops/changelog/nacos_change.py
 configops/cli/__init__.py
 configops/cli/main.py
@@ -27,7 +28,8 @@ configops/utils/constants.py
 configops/utils/exception.py
 configops/utils/logging_configurator.py
 configops/utils/nacos_client.py
+configops/utils/secret_util.py
 configops/utils/sql_util.py
 tests/test_classpath.py
 tests/test_database.py
-tests/test_string.py
+tests/test_simple.py
