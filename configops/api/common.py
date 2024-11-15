@@ -73,11 +73,11 @@ def replace_jinja_template():
     outputFile = data.get("outputFile")
     vars = data.get("vars")
 
-    with open(templateFile, "r") as file:
+    with open(templateFile, "r", encoding="utf-8") as file:
         template = Template(file.read())
 
     renderStr = template.render(vars)
 
-    with open(outputFile, "w") as file:
+    with open(outputFile, "w", encoding="utf-8") as file:
         file.write(renderStr)
     return "OK"    

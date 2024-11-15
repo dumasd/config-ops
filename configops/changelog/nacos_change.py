@@ -108,7 +108,7 @@ class NacosChangeLog:
 
         if os.path.isfile(self.changelogFile):
             changeLogData = None
-            with open(self.changelogFile, "r") as file:
+            with open(self.changelogFile, "r", encoding="utf-8") as file:
                 try:
                     yaml = ryaml.YAML()
                     yaml.preserve_quotes = True

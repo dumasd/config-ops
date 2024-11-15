@@ -261,7 +261,7 @@ def run_liquibase():
                         rootFileContent + f"\n  - include:\n      file: {file}"
                     )
                 tmpChangelogRoot = os.path.join(changelogFile, rootFileName)
-                with open(tmpChangelogRoot, "w") as file:
+                with open(tmpChangelogRoot, "w", encoding="utf-8") as file:
                     file.write(rootFileContent)
 
                 cmd_args_str = cmd_args_str + " --changelog-file " + rootFileName

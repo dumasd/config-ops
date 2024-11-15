@@ -72,7 +72,7 @@ def load_config(config_file=None):
 
     if config_file and os.path.isfile(config_file):
         print(f"Load config from file: {config_file}")
-        with open(config_file, "r") as file:
+        with open(config_file, "r", encoding="utf-8") as file:
             config = yaml.load(file)
         return config
 
@@ -86,7 +86,7 @@ def load_config(config_file=None):
     config_file = "config.yaml"
     if os.path.isfile(config_file):
         print(f"Load config from file: {config_file}")
-        with open(config_file, "r") as file:
+        with open(config_file, "r", encoding="utf-8") as file:
             config = yaml.load(file)
         return config
 
