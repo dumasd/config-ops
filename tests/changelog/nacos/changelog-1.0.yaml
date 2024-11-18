@@ -16,6 +16,13 @@ nacosChangeLog:
                 name: blue
           deleteContent: |-
             notice:
+            arr:
+              list1:
+                - 111
+              list2:
+                - name: wk
+                  age: 30
+                  position: dev
         - namespace: blue
           group: group
           dataId: config.properties
@@ -23,3 +30,23 @@ nacosChangeLog:
           patchContent: |-
             delete.aaa = 9
             delete.ccc = fff
+        - namespace: blue
+          group: group
+          dataId: config.json
+          format: json
+          patchContent: |-
+            {
+              "name": "bruce.wu",
+              "age": 30,
+              "gender": 1,
+              "address": {
+                "country": "China",
+                "province": "Jiangsu",
+                "city": "Nanjing"
+              },
+              "steps": [1, 2, 3],
+              "positions": [
+                {"id": 1000, "name": "Developer"},
+                {"id": 1001, "name": "Designer"}
+              ]
+            }

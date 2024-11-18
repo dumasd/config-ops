@@ -26,6 +26,14 @@ def parse_content(content: str, format=None):
         if format == constants.PROPERTIES:
             raise ex
 
+    # 尝试当json解析
+    try:
+        data = json.loads(content)
+        return constants.JSON, data, None
+    except Exception as ex:
+        if format == constants.JSON:
+            raise ex
+
     # 尝试当yaml解析
     try:
         yaml = ryaml.YAML()
@@ -34,14 +42,6 @@ def parse_content(content: str, format=None):
         return constants.YAML, data, yaml
     except Exception as ex:
         if format == constants.YAML:
-            raise ex
-
-    # 尝试当json解析
-    try:
-        data = json.load(content)
-        return constants.JSON, data, None
-    except Exception as ex:
-        if format == constants.JSON:
             raise ex
 
     # 尝试当xml解析
@@ -73,10 +73,12 @@ def to_string(format, current, y):
         raise ConfigOpsException(f"ToString unsupported format: {format}")
 
 
+"""
+==========  YAML 相关方法 ==========
+"""
+
+
 def yaml_cpx(full, current):
-    """
-    YAML 相关方法
-    """
     # 只支持dict
     if isinstance(current, dict) and isinstance(full, dict):
         keys_to_remove = []
@@ -95,8 +97,14 @@ def yaml_cpx(full, current):
 
 
 def yaml_patch(patch, current):
-    """
-    将Patch的内容追加或修改到Current
+    """Patch yaml ``obj`` use ``obj``.
+
+    :type patch: obj
+    :param patch: patch object
+
+    :type current: obj
+    :param current: current object
+
     """
     if patch.ca.comment:
         current.ca.comment = patch.ca.comment
@@ -143,8 +151,14 @@ def yaml_patch(patch, current):
 
 
 def yaml_delete(patch, current):
-    """
-    从Current中删除Delete的内容
+    """Delete yaml ``obj`` use ``obj``.
+
+    :type patch: obj
+    :param patch: patch object
+
+    :type current: obj
+    :param current: current object
+
     """
     if isinstance(current, dict) and isinstance(patch, dict):
         for key in patch:
@@ -153,11 +167,13 @@ def yaml_delete(patch, current):
                 current_value = current[key]
                 if value is None:
                     del current[key]
-                if isinstance(current_value, dict) and isinstance(value, dict):
+                elif isinstance(current_value, dict) and isinstance(value, dict):
                     yaml_delete(value, current_value)
-                elif not isinstance(current_value, dict) and not isinstance(
-                    value, dict
-                ):
+                elif isinstance(current_value, list) and isinstance(value, list):
+                    for idx, item in enumerate(value):
+                        if item in current_value:
+                            current_value.remove(item)
+                else:
                     del current[key]
 
 
@@ -198,7 +214,7 @@ def yaml_delete_content(delete_content, current):
 
 
 """
-PROPERTIES 相关方法
+========== PROPERTIES 相关方法 ==========
 """
 
 
@@ -275,6 +291,90 @@ def properties_delete_content(delete_content, current):
     return True, "OK"
 
 
+"""
+========== JSON 相关方法 ============
+"""
+
+
+def json_to_string(data):
+    return json.dumps(data, ensure_ascii=False, indent=2)
+
+
+def json_patch(patch, current):
+    """Patch json ``obj`` use ``obj``.
+
+    :type patch: obj
+    :param patch: patch object
+
+    :type current: obj
+    :param current: current object
+
+    """
+    for key in patch:
+        if key in current:
+            if isinstance(patch[key], dict) and isinstance(current[key], dict):
+                json_patch(patch[key], current[key])
+            elif isinstance(patch[key], list) and isinstance(current[key], list):
+                for idx, item in enumerate(patch[key]):
+                    if item not in current[key]:
+                        current[key].append(item)
+            else:
+                current[key] = patch[key]
+        else:
+            current[key] = patch[key]
+
+
+def json_patch_content(patch_content, current):
+    """Patch json ``obj`` use ``str``.
+
+    :type patch_content: str
+    :param patch_content: patch str
+
+    :type current: obj
+    :param current: current object
+
+    """
+    if patch_content is not None and len(patch_content.strip()) > 0:
+        try:
+            _, patch, _ = parse_content(patch_content, format=constants.JSON)
+            json_patch(patch, current)
+        except BaseException:
+            return False, "Patch content must be properties"
+    return True, "OK"
+
+
+def json_delete(delete, current):
+    for key in delete:
+        if key in current:
+            if isinstance(delete[key], dict) and isinstance(current[key], dict):
+                json_delete(delete[key], current[key])
+            elif isinstance(delete[key], list) and isinstance(current[key], list):
+                for idx, item in enumerate(delete[key]):
+                    if item in current[key]:
+                        current[key].remove(item)
+            else:
+                del current[key]
+
+
+def json_delete_content(delete_content, current):
+    """Delete json object use string.
+
+    :type delete_content: str
+    :param delete_content: delete str
+
+    :type current: obj
+    :param current: current object
+
+    """
+    if delete_content is not None and len(delete_content.strip()) > 0:
+        try:
+            _, delete, _ = parse_content(delete_content, format=constants.JSON)
+            json_delete(delete, current)
+        except BaseException:
+            return False, "Patch content must be properties"
+    return True, "OK"
+
+
 def patch_by_str(content, edit, type):
     needPatch = True
     if len(content.strip()) == 0:
@@ -308,6 +408,13 @@ def patch_by_str(content, edit, type):
                 "content": content,
                 "nextContent": properties_to_string(current),
             }
+        elif format == constants.JSON:
+            suc, msg = json_patch_content(edit, current)
+            return {
+                "format": format,
+                "content": content,
+                "nextContent": json_to_string(current),
+            }
         else:
             raise ConfigOpsException(f"Unsupport patch format. {type}")
     else:
@@ -337,6 +444,13 @@ def delete_by_str(content, edit, type):
             "format": format,
             "content": content,
             "nextContent": properties_to_string(current),
+        }
+    elif format == constants.JSON:
+        suc, msg = json_delete_content(edit, current)
+        return {
+            "format": format,
+            "content": content,
+            "nextContent": json_to_string(current),
         }
     else:
         raise ConfigOpsException(f"Unsupported delete format. {format}")

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="configops",  # PyPI 上的包名
-    version="0.2.1",  # 初始版本
+    version="0.2.2",  # 初始版本
     description="A devops config tool",
     author="Bruce Wu",
     author_email="wukai213@gmail.com",

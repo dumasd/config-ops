@@ -38,10 +38,6 @@ DIALECT_DRIVER_MAP = {
 }
 
 
-def is_support_format(format):
-    return format == PROPERTIES or format == YAML
-
-
 def extract_version(name):
     match = re.search(r"(\d+\.\d+(?:\.\d+){0,2})(?:-([a-zA-Z0-9]+))?", name)
     if match:

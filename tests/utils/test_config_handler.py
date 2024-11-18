@@ -146,3 +146,56 @@ mfc.detail.es.cluster.server.serverName =
         p.store(out_stream=output_stream, encoding="utf-8")
         t = output_stream.getvalue()
         logger.info("\n%s", t)
+
+    def test_json_patch_delete(self):
+        current_str = """
+        {
+            "name": "bruce.wu",
+            "age": 30,
+            "gender": 1,
+            "address": {
+                "country": "China",
+                "province": "Jiangsu",
+                "city": "Nanjing"
+            },
+            "steps": [1, 2, 3],
+            "positions": [
+                {"id": 1000, "name": "Developer"},
+                {"id": 1001, "name": "Designer"}
+            ]
+        }
+        """
+
+        patch_str = """
+        {
+            "name": "wukai",
+            "age": 31,
+            "address": {
+                "city": "Nantong"
+            },
+            "steps": [4],
+            "positions": [
+                {"id": 1000, "name": "Developer"}
+            ]
+        }
+        """
+
+        delete_str = """
+        {
+            "age": 10,
+            "steps": [1, 2],
+            "positions": [
+                {"id": 1001, "name": "Designer"}
+            ]
+        }
+        """
+
+        f1, current, _ = config_handler.parse_content(current_str)
+
+        f2, patch, _ = config_handler.parse_content(patch_str)
+        config_handler.json_patch(patch, current)
+        logger.info("patch result: %s", config_handler.json_to_string(current))
+
+        f3, delete, _ = config_handler.parse_content(delete_str)
+        config_handler.json_delete(delete, current)
+        logger.info("delete result: %s", config_handler.json_to_string(current))

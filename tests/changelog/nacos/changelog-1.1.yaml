@@ -30,3 +30,20 @@ nacosChangeLog:
           deleteContent: |-
             delete.aaa = 9
             delete.ccc = fff
+        - namespace: blue
+          group: group
+          dataId: config.json
+          format: json
+          patchContent: |-
+            {
+              "name": "wukai",
+              "address": {
+                "city": "Nantong"
+              }
+            }
+          deleteContent: |-
+            {
+              "age": 30,
+              "steps": [1],
+              "positions": [ {"id": 1001, "name": "Designer"} ]
+            }
