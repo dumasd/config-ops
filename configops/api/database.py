@@ -1,14 +1,14 @@
 """ 执行SQL操作 """
 
 from flask import Blueprint, request, make_response, jsonify, current_app, Response
-import re, logging, os, json, collections, subprocess, platform, string, random
+import re, logging, os, json, collections, subprocess, platform, string, random, shlex
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from sqlalchemy import create_engine, text
 from marshmallow import Schema, fields, ValidationError, EXCLUDE
 from configops.config import get_database_cfg, get_java_home_dir, get_liquibase_cfg
-from configops.utils.constants import DIALECT_DRIVER_MAP, extract_version, parse_args
+from configops.utils.constants import DIALECT_DRIVER_MAP, extract_version
 from configops.utils import secret_util
 
 logger = logging.getLogger(__name__)
@@ -271,7 +271,7 @@ def run_liquibase():
 
     logger.info(f"Liquibase command: {cmd_args_str}")
 
-    args = parse_args(cmd_args_str.strip())
+    args = shlex.split(cmd_args_str.strip())
     # args = re.split(r"\s+", cmd_args_str.strip())
 
     try:

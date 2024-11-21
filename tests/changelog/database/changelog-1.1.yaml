@@ -2,7 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: maven-example-1.1.1-release
       author: henry.hua
-      labels: gradle-example
+      labels: before
       context: gradle-example
       comment: example-comment
       runOnChange: true
