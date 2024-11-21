@@ -46,3 +46,28 @@ def extract_version(name):
         suffix = match.group(2) or ""
         return version_numbers, suffix
     return (0,), ""  # 默认返回最小版本
+
+
+def parse_args(input_args: str) -> list:
+    """
+    Parse input args string to list
+    """
+    result = []
+    buffer = []
+    inside_quotes = False
+
+    for char in input_args:
+        if char == '"':  # 切换双引号状态
+            inside_quotes = not inside_quotes
+            buffer.append(char)  # 保留双引号
+        elif char == " " and not inside_quotes:  # 遇到空格且不在双引号内
+            if buffer:
+                result.append("".join(buffer))
+                buffer = []
+        else:
+            buffer.append(char)
+
+    if buffer:
+        result.append("".join(buffer))
+
+    return result

@@ -1,4 +1,4 @@
-import re, logging, os
+import re, logging, os, shlex
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,30 @@ class TestString:
         f = "/Users/wukai/IdeaProjects/Opensource/config-ops/tests/changelog/changelog-root.yaml"
         logger.info(os.path.isfile(f))
 
+    def test_shlex(self):
+        def split_with_quotes(input_string):
+            lexer = shlex.shlex(input_string, posix=True)
+            lexer.whitespace_split = True
+            lexer.quotes = '"'
+            result = []
+            for token in lexer:
+                # 如果 token 是双引号括起来的内容，重新加上双引号
+                if " " in token and not token.startswith('"'):
+                    result.append(f'"{token}"')
+                else:
+                    result.append(token)
+            return result
+
+        result = split_with_quotes(
+            '--changelog-file=changelog-root.yaml --label-filter="before and api"'
+        )
+        logger.info(f"split_with_quotes: {result}")
+
+        result = shlex.split(
+            '--changelog-file=changelog-root.yaml --label-filter="before and api"'
+        )
+        logger.info(f"shlex split: {result}")
+
 
 class TestRegex:
     """
@@ -65,3 +89,37 @@ class TestRegex:
         sorted_filenames = sorted(filenames, key=self.__extract_version)
         logger.info(f"sort files {sorted_filenames}")
         pass
+
+    def test_arguments(self):
+        input_string = (
+            ' --changelog-file=changelog-root.yaml    --label-filter="before and api" '
+        )
+        result = re.findall(
+            r'"[^"]*"|\S+',
+            input_string,
+        )
+        logger.info(f"regex list: {result}")
+
+        def parse_args_with_quotes(input_string):
+            result = []
+            buffer = []
+            inside_quotes = False
+
+            for char in input_string:
+                if char == '"':  # 切换双引号状态
+                    inside_quotes = not inside_quotes
+                    buffer.append(char)  # 保留双引号
+                elif char == " " and not inside_quotes:  # 遇到空格且不在双引号内
+                    if buffer:
+                        result.append("".join(buffer))
+                        buffer = []
+                else:
+                    buffer.append(char)
+
+            if buffer:
+                result.append("".join(buffer))
+
+            return result
+
+        result = parse_args_with_quotes(input_string)
+        logger.info(f"parse_args_with_quotes: {result}")

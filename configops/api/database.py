@@ -8,7 +8,7 @@ from enum import Enum
 from sqlalchemy import create_engine, text
 from marshmallow import Schema, fields, ValidationError, EXCLUDE
 from configops.config import get_database_cfg, get_java_home_dir, get_liquibase_cfg
-from configops.utils.constants import DIALECT_DRIVER_MAP, extract_version
+from configops.utils.constants import DIALECT_DRIVER_MAP, extract_version, parse_args
 from configops.utils import secret_util
 
 logger = logging.getLogger(__name__)
@@ -270,7 +270,9 @@ def run_liquibase():
             cmd_args_str = cmd_args_str + " --changelog-file " + changelogFile
 
     logger.info(f"Liquibase command: {cmd_args_str}")
-    args = re.split(r"\s+", cmd_args_str.strip())
+
+    args = parse_args(cmd_args_str.strip())
+    # args = re.split(r"\s+", cmd_args_str.strip())
 
     try:
         custom_env = os.environ.copy()
