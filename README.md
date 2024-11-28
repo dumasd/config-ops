@@ -69,6 +69,9 @@ python3 -m venv .venv
 # 安装依赖
 pip3 install -r requirements.txt
 
+# 启动应用
+python3 -m flask --app configops/app.py run
+
 # Run Tests
 python3 -m pytest ./tests
 
