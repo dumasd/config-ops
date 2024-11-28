@@ -34,7 +34,7 @@ def validate_properties(content):
             write_empty_values=True,
         )
         return True, "OK"
-    except configparser.Error as e:
+    except BaseException as e:
         logger.error(f"Properties is invalid:{e}")
         return False, f"Properties is invalid:{e}"
 

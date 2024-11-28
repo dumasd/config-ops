@@ -347,10 +347,10 @@ def get_change_set():
         return dict(zip(keys, result))
     except ChangeLogException as err:
         logger.error("Nacos changelog invalid.", exc_info=True)
-        return make_response(f"Nacos changelog invalid. {err}", 400)
+        return make_response(f"Nacos changelog invalid. {str(err)}", 400)
     except KeyError as err:
         logger.error("Vars missing key", exc_info=True)
-        return make_response(f"Vars missing key: {err}", 400)
+        return make_response(f"Vars missing key: {str(err)}", 400)
 
 
 @bp.route("/nacos/v1/apply_change_set", methods=["POST"])

@@ -159,7 +159,7 @@ class NacosChangeLog:
                                 )
                                 if not suc:
                                     raise ChangeLogException(
-                                        f"patchContent is not valid. changeSetId:{id}, namespace:{namespace}, group:{group}, dataId:{dataId}, [{format}] type. {msg}"
+                                        f"PatchContent Invalid!!! changeLogFile: {self.changelogFile}, changeSetId: {id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {format}. errorMsg: {msg}"
                                     )
 
                             if len(deleteContent.strip()) > 0:
@@ -168,7 +168,7 @@ class NacosChangeLog:
                                 )
                                 if not suc:
                                     raise ChangeLogException(
-                                        f"deleteContent is not valid. changeSetId:{id}, namespace:{namespace}, group:{group}, dataId:{dataId}, [{format}] type. {msg}"
+                                        f"DeleteContent Invalid!!! changeLogFile: {self.changelogFile}, changeSetId: {id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {format}. errorMsg: {msg}"
                                     )
 
                         if not ignore:
