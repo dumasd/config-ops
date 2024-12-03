@@ -3,7 +3,7 @@
 from flask import current_app
 from ruamel.yaml import YAML
 from configops.utils.constants import CONFIG_ENV_NAME, CONFIG_FILE_ENV_NAME
-from marshmallow import Schema, fields, ValidationError, EXCLUDE
+from marshmallow import Schema, fields, validate, ValidationError, EXCLUDE
 import os
 import logging
 
@@ -63,6 +63,15 @@ class NacosConfig(Schema):
     secretmanager = fields.Nested(SecretManager, required=False)
 
 
+class EsConfig(Schema):
+    url = fields.Str(required=True)
+    username = fields.Str(required=False)
+    password = fields.Str(required=False)
+    api_id = fields.Str(required=False)
+    api_key = fields.Str(required=False)
+    secretmanager = fields.Nested(SecretManager, required=False)
+
+
 def load_config(config_file=None):
     """加载YAML配置"""
     yaml = YAML()
@@ -107,7 +116,7 @@ def get_aws_cfg():
 
 def get_nacos_cfg(nacos_id):
     """
-    Get Nacos info
+    Get Nacos configuration
 
     :type nacos_id: str
     :param nacos_id: nacos id
@@ -125,7 +134,7 @@ def get_nacos_cfg(nacos_id):
 
 def get_database_cfg(db_id):
     """
-    Get database info
+    Get database configuration
 
     :type db_id: str
     :param db_id: database id
@@ -139,6 +148,24 @@ def get_database_cfg(db_id):
         return None
     schema = DbConfig()
     return schema.load(db_cfg)
+
+
+def get_elasticsearch_cfg(es_id):
+    """
+    Get elasticsearch configuration
+
+    :type db_id: str
+    :param db_id: database id
+
+    :rtype: map
+    :return: database info
+    """
+    es_cfgs = current_app.config["elasticsearch"]
+    cfg = es_cfgs.get(es_id, None)
+    if cfg == None:
+        return None
+    data = EsConfig().load(cfg)
+    return data
 
 
 def get_java_home_dir(app):

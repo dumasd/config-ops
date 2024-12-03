@@ -1,7 +1,7 @@
-from flask import Blueprint, jsonify, make_response, request, current_app
-import logging, jsonschema
+import logging
+from flask import Blueprint, make_response, request, current_app
 from configops.utils import constants, config_handler, config_validator
-from marshmallow import Schema, fields, ValidationError, EXCLUDE
+from marshmallow import Schema, fields, EXCLUDE
 from configops.utils import nacos_client
 from configops.utils.exception import ConfigOpsException, ChangeLogException
 from configops.changelog.nacos_change import NacosChangeLog, apply_changes
@@ -94,12 +94,7 @@ def get_nacos_list():
 @bp.route("/nacos/v1/config", methods=["GET"])
 def get_config():
     """获取指定配置"""
-    schema = ModifyPreviewSchema()
-    data = None
-    try:
-        data = schema.load(request.args)
-    except ValidationError as err:
-        return jsonify(err.messages), 400
+    data = ModifyPreviewSchema().load(request.args)
     nacos_id = data.get("nacosId")
     namespace = data.get("namespace")
     group = data.get("group")
@@ -157,12 +152,7 @@ def get_namespace_list():
 
 @bp.route("/nacos/v1/configs", methods=["POST"])
 def get_configs():
-    schema = GetConfigsSchema()
-    data = None
-    try:
-        data = schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
+    data = GetConfigsSchema().load(request.get_json())
     nacos_id = data.get("nacosId")
     namespaces = data.get("namespaces")
     nacosCfg = get_nacos_cfg(nacos_id)
@@ -190,13 +180,7 @@ def modify_preview():
     """
     修改预览
     """
-    schema = ModifyPreviewSchema()
-    data = None
-    try:
-        data = schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
-
+    data = ModifyPreviewSchema().load(request.get_json())
     nacos_id = data.get("nacosId")
     nacosCfg = get_nacos_cfg(nacos_id)
     if nacosCfg == None:
@@ -269,13 +253,7 @@ def modify_preview():
 @bp.route("/nacos/v1/config/modify", methods=["PUT"])
 def modify_confirm():
     """修改配置"""
-    schema = ModifyConfirmSchema()
-    data = None
-    try:
-        data = schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
-
+    data = ModifyConfirmSchema().load(request.get_json())
     nacos_id = data.get("nacosId")
     namespace = data.get("namespace")
     group = data.get("group")
@@ -317,18 +295,11 @@ def modify_confirm():
 
 @bp.route("/nacos/v1/get_change_set", methods=["POST"])
 def get_change_set():
-    schema = GetChangeSetSchema()
-    data = None
-    try:
-        data = schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
-
+    data = GetChangeSetSchema().load(request.get_json())
     nacos_id = data["nacosId"]
-
     nacosCfg = get_nacos_cfg(nacos_id)
     if nacosCfg is None:
-        return make_response("Nacos instance not found", 404)
+        return make_response(f"Nacos ID not found in config file: {nacos_id}", 404)
 
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosCfg.get("url"),
@@ -355,19 +326,14 @@ def get_change_set():
 
 @bp.route("/nacos/v1/apply_change_set", methods=["POST"])
 def apply_change_set():
-    schema = ApplyChangeSetSchema()
-    data = None
-    try:
-        data = schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
+    data = ApplyChangeSetSchema().load(request.get_json())
     nacos_id = data.get("nacosId")
     change_set_ids = data.get("changeSetIds")
     changes = data.get("changes")
 
     nacosCfg = get_nacos_cfg(nacos_id)
     if nacosCfg == None:
-        return make_response("Nacos instance not found", 404)
+        return make_response(f"Nacos ID not found in config file: {nacos_id}", 404)
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=nacosCfg.get("url"),
         username=nacosCfg.get("username"),
@@ -375,7 +341,6 @@ def apply_change_set():
     )
 
     def push_changes():
-        pass
         for change in changes:
             namespace = change.get("namespace")
             group = change.get("group")

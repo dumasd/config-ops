@@ -1,9 +1,11 @@
-from flask import Flask
+from flask import Flask, jsonify
 import argparse
 import logging
+from marshmallow import ValidationError
+from configops.api.common import bp as common_bp
 from configops.api.nacos import bp as nacos_bp
 from configops.api.database import bp as database_bp
-from configops.api.common import bp as common_bp
+from configops.api.elasticsearch import bp as elasticsearch_bp
 from configops.config import load_config
 from configops.utils.logging_configurator import DefaultLoggingConfigurator
 from configops.database import db
@@ -20,13 +22,20 @@ def create_app(config_file=None):
 
     @app.errorhandler(Exception)
     def handle_exception(error):
-        error_handler_logger.error("f Catch exception {error}", exc_info=True)
+        error_handler_logger.error("f Catch global exception {error}", exc_info=True)
         type_name = type(error).__name__
         return f"{type_name}: {error}", 500
 
-    app.register_blueprint(database_bp)
-    app.register_blueprint(nacos_bp)
+    @app.errorhandler(ValidationError)
+    def handle_validation_error(error):
+        error_handler_logger.error("f Catch validation error {error}", exc_info=True)
+        return jsonify(error.messages), 400
+
     app.register_blueprint(common_bp)
+    app.register_blueprint(nacos_bp)
+    app.register_blueprint(database_bp)
+    app.register_blueprint(elasticsearch_bp)
+
     config = load_config(config_file)
     if config is not None:
         app.config.update(config)

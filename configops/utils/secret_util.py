@@ -61,7 +61,7 @@ def __get_or_create_botocore_cache(profile: str) -> SecretCache:
         return botocore_client_map[profile_key]
 
 
-def get_secret_data(cfg: map) -> SecretData:
+def get_secret_data(cfg: map, password_name="password") -> SecretData:
     secret_mgt = cfg.get("secretmanager", None)
     if secret_mgt:
         aws_secret_mgt = secret_mgt.get("aws", None)
@@ -73,4 +73,4 @@ def get_secret_data(cfg: map) -> SecretData:
             secret_string = secret_cache.get_secret_string(secretid)
             db_info = json.loads(secret_string)
             return SecretData(password=db_info["password"])
-    return SecretData(password=cfg["password"])
+    return SecretData(password=cfg[password_name])

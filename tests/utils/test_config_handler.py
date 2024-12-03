@@ -1,7 +1,6 @@
 from configops.utils import config_handler, constants
 import io
 import logging
-from jproperties import Properties
 
 logger = logging.getLogger(__name__)
 
@@ -127,25 +126,6 @@ mfc.detail.es.cluster.server.serverName =
         f2, patch, yml2 = config_handler.parse_content(patch_str)
         config_handler.properties_patch(patch, current)
         logger.info("\n%s", config_handler.properties_to_string(current))
-
-    def test_jproperties(self):
-        current_str = """#comment
-        key1=value1
-        extra_key=value_extra
-        nested.key3=value3
-        # comment2222
-        nested.key-1.key-1-1=value_prod
-        nested.arr[0].key1=aaa1
-        nested.arr[0].key2=aaa2
-        nested.arr[1].key1=bbb_prod1
-        nested.arr[1].key2=bbb_prod2
-        """
-        p = Properties()
-        p.load(current_str, encoding="utf-8")
-        output_stream = io.BytesIO()
-        p.store(out_stream=output_stream, encoding="utf-8")
-        t = output_stream.getvalue()
-        logger.info("\n%s", t)
 
     def test_json_patch_delete(self):
         current_str = """

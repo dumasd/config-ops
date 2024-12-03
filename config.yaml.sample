@@ -6,7 +6,7 @@ logging:
 # Nacos配置
 nacos:
   default: # Nacos ID
-    url: http://localhost:8848
+    url: http://localhost:8848  # 必须加端口
     username: nacos
     password: nacos
     # 使用了三方平台管理密码
@@ -35,6 +35,22 @@ database:
     #     # 密钥ID
     #     secretid: "secret_id"
 
+# elasticsearch配置
+elasticsearch:
+  local: # ES ID
+    url: http://localhost:9200
+    # username: admin               # Elasticsearch 用户名，没有注释掉
+    # password: "1234"              # Elasticsearch 密码，没有注释掉
+    # api_id: "api_id"              # Elasticsearch 8.x，API 密钥认证，没有注释掉
+    # api_key: "api_key"            # Elasticsearch 8.x，API 密钥认证，没有注释掉
+    # 使用了三方平台管理密码
+    # secretmanager:
+    #  aws:
+    #      # 使用哪个 aws config profile访问aws-secretmanager
+    #      profile: default
+    #      # 密钥名称
+    #      secretid: secret_name
+
 # aws 配置
 aws:
   # aws credentials 文件位置，不配置默认 ~/.aws/credentials
@@ -48,6 +64,9 @@ aws:
 
 # 应用配置
 config:
+  # 老数据库连接uri，用于将数据迁移到新的database
+  old-database-uri: sqlite:///configops.db
+  # config-ops 使用的数据库，用来存储nacos、elasticsearch changelog执行记录。默认是本地sqlite，仅做测试使用，生产使用请切换到独立的数据库，如mysql
   database-uri: sqlite:///configops.db
   # 手动指定java-home目录，java版本必须在11及以上
   java-home-dir:

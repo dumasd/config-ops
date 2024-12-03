@@ -6,7 +6,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from sqlalchemy import create_engine, text
-from marshmallow import Schema, fields, ValidationError, EXCLUDE
+from marshmallow import Schema, fields, EXCLUDE
 from configops.config import get_database_cfg, get_java_home_dir, get_liquibase_cfg
 from configops.utils.constants import DIALECT_DRIVER_MAP, extract_version
 from configops.utils import secret_util
@@ -146,12 +146,7 @@ def get_database_list():
 
 @bp.route("/database/v1/run-sql", methods=["PUT"])
 def run_sql():
-    schema = RunSqlSchema()
-    data = None
-    try:
-        data = schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
+    data = RunSqlSchema().load(request.get_json())
     db_id = data.get("dbId")
     db_config = get_database_cfg(db_id)
     if db_config == None:
@@ -172,15 +167,8 @@ def run_liquibase():
     """
     执行liquibase命令
     """
-    data = None
-    try:
-        schema = RunLiquibaseCmdSchema()
-        data = schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
-
+    data = RunLiquibaseCmdSchema().load(request.get_json())
     cmd_args_str = "liquibase " + data["command"]
-
     db_id = data.get("dbId")
     if db_id:
         db_config = get_database_cfg(db_id)

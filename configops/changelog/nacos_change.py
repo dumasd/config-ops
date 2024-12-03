@@ -1,4 +1,5 @@
-import logging, os, yaml, hashlib, string, re
+import logging, os, string
+from configops.changelog import changelog_utils
 from configops.utils import config_handler, config_validator
 from configops.utils.constants import CHANGE_LOG_EXEXTYPE, SYSTEM_TYPE, extract_version
 from configops.utils.exception import ChangeLogException
@@ -117,7 +118,7 @@ class NacosChangeLog:
                     validator.validate(changeLogData)
                 except ValidationError as e:
                     raise ChangeLogException(
-                        f"Validation error: {self.changelogFile} \n{e}"
+                        f"Nacos changelog validation error: {self.changelogFile} \n{e}"
                     )
 
             base_dir = os.path.dirname(self.changelogFile)
@@ -180,7 +181,9 @@ class NacosChangeLog:
                         childLog = NacosChangeLog(changelogFile=f"{base_dir}/{file}")
                         for id in childLog.changeSetDict:
                             if id in changeSetDict:
-                                raise ChangeLogException(f"Repeat change set id {id}")
+                                raise ChangeLogException(
+                                    f"Repeat change set id: {id}. Please check your changelog"
+                                )
                             else:
                                 changeSetDict[id] = childLog.changeSetDict[id]
                         changeSets.extend(childLog.changeSets)
@@ -210,10 +213,6 @@ class NacosChangeLog:
         self.changeSetDict = changeSetDict
         self.changeSets = changeSets
 
-    def __change_set_checksum(self, changes):
-        changes_str = yaml.dump(changes, sort_keys=True)
-        return hashlib.sha256(changes_str.encode()).hexdigest()
-
     def fetch_multi(
         self,
         client: ConfigOpsNacosClient,
@@ -235,11 +234,13 @@ class NacosChangeLog:
             id = str(changeSetObj["id"])
             # 判断是否在指定的contexts里面
             changeSetCtx = changeSetObj.get("context")
-            if not self._is_ctx_included(contexts, changeSetCtx):
+            if not changelog_utils.is_ctx_included(contexts, changeSetCtx):
                 continue
 
             # 计算checksum
-            checksum = self.__change_set_checksum({"changes": changeSetObj["changes"]})
+            checksum = changelog_utils.get_change_set_checksum(
+                {"changes": changeSetObj["changes"]}
+            )
 
             is_execute = True
             if (
@@ -375,19 +376,6 @@ class NacosChangeLog:
             if item.get("dataId") == dataId:
                 return item, remoteConfigs
         return None, remoteConfigs
-
-    def _is_ctx_included(self, contexts: str, changeSetCtx: str) -> bool:
-        # 判断是否在指定的contexts里面
-        if contexts:
-            contextList = contexts.split(",")
-            if changeSetCtx:
-                changeSetCtxList = changeSetCtx.split(",")
-                for changeSetCtx in changeSetCtxList:
-                    if changeSetCtx in contextList:
-                        return True
-            return False
-        else:
-            return True
 
 
 def apply_change(change_set_id: str, nacos_id: str, func):

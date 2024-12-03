@@ -1,7 +1,7 @@
-from flask import Blueprint, jsonify, make_response, request, current_app
-import logging, sys
-from marshmallow import Schema, fields, ValidationError, EXCLUDE
-from configops.utils import config_handler, constants
+from flask import Blueprint, request
+import logging
+from marshmallow import Schema, fields, EXCLUDE
+from configops.utils import config_handler
 from jinja2 import Template
 
 bp = Blueprint("common", __name__)
@@ -26,12 +26,7 @@ class ReplaceJinjaTemplateSchema(Schema):
 
 @bp.route("/common/v1/patch_content", methods=["POST"])
 def patch_content():
-    schema = EditContentSchema()
-    data = None
-    try:
-        data = schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
+    data = EditContentSchema().load(request.get_json())
     content = data.get("content")
     edit = data.get("edit")
     type = data.get("format")
@@ -40,16 +35,10 @@ def patch_content():
 
 @bp.route("/common/v1/delete_content", methods=["POST"])
 def delete_content():
-    schema = EditContentSchema()
-    data = None
-    try:
-        data = schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
+    data = EditContentSchema().load(request.get_json())
     content = data.get("content")
     edit = data.get("edit")
     type = data.get("format")
-
     return config_handler.delete_by_str(content, edit, type)
 
 
@@ -63,12 +52,7 @@ def check_sql():
 
 @bp.route("/common/v1/replace_jinja_template", methods=["POST"])
 def replace_jinja_template():
-    schema = ReplaceJinjaTemplateSchema()
-    data = None
-    try:
-        data = schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
+    data = ReplaceJinjaTemplateSchema().load(request.get_json())
     templateFile = data.get("templateFile")
     outputFile = data.get("outputFile")
     vars = data.get("vars")
@@ -80,4 +64,4 @@ def replace_jinja_template():
 
     with open(outputFile, "w", encoding="utf-8") as file:
         file.write(renderStr)
-    return "OK"    
+    return "OK"

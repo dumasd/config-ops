@@ -28,5 +28,8 @@ replay_pid*
 **/.pytest_cache
 **/nacos-data
 
+# Local debug config.yaml
+config.yaml
+
 dist
 build
