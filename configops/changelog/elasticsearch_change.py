@@ -294,14 +294,14 @@ class ElasticsearchChangelog:
                             body=body,
                             headers={"Content-Type": "application/json"},
                         )
-                        change["sucess"] = True
+                        change["success"] = True
                         change["message"] = f"{resp}"
                     except Exception as e:
                         logger.error(
                             f"Execute elastic request error. changeSetId: {id}, path: {path}, method: {method}. {e}",
                             exc_info=True,
                         )
-                        change["sucess"] = False
+                        change["success"] = False
                         change["message"] = f"{e}"
                         raise ConfigOpsException(
                             f"Execute elastic request error. changeSetId: {id}, path: {path}, method: {method}. {e}"
