@@ -310,18 +310,24 @@ def json_patch(patch, current):
     :param current: current object
 
     """
-    for key in patch:
-        if key in current:
-            if isinstance(patch[key], dict) and isinstance(current[key], dict):
-                json_patch(patch[key], current[key])
-            elif isinstance(patch[key], list) and isinstance(current[key], list):
-                for idx, item in enumerate(patch[key]):
-                    if item not in current[key]:
-                        current[key].append(item)
+    if isinstance(patch, dict) and isinstance(current, dict):
+        for key in patch:
+            if key in current:
+                if isinstance(patch[key], dict) and isinstance(current[key], dict):
+                    json_patch(patch[key], current[key])
+                elif isinstance(patch[key], list) and isinstance(current[key], list):
+                    json_patch(patch[key], current[key])
+                else:
+                    current[key] = patch[key]
             else:
                 current[key] = patch[key]
-        else:
-            current[key] = patch[key]
+    elif isinstance(patch, list) and isinstance(current, list):
+        for idx, item in enumerate(patch):
+            if item not in current:
+                current.append(item)
+    else:
+        # 格式不对应，不处理
+        pass
 
 
 def json_patch_content(patch_content, current):
@@ -344,16 +350,22 @@ def json_patch_content(patch_content, current):
 
 
 def json_delete(delete, current):
-    for key in delete:
-        if key in current:
-            if isinstance(delete[key], dict) and isinstance(current[key], dict):
-                json_delete(delete[key], current[key])
-            elif isinstance(delete[key], list) and isinstance(current[key], list):
-                for idx, item in enumerate(delete[key]):
-                    if item in current[key]:
-                        current[key].remove(item)
-            else:
-                del current[key]
+    if isinstance(delete, dict) and isinstance(current, dict):
+        for key in delete:
+            if key in current:
+                if isinstance(delete[key], dict) and isinstance(current[key], dict):
+                    json_delete(delete[key], current[key])
+                elif isinstance(delete[key], list) and isinstance(current[key], list):
+                    json_delete(delete[key], current[key])
+                else:
+                    del current[key]
+    elif isinstance(delete, list) and isinstance(current, list):
+        for idx, item in enumerate(delete):
+            if item in current:
+                current.remove(item)
+    else:
+        # 格式不对应，不处理
+        pass
 
 
 def json_delete_content(delete_content, current):

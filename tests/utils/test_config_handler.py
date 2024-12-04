@@ -127,7 +127,16 @@ mfc.detail.es.cluster.server.serverName =
         config_handler.properties_patch(patch, current)
         logger.info("\n%s", config_handler.properties_to_string(current))
 
-    def test_json_patch_delete(self):
+    def __json_patch_delete(self, current_str, patch_str, delete_str):
+        result = config_handler.patch_by_str(current_str, patch_str, constants.JSON)
+        logger.info("patch result: %s", result["nextContent"])
+
+        result = config_handler.delete_by_str(
+            result["nextContent"], delete_str, constants.JSON
+        )
+        logger.info("delete result: %s", result["nextContent"])
+
+    def test_json_patch_delete_obj(self):
         current_str = """
         {
             "name": "bruce.wu",
@@ -169,13 +178,25 @@ mfc.detail.es.cluster.server.serverName =
             ]
         }
         """
+        self.__json_patch_delete(current_str, patch_str, delete_str)
 
-        f1, current, _ = config_handler.parse_content(current_str)
+    def test_json_patch_delete_array(self):
+        current_str = """
+        []
+        """
 
-        f2, patch, _ = config_handler.parse_content(patch_str)
-        config_handler.json_patch(patch, current)
-        logger.info("patch result: %s", config_handler.json_to_string(current))
+        patch_str = """
+            [
+            {"tableName":"gs_headend_dictionary","encryptFields":[{"name":"name","type":"TEXT"}],"primaryKeys":["id"],"keyFields":["vno_id"]},
+            {"tableName":"headend_source_policy","encryptFields":[{"name":"policy_name","type":"TEXT"}],"primaryKeys":["id"],"keyFields":["vno_id"]},
+            {"tableName":"tve_channel","encryptFields":[{"name":"name","type":"TEXT"},{"name":"description","type":"TEXT"},{"name":"aws_id","type":"FILE"}],"primaryKeys":["id"],"keyFields":["vno_id"]},
+            {"tableName":"gs_stream_live","encryptFields":[{"name":"remark","type":"TEXT"}],"primaryKeys":["id"],"keyFields":["vno_id"]}
+            ]
+        """
 
-        f3, delete, _ = config_handler.parse_content(delete_str)
-        config_handler.json_delete(delete, current)
-        logger.info("delete result: %s", config_handler.json_to_string(current))
+        delete_str = """
+        [
+        {"tableName":"gs_stream_live","encryptFields":[{"name":"remark","type":"TEXT"}],"primaryKeys":["id"],"keyFields":["vno_id"]}
+        ]
+        """
+        self.__json_patch_delete(current_str, patch_str, delete_str)
