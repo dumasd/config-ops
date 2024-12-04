@@ -163,6 +163,7 @@ mfc.detail.es.cluster.server.serverName =
                 "city": "Nantong"
             },
             "steps": [4],
+            "args": {"key": 1, "arr": [2, 3, 8]},
             "positions": [
                 {"id": 1000, "name": "Developer"}
             ]
@@ -173,6 +174,7 @@ mfc.detail.es.cluster.server.serverName =
         {
             "age": 10,
             "steps": [1, 2],
+            "args": {"arr": [8]},
             "positions": [
                 {"id": 1001, "name": "Designer"}
             ]
