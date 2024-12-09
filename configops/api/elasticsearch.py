@@ -113,7 +113,7 @@ def get_change_set():
         return result
     except ChangeLogException as err:
         logger.error("Elasticsearch changelog invalid.", exc_info=True)
-        return make_response(f"Nacos changelog invalid. {str(err)}", 400)
+        return make_response(f"Elasticsearch changelog invalid. {str(err)}", 400)
 
 
 @bp.route("/elasticsearch/v1/apply_change_set", methods=["POST"])
@@ -134,4 +134,4 @@ def apply_change_set():
         return esChangeLog.apply(client, esId, count, contexts, vars, True)
     except ChangeLogException as err:
         logger.error("Elasticsearch changelog invalid.", exc_info=True)
-        return make_response(f"Elasticsearch changelog invalid. {err}", 400)
+        return make_response(f"Elasticsearch changelog invalid. {str(err)}", 400)

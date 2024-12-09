@@ -378,5 +378,5 @@ def apply_change_set():
         apply_changes(change_set_ids, nacos_id, push_changes)
     except Exception as ex:
         logger.error(f"Apply config error. {ex}")
-        return make_response(f"Apply config error:{ex}", 500)
+        return make_response(f"Apply config error:{str(ex)}", 500)
     return "OK"
