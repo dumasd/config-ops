@@ -343,7 +343,7 @@ class ElasticsearchChangelog:
                         if body:
                             data = body.encode("utf-8")
                         resp = self.__request(
-                            es_cfg, method=method, path=path, body=data
+                            es_cfg, method=method, path=path, data=data
                         )
                         # resp = es_client.transport.perform_request(
                         #     url=path,
