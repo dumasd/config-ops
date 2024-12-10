@@ -1,8 +1,9 @@
-import logging, os, string
+import logging, os, string, base64, requests, urllib
+import urllib.parse
 from ruamel import yaml as ryaml
 from jsonschema import Draft7Validator, ValidationError
 from configops.changelog import changelog_utils
-from configops.utils import config_validator
+from configops.utils import config_validator, secret_util
 from configops.utils.constants import CHANGE_LOG_EXEXTYPE, SYSTEM_TYPE, extract_version
 from configops.database.db import db, ConfigOpsChangeLog
 from configops.utils.exception import ChangeLogException, ConfigOpsException
@@ -253,9 +254,58 @@ class ElasticsearchChangelog:
 
         return finalChangeSets
 
+    def __request(self, cfg, method, path, body):
+        url = cfg.get("url")
+        hosts = url.split(",")
+
+        username = cfg.get("username")
+        password = cfg.get("password")
+        api_id = cfg.get("api_id")
+        api_key = cfg.get("api_key")
+
+        credentials_type = None
+        if api_id:
+            credentials_type = 1
+            secretData = secret_util.get_secret_data(cfg, "app_key")
+            api_key = secretData.password
+        elif username:
+            credentials_type = 2
+            secretData = secret_util.get_secret_data(cfg, "password")
+            password = secretData.password
+
+        errorResponse = None
+        for host in hosts:
+            headers = {"Content-Type": "application/json"}
+            if credentials_type == 1:
+                encoded_key = base64.b64encode(
+                    f"{api_id}:{api_key}".encode("utf-8")
+                ).decode("utf-8")
+                headers["Authorization"] = f"ApiKey {encoded_key}"
+            elif credentials_type == 2:
+                encoded_key = base64.b64encode(
+                    f"{username}:{password}".encode("utf-8")
+                ).decode("utf-8")
+                headers["Authorization"] = f"Basic {encoded_key}"
+
+            response = requests.request(
+                method=method,
+                url=urllib.parse.urljoin(host, path),
+                headers=headers,
+                verify=False,
+            )
+            if response.status_code >= 200 and response.status_code < 300:
+                # 处理成功
+                return response
+            else:
+                errorResponse = response
+
+        raise ConfigOpsException(
+            f"status_code: {errorResponse.status_code} , text: {errorResponse.text}"
+        )
+
     def apply(
         self,
-        es_client,
+        es_cfg,
         elasticsearch_id: str,
         count: int = 0,
         contexts: str = None,
@@ -288,14 +338,17 @@ class ElasticsearchChangelog:
                     method = change["method"]
                     body = change.get("body")
                     try:
-                        resp = es_client.transport.perform_request(
-                            url=path,
-                            method=method,
-                            body=body,
-                            headers={"Content-Type": "application/json"},
+                        resp = self.__request(
+                            es_cfg, method=method, path=path, body=body
                         )
+                        # resp = es_client.transport.perform_request(
+                        #     url=path,
+                        #     method=method,
+                        #     body=body,
+                        #     headers={"Content-Type": "application/json"},
+                        # )
                         change["success"] = True
-                        change["message"] = f"{resp}"
+                        change["message"] = f"{resp.text}"
                     except Exception as e:
                         logger.error(
                             f"Execute elastic request error. changeSetId: {id}, path: {path}, method: {method}. {e}",

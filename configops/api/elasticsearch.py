@@ -55,17 +55,13 @@ def detect_version_and_create_client(cfg):
             headers["Authorization"] = f"Basic {encoded_key}"
 
         response = requests.get(host, headers=headers, verify=False)
-        if response.status_code >= 200 or response.status_code <= 299:
+        if response.status_code >= 200 and response.status_code <= 299:
             ver = response.json()["version"]["number"]
-            logger.info(f"Found Elasticsearch version: {ver}, hosts: {hosts}")
+            logger.info(
+                f"Found Elasticsearch version: {ver}, hosts: {hosts}, credentials_type: {credentials_type}"
+            )
             if ver.startswith("8."):
                 from elasticsearch8 import Elasticsearch
-
-                if api_id:
-                    secretData = secret_util.get_secret_data(cfg, "app_key")
-                    return Elasticsearch(
-                        hosts=hosts, api_id=api_id, api_key=secretData.password
-                    )
             elif ver.startswith("7."):
                 from elasticsearch7 import Elasticsearch
             elif ver.startswith("6."):
@@ -77,15 +73,15 @@ def detect_version_and_create_client(cfg):
 
             if credentials_type == 1:
                 return Elasticsearch(
-                    hosts=hosts,
+                    hosts,
                     api_id=api_id,
-                    api_key=secretData.password,
+                    api_key=api_key,
                     verify_certs=False,
                 )
             elif credentials_type == 2:
                 return Elasticsearch(
                     hosts=hosts,
-                    http_auth=(username, secretData.password),
+                    http_auth=(username, password),
                     verify_certs=False,
                 )
             else:
@@ -128,10 +124,10 @@ def apply_change_set():
     cfg = get_elasticsearch_cfg(esId)
     if cfg is None:
         return make_response(f"Elasticsearch id not found in config file: {esId}", 404)
-    client = detect_version_and_create_client(cfg)
+    # client = detect_version_and_create_client(cfg)
     try:
         esChangeLog = ElasticsearchChangelog(changelogFile=changelogFile)
-        return esChangeLog.apply(client, esId, count, contexts, vars, True)
+        return esChangeLog.apply(cfg, esId, count, contexts, vars, True)
     except ChangeLogException as err:
         logger.error("Elasticsearch changelog invalid.", exc_info=True)
         return make_response(f"Elasticsearch changelog invalid. {str(err)}", 400)
