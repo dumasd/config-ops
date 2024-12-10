@@ -289,6 +289,7 @@ class ElasticsearchChangelog:
 
             response = requests.request(
                 method=method,
+                data=body,
                 url=urllib.parse.urljoin(host, path),
                 headers=headers,
                 verify=False,
@@ -355,10 +356,8 @@ class ElasticsearchChangelog:
                             exc_info=True,
                         )
                         change["success"] = False
-                        change["message"] = f"{e}"
-                        raise ConfigOpsException(
-                            f"Execute elastic request error. changeSetId: {id}, path: {path}, method: {method}. {e}"
-                        )
+                        change["message"] = str(e)
+                        raise ConfigOpsException(str(e))
                 if log:
                     log.exectype = CHANGE_LOG_EXEXTYPE.EXECUTED.value
             except ConfigOpsException as e:

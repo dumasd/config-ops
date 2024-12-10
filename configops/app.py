@@ -24,7 +24,7 @@ def create_app(config_file=None):
     def handle_exception(error):
         error_handler_logger.error("f Catch global exception {error}", exc_info=True)
         type_name = type(error).__name__
-        return f"{type_name}: {error}", 500
+        return f"{type_name}: {str(error)}", 500
 
     @app.errorhandler(ValidationError)
     def handle_validation_error(error):
