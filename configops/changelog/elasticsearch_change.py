@@ -254,7 +254,7 @@ class ElasticsearchChangelog:
 
         return finalChangeSets
 
-    def __request(self, cfg, method, path, body):
+    def __request(self, cfg, method, path, data):
         url = cfg.get("url")
         hosts = url.split(",")
 
@@ -289,7 +289,7 @@ class ElasticsearchChangelog:
 
             response = requests.request(
                 method=method,
-                data=body,
+                data=data,
                 url=urllib.parse.urljoin(host, path),
                 headers=headers,
                 verify=False,
@@ -339,8 +339,11 @@ class ElasticsearchChangelog:
                     method = change["method"]
                     body = change.get("body")
                     try:
+                        data = None
+                        if body:
+                            data = body.encode("utf-8")
                         resp = self.__request(
-                            es_cfg, method=method, path=path, body=body
+                            es_cfg, method=method, path=path, body=data
                         )
                         # resp = es_client.transport.perform_request(
                         #     url=path,
