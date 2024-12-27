@@ -125,6 +125,7 @@ class NacosChangeLog:
 
             items = changeLogData.get("nacosChangeLog", None)
             if items:
+                includeFiles = []
                 for item in items:
                     changeSetObj = item.get("changeSet")
                     includeObj = item.get("include")
@@ -178,6 +179,11 @@ class NacosChangeLog:
                     elif includeObj:
                         # 引用了其他文件
                         file = includeObj["file"]
+                        if file in includeFiles:
+                            raise ChangeLogException(
+                                f"Repeat include file!!! changeLogFile: {self.changelogFile}, file: {file}"
+                            )
+                        includeFiles.append(file)
                         childLog = NacosChangeLog(changelogFile=f"{base_dir}/{file}")
                         for id in childLog.changeSetDict:
                             if id in changeSetDict:
@@ -200,7 +206,7 @@ class NacosChangeLog:
                 childLog = NacosChangeLog(changelogFile=file)
                 for id in childLog.changeSetDict:
                     if id in changeSetDict:
-                        raise ChangeLogException(f"Repeat change set id {id}")
+                        raise ChangeLogException(f"Repeat change set id: {id}. Please check your changelog")
                     else:
                         changeSetDict[id] = childLog.changeSetDict[id]
                 changeSets.extend(childLog.changeSets)

@@ -119,6 +119,7 @@ class ElasticsearchChangelog:
             items = changeLogData.get("elasticsearchChangeLog", None)
 
             if items:
+                includeFiles = []
                 for item in items:
                     changeSetObj = item.get("changeSet")
                     includeObj = item.get("include")
@@ -145,6 +146,11 @@ class ElasticsearchChangelog:
 
                     elif includeObj:
                         file = includeObj["file"]
+                        if file in includeFiles:
+                            raise ChangeLogException(
+                                f"Repeat include file!!! changeLogFile: {self.changelogFile}, file: {file}"
+                            )
+                        includeFiles.append(file)
                         childLog = ElasticsearchChangelog(
                             changelogFile=f"{base_dir}/{file}"
                         )
