@@ -31,5 +31,10 @@ replay_pid*
 # Local debug config.yaml
 config.yaml
 
+saml/settings.json
+saml/cert.pem
+saml/key.pem
+
 dist
 build
+flask_session

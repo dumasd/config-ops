@@ -351,12 +351,6 @@ class ElasticsearchChangelog:
                         resp = self.__request(
                             es_cfg, method=method, path=path, data=data
                         )
-                        # resp = es_client.transport.perform_request(
-                        #     url=path,
-                        #     method=method,
-                        #     body=body,
-                        #     headers={"Content-Type": "application/json"},
-                        # )
                         change["success"] = True
                         change["message"] = f"{resp.text}"
                     except Exception as e:

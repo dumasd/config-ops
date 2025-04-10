@@ -2,10 +2,9 @@
 
 import threading, logging, json, os
 import botocore
-import botocore.session
 from dataclasses import dataclass
 from configops import config as configops_config
-from aws_secretsmanager_caching import SecretCache, SecretCacheConfig
+import aws_secretsmanager_caching
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,9 @@ class SecretData:
     password: str
 
 
-def __get_or_create_botocore_cache(profile: str) -> SecretCache:
+def __get_or_create_botocore_cache(
+    profile: str,
+) -> aws_secretsmanager_caching.SecretCache:
     """Get or create botocore cache cleint.
 
     :type profile: str
@@ -54,8 +55,12 @@ def __get_or_create_botocore_cache(profile: str) -> SecretCache:
                 aws_secret_access_key=secret_key,
                 region_name=region,
             )
-            cache_config = SecretCacheConfig()  # See below for defaults
-            cache = SecretCache(config=cache_config, client=client)
+            cache_config = (
+                aws_secretsmanager_caching.SecretCacheConfig()
+            )  # See below for defaults
+            cache = aws_secretsmanager_caching.SecretCache(
+                config=cache_config, client=client
+            )
             botocore_client_map[profile_key] = cache
 
         return botocore_client_map[profile_key]

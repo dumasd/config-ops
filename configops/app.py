@@ -6,13 +6,19 @@ from configops.api.common import bp as common_bp
 from configops.api.nacos import bp as nacos_bp
 from configops.api.database import bp as database_bp
 from configops.api.elasticsearch import bp as elasticsearch_bp
+from configops.api.auth import bp as auth_bp
+from configops.api.auth import init_app as auth_init_app
 from configops.config import load_config
 from configops.utils.logging_configurator import DefaultLoggingConfigurator
 from configops.database import db
+from flask_socketio import SocketIO
+from configops.cluster import controller as clueter_controller
 
 logger = logging.getLogger(__name__)
 
 error_handler_logger = logging.getLogger("error_handler_logger")
+
+socketio = SocketIO(cors_allowed_origins="*")
 
 
 def create_app(config_file=None):
@@ -35,13 +41,18 @@ def create_app(config_file=None):
     app.register_blueprint(nacos_bp)
     app.register_blueprint(database_bp)
     app.register_blueprint(elasticsearch_bp)
+    app.register_blueprint(auth_bp)
 
     config = load_config(config_file)
     if config is not None:
         app.config.update(config)
     loggingConfig.configure_logging(app.config, debug_mode=False)
     db.init(app)
+    auth_init_app(app)
 
+    clueter_controller.register(socketio, app)
+
+    socketio.init_app(app)
     return app
 
 
@@ -61,6 +72,6 @@ if __name__ == "__main__":
     if args.debug:
         debug = True
     app = create_app(config_file=args.config)
-    app.run(host=args.host, port=args.port, debug=debug)
-
+    # app.run(host=args.host, port=args.port, debug=debug)
+    socketio.run(app, host=args.host, port=args.port, debug=debug)
     logger.info("Started flask app")

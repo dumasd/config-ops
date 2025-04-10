@@ -1,5 +1,5 @@
-""" 执行SQL操作 """
-
+# -*- coding: utf-8 -*-
+# @Author  : Bruce Wu
 from flask import Blueprint, request, make_response, jsonify, current_app, Response
 import re, logging, os, json, collections, subprocess, platform, string, random, shlex
 from datetime import date, datetime
@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint("database", __name__)
 
-
 class DatabaseJsonEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime):
@@ -28,7 +27,6 @@ class DatabaseJsonEncoder(json.JSONEncoder):
             return obj.name
         elif isinstance(obj, bytes):
             return str(obj, encoding="utf-8")
-            # return base64.b64encode(obj).decode("utf-8")
         else:
             return json.JSONEncoder.default(self, obj)
 
@@ -138,10 +136,10 @@ def execute_sql(database, sql_script, db_config):
 @bp.route("/database/v1/list", methods=["GET"])
 def get_database_list():
     configs = current_app.config["database"]
-    list = []
+    db_cfgs = []
     for k in configs:
-        list.append({"db_id": k})
-    return list
+        db_cfgs.append({"db_id": k})
+    return db_cfgs
 
 
 @bp.route("/database/v1/run-sql", methods=["PUT"])
@@ -260,7 +258,6 @@ def run_liquibase():
     logger.info(f"Liquibase command: {cmd_args_str}")
 
     args = shlex.split(cmd_args_str.strip())
-    # args = re.split(r"\s+", cmd_args_str.strip())
 
     try:
         custom_env = os.environ.copy()

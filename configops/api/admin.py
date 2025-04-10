@@ -6,3 +6,4 @@ from configops.utils import config_handler, constants
 bp = Blueprint("admin", __name__)
 
 logger = logging.getLogger(__name__)
+

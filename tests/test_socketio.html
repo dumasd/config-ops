@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SocketIO Test</title>
+</head>
+
+<body>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        const socketio = io("http://127.0.0.1:5000");
+        socketio.on("connect", () => {
+            console.log("Connected");
+            socketio.send("Hello from browser");
+        });
+
+        socketio.on("message", (data) => {
+            console.log("Received:", data);
+        });
+    </script>
+</body>
+
+</html>

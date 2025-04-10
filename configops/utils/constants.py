@@ -33,6 +33,14 @@ class SYSTEM_TYPE(Enum):
     REDIS = "REDIS"
 
 
+class NODE_ROLE(Enum):
+    CONTROLLER = "controller"
+    WORKER = "worker"
+
+    def matches(self, value):
+        return self.value == value
+
+
 DIALECT_DRIVER_MAP = {
     "mysql": "mysqlconnector",
     "postgresql": "psycopg2",

@@ -1,9 +1,9 @@
-# 日志配置
+###### logging configuration
 logging:
   level: INFO
   format: "[%(asctime)s] %(levelname)s %(name)s %(message)s"
 
-# Nacos配置
+###### Nacos configurations
 nacos:
   default: # Nacos ID
     url: http://localhost:8848  # 必须加端口
@@ -17,7 +17,7 @@ nacos:
     #      # 密钥名称
     #      secretid: secret_name
 
-# 数据库配置
+###### Database configurations
 database:
   local: # Database ID
     url: localhost
@@ -35,7 +35,7 @@ database:
     #     # 密钥ID
     #     secretid: "secret_id"
 
-# elasticsearch配置
+###### elasticsearch配置
 elasticsearch:
   local: # ES ID
     url: http://localhost:9200
@@ -51,7 +51,7 @@ elasticsearch:
     #      # 密钥名称
     #      secretid: secret_name
 
-# aws 配置
+###### AWS configuration
 aws:
   # aws credentials 文件位置，不配置默认 ~/.aws/credentials
   credentials: ~/.aws/credentials
@@ -62,10 +62,23 @@ aws:
   secret_key: "sk"
   region: "us-east-2"
 
-# 应用配置
+###### Application configuration
 config:
-  # 老数据库连接uri，用于将数据迁移到新的database
-  old-database-uri: sqlite:///configops.db
+  home_url: http://127.0.0.1:5000/oidc/callback
+  auth:
+    oidc:
+      enabled: false
+      issuer: https://your-oidc-idp.com
+      client_id: xxxxx
+      client_secret: xxxxxx
+      scope: "email openid profile"
+      groups_sync: groups
+      auto_login: false
+  node:
+    role: worker   # Node role: controller, worker
+    controller_url: https://example.com  # Controller node url
+    secret: 1235673213123 # secret
+    name: worker-1
   # config-ops 使用的数据库，用来存储nacos、elasticsearch changelog执行记录。默认是本地sqlite，仅做测试使用，生产使用请切换到独立的数据库，如mysql
   database-uri: sqlite:///configops.db
   # 手动指定java-home目录，java版本必须在11及以上

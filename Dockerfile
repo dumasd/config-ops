@@ -4,9 +4,9 @@ LABEL MATAINER="Bruce Wu"
 
 WORKDIR /opt/config-ops/
 
-ADD configops/ ./configops/
-ADD requirements.txt ./requirements.txt
-ADD config.yaml.sample ./config.yaml
+COPY configops/ ./configops/
+COPY requirements.txt ./requirements.txt
+COPY config.yaml.sample ./config.yaml
 
 RUN pip install --no-cache-dir -r requirements.txt
 

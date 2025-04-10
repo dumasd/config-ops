@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+# @Author  : Bruce Wu
 import logging
 from marshmallow import Schema, fields, EXCLUDE
 from configops.changelog.elasticsearch_change import ElasticsearchChangelog
@@ -27,7 +29,7 @@ def get_change_set():
     esId = data.get("esId")
     count = data.get("count", 0)
     contexts = data.get("contexts")
-    vars = data.get("vars", {})
+    variables = data.get("vars", {})
     changelogFile = data.get("changeLogFile")
 
     cfg = get_elasticsearch_cfg(esId)
@@ -36,7 +38,7 @@ def get_change_set():
 
     try:
         esChangeLog = ElasticsearchChangelog(changelogFile=changelogFile)
-        result = esChangeLog.fetch_multi(esId, count, contexts, vars, True)
+        result = esChangeLog.fetch_multi(esId, count, contexts, variables, True)
         return result
     except ChangeLogException as err:
         logger.error("Elasticsearch changelog invalid.", exc_info=True)
@@ -49,16 +51,15 @@ def apply_change_set():
     esId = data.get("esId")
     count = data.get("count", 0)
     contexts = data.get("contexts")
-    vars = data.get("vars", {})
+    variables = data.get("vars", {})
     changelogFile = data.get("changeLogFile")
 
     cfg = get_elasticsearch_cfg(esId)
     if cfg is None:
         return make_response(f"Elasticsearch id not found in config file: {esId}", 404)
-    # client = detect_version_and_create_client(cfg)
     try:
         esChangeLog = ElasticsearchChangelog(changelogFile=changelogFile)
-        return esChangeLog.apply(cfg, esId, count, contexts, vars, True)
+        return esChangeLog.apply(cfg, esId, count, contexts, variables, True)
     except ChangeLogException as err:
         logger.error("Elasticsearch changelog invalid.", exc_info=True)
         return make_response(f"Elasticsearch changelog invalid. {str(err)}", 400)

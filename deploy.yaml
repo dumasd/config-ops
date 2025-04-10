@@ -20,6 +20,7 @@ spec:
       labels:
         app: config-ops
     spec:
+      automountServiceAccountToken: false
       containers:
         - image: $IMAGE
           name: config-ops

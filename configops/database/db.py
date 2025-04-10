@@ -4,12 +4,12 @@ from sqlalchemy import String, Integer, DateTime, Index, UniqueConstraint
 import sqlalchemy
 import os
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
 
 class Base(DeclarativeBase):
-    pass
     created_at = mapped_column(
         DateTime,
         default=sqlalchemy.func.now(),
@@ -24,12 +24,6 @@ class Base(DeclarativeBase):
 
 
 db = SQLAlchemy(model_class=Base)
-
-
-class Test(Base):
-    __tablename__ = "test"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = db.Column(String(50), nullable=False)
 
 
 class ConfigOpsChangeLog(Base):
@@ -49,6 +43,67 @@ class ConfigOpsChangeLog(Base):
             "change_set_id", "system_type", "system_id", name="uix_change"
         ),
     )
+
+
+table_name_prefix = "configops_"
+
+
+class Workspace(Base):
+    __tablename__ = f"{table_name_prefix}workspace"
+    id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = mapped_column(String(50), nullable=False)
+    description = mapped_column(String(255), nullable=True)
+
+
+class Worker(Base):
+    __tablename__ = f"{table_name_prefix}worker"
+    id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    workspace_id = mapped_column(String(36), nullable=False)
+    name = mapped_column(String(50), nullable=False)
+    secret = mapped_column(String(255), nullable=False)
+    description = mapped_column(String(255), nullable=True)
+
+
+class ManagedObjects(Base):
+    __tablename__ = f"{table_name_prefix}managed_objects"
+    id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    worker_id = mapped_column(String(36), nullable=False)
+    key = mapped_column(String(128), nullable=False)
+    system_type = mapped_column(String(30), nullable=False)
+    url = mapped_column(String(512), nullable=False)
+
+
+class User(Base):
+    __tablename__ = f"{table_name_prefix}user"
+    id = mapped_column(String(32), primary_key=True, nullable=False)
+    email = mapped_column(String(64), nullable=True)
+    status = mapped_column(String(12), nullable=False, default="active")
+    source = mapped_column(String(32), nullable=False)
+
+
+class Group(Base):
+    __tablename__ = f"{table_name_prefix}group"
+    id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = mapped_column(String(50), nullable=False)
+    description = mapped_column(String(255), nullable=True)
+    type = mapped_column(String(10), nullable=False)
+    scope_id = mapped_column(String(36), nullable=False)
+
+
+class GroupPermission(Base):
+    __tablename__ = f"{table_name_prefix}group_permission"
+    id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    group_id = mapped_column(String(36), nullable=False)
+    permission_id = mapped_column(String(72), nullable=False)
+    module_id = mapped_column(String(72), nullable=False)
+
+
+class UserGroup(Base):
+    __tablename__ = f"{table_name_prefix}user_group"
+    id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = mapped_column(String(36), nullable=False)
+    group_id = mapped_column(String(36), nullable=False)
+    source_id = mapped_column(String(36), nullable=False)
 
 
 def init(app):
