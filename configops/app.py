@@ -83,6 +83,7 @@ def create_app(config_file=None):
         clueter_worker.register(app)
 
     socketio.init_app(app)
+    logger.info(f"Flask static folder: {app.static_folder}")
     return app
 
 
