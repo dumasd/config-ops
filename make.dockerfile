@@ -3,6 +3,7 @@ ARG PY_VER=3.10.17-slim-bookworm
 FROM docker.io/node:20.19-bookworm-slim AS configops-node
 
 ARG NPM_BUILD_CMD="build:pro"
+ARG NPM_NODE_OPTIONS="--max-old-space-size=4096"
 
 RUN apt-get update -qq \
     && apt-get install -yqq --no-install-recommends \
@@ -10,7 +11,8 @@ RUN apt-get update -qq \
     python3
 
 ENV BUILD_CMD=${NPM_BUILD_CMD} \
-    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    NODE_OPTIONS=${NPM_NODE_OPTIONS}
 # NPM ci first, as to NOT invalidate previous steps except for when package.json changes
 WORKDIR /app/configops-frontend
 
