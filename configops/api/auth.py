@@ -1,9 +1,4 @@
-from flask import (
-    Flask,
-    Blueprint,
-    session,
-    current_app,
-)
+from flask import Flask, Blueprint, session, current_app, make_response
 from flask_session import Session
 from authlib.integrations.flask_client import OAuth
 from configops.config import get_auth_config, get_config
@@ -96,8 +91,12 @@ def oidc_login():
 def oidc_callback():
     oidc = current_app.extensions.get(EXT_CONFIG_OPS_OIDC_NAME)
     oidc_config = __get_oidc_config(current_app)
+    try:
+        token = oidc.authorize_access_token()
+    except Exception as e:
+        logger.error(f"OIDC authorize_access_token error: {e}")
+        return make_response("Please relogin", 401)
 
-    token = oidc.authorize_access_token()
     userinfo = token["userinfo"]
     user_id = userinfo["sub"]
     name = userinfo.get("name", userinfo.get("nickname", user_id))
@@ -169,9 +168,6 @@ def oidc_callback():
     }
     session["permissions"] = permissions
     session["groups"] = groups
-    # session["access_token"] = token["access_token"]
-    # session["refresh_token"] = token.get("refresh_token")
-    # session["expires_at"] = time.time() + token["expires_in"]
     return BaseResult(data={"id": user.id, "name": user.name}).response()
 
 

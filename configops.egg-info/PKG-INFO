@@ -1,4 +1,4 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: configops
 Version: 0.2.3
 Summary: A devops config tool
@@ -32,6 +32,16 @@ Requires-Dist: mysql-connector-python==8.0.30
 Requires-Dist: sqlfluff>=3.1.1
 Requires-Dist: psycopg2-binary==2.9.9
 Requires-Dist: jsonschema==4.23.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
 
 # config-ops
 
@@ -104,6 +114,9 @@ python3 -m venv .venv
 # 安装依赖
 pip3 install -r requirements.txt
 
+# 修改config.yaml, 启动应用
+python3 -m flask --app configops/app.py run
+
 # Run Tests
 python3 -m pytest ./tests
 
@@ -114,6 +127,13 @@ pyinstaller app.spec
 pip3 install --upgrade setuptools wheel twine
 python3 setup.py sdist bdist_wheel
 python3 -m twine upload dist/*
+```
 
+
+
+```
+# gunicorn 启动应用
+pip install gunicorn
+gunicorn -w 4 'configops.app:create_app()'
 
 ```

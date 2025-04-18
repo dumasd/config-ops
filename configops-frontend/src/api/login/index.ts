@@ -39,7 +39,7 @@ export const oidcLoginApi = () => {
 }
 
 export const oidcCallbackApi = (params) => {
-  return request.get({ url: '/api/oidc/callback', params })
+  return request.get({ url: '/api/oidc/callback', params: params })
 }
 
 export const getAdminRoleApi = (
