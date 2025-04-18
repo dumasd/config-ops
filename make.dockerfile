@@ -14,14 +14,12 @@ ENV BUILD_CMD=${NPM_BUILD_CMD} \
 # NPM ci first, as to NOT invalidate previous steps except for when package.json changes
 WORKDIR /app/configops-frontend
 
-RUN --mount=type=bind,target=./package.json,src=./configops-frontend/package.json \
-    npm i -g pnpm \
-    pnpm install vite \
-    pnpm i
-
 COPY ./configops-frontend ./
+
 # This seems to be the most expensive step
-RUN pnpm run ${BUILD_CMD}
+RUN npm i -g pnpm \
+    npm install \
+    pnpm run ${BUILD_CMD}
 
 ######################################################################
 # Final lean image...
