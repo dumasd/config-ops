@@ -16,6 +16,7 @@ WORKDIR /app/configops-frontend
 
 RUN --mount=type=bind,target=./package.json,src=./configops-frontend/package.json \
     npm i -g pnpm \
+    pnpm install vite \
     pnpm i
 
 COPY ./configops-frontend ./
