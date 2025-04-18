@@ -49,11 +49,13 @@ class WorkerNamespace(socketio.ClientNamespace):
         database_cfg_map = get_config(self.app, "database")
         if database_cfg_map and len(database_cfg_map) > 0:
             for key, item in database_cfg_map.items():
+                host = item.get("url")
+                port = item.get("port", 3306)
                 data.append(
                     {
                         "id": key,
                         "system_type": SystemType.DATABASE.name,
-                        "url": f"{item.get("url")}:{item.get("port", 3306)}",
+                        "url": f"{host}:{port}",
                         "dialect": item.get("dialect", "mysql"),
                     }
                 )
