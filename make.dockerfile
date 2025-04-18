@@ -14,7 +14,7 @@ ENV BUILD_CMD=${NPM_BUILD_CMD} \
 # NPM ci first, as to NOT invalidate previous steps except for when package.json changes
 WORKDIR /app/configops-frontend
 
-COPY ./configops-frontend ./
+COPY ./configops-frontend/ ./
 
 # This seems to be the most expensive step
 RUN npm i -g pnpm \
