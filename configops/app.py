@@ -11,6 +11,7 @@ from configops.api.elasticsearch import bp as elasticsearch_bp
 from configops.api.auth import bp as auth_bp
 from configops.api.admin import bp as admin_bp
 from configops.api.dashboard import bp as dashboard_bp
+from configops.api.web import bp as web_bp
 from configops.api.auth import init_app as auth_init_app
 from configops.config import load_config, get_node_cfg
 from configops.utils import constants
@@ -67,6 +68,7 @@ def create_app(config_file=None):
         app.register_blueprint(auth_bp)
         app.register_blueprint(admin_bp)
         app.register_blueprint(dashboard_bp)
+        app.register_blueprint(web_bp)
     else:
         app.register_blueprint(nacos_bp)
         app.register_blueprint(database_bp)

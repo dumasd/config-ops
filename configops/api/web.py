@@ -1,13 +1,20 @@
 # flask-backend/app.py
-from flask import Flask, Blueprint, render_template
-import logging
+from flask import Flask, Blueprint, send_from_directory
+import logging, os
 
-bp = Blueprint("admin", __name__)
+bp = Blueprint("web", __name__)
 
 logger = logging.getLogger(__name__)
 
 
-@bp.route("/", defaults={"path": ""})
+@bp.route("/")
+def index():
+    return send_from_directory("static", "index.html")
+
+
 @bp.route("/<path:path>")
-def serve_vue(path):
-    return render_template("index.html")
+def static_proxy(path):
+    if "." in path:
+        return send_from_directory("static", path)
+    else:
+        return send_from_directory("static", "index.html")

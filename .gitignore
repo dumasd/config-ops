@@ -36,6 +36,8 @@ saml/settings.json
 saml/cert.pem
 saml/key.pem
 
+configops/static
+
 dist
 build
 flask_session
