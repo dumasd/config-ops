@@ -1,8 +1,6 @@
 ARG PY_VER=3.10.17-slim-bookworm
 
-# if BUILDPLATFORM is null, set it to 'amd64' (or leave as is otherwise).
-ARG BUILDPLATFORM=${BUILDPLATFORM:-amd64}
-FROM --platform=${BUILDPLATFORM} docker.io/node:20.19-bookworm-slim AS configops-node
+FROM docker.io/node:20.19-bookworm-slim AS configops-node
 
 ARG NPM_BUILD_CMD="build:pro"
 
