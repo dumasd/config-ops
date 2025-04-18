@@ -17,9 +17,9 @@ WORKDIR /app/configops-frontend
 COPY ./configops-frontend/ ./
 
 # This seems to be the most expensive step
-RUN npm i -g pnpm \
-    pnpm install \
-    pnpm run "${BUILD_CMD}"
+RUN npm i -g pnpm && \
+    pnpm install && \
+    pnpm run ${BUILD_CMD}
 
 ######################################################################
 # Final lean image...
