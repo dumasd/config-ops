@@ -18,7 +18,7 @@ COPY ./configops-frontend ./
 
 # This seems to be the most expensive step
 RUN npm i -g pnpm \
-    npm install \
+    pnpm install \
     pnpm run ${BUILD_CMD}
 
 ######################################################################
