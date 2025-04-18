@@ -41,6 +41,7 @@ spec:
               port: 5000
             initialDelaySeconds: 5
             timeoutSeconds: 10
+          imagePullPolicy: Always  
           env:
             - name: CONFIGOPS_CONFIG
               valueFrom:

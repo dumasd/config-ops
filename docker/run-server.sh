@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 HYPHEN_SYMBOL='-'
 
 gunicorn \
