@@ -10,10 +10,12 @@ from marshmallow import Schema, fields, EXCLUDE
 from configops.config import get_database_cfg, get_java_home_dir, get_liquibase_cfg
 from configops.utils.constants import DIALECT_DRIVER_MAP, extract_version
 from configops.utils import secret_util
+from configops.utils.exception import ConfigOpsException
 
 logger = logging.getLogger(__name__)
 
 bp = Blueprint("database", __name__)
+
 
 class DatabaseJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -84,7 +86,7 @@ def execute_sql(database, sql_script, db_config):
         dialect = db_config.get("dialect")
         driver = DIALECT_DRIVER_MAP.get(dialect)
         if driver is None:
-            raise Exception(f"Unsupported dialect {dialect}")
+            raise ConfigOpsException(f"Unsupported dialect {dialect}")
 
         conn_string = f"{dialect}+{driver}://{username}:{password}@{url}:{port}"
         if database is not None and len(database.strip()) > 0:
@@ -146,7 +148,7 @@ def get_database_list():
 def run_sql():
     data = RunSqlSchema().load(request.get_json())
     db_id = data.get("dbId")
-    db_config = get_database_cfg(db_id)
+    db_config = get_database_cfg(current_app, db_id)
     if db_config == None:
         return make_response("Database config not found", 404)
     success, result = execute_sql(data.get("database"), data.get("sql"), db_config)
@@ -169,7 +171,7 @@ def run_liquibase():
     cmd_args_str = "liquibase " + data["command"]
     db_id = data.get("dbId")
     if db_id:
-        db_config = get_database_cfg(db_id)
+        db_config = get_database_cfg(current_app, db_id)
         if db_config == None:
             return make_response("Database not found", 404)
 

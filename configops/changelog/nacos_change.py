@@ -1,7 +1,7 @@
 import logging, os, string
 from configops.changelog import changelog_utils
 from configops.utils import config_handler, config_validator
-from configops.utils.constants import CHANGE_LOG_EXEXTYPE, SYSTEM_TYPE, extract_version
+from configops.utils.constants import ChangelogExeType, SystemType, extract_version
 from configops.utils.exception import ChangeLogException
 from ruamel import yaml as ryaml
 from jsonschema import Draft7Validator, ValidationError
@@ -122,6 +122,7 @@ class NacosChangeLog:
                     )
 
             base_dir = os.path.dirname(self.changelogFile)
+            changelog_file_name = os.path.basename(self.changelogFile)
 
             items = changeLogData.get("nacosChangeLog", None)
             if items:
@@ -136,6 +137,7 @@ class NacosChangeLog:
                         if changeSetDict.get(id) is not None:
                             raise ChangeLogException(f"Repeat change set id {id}")
 
+                        changeSetObj["filename"] = changelog_file_name
                         changeSetDict[id] = changeSetObj
                         changes = changeSetObj["changes"]
 
@@ -206,7 +208,9 @@ class NacosChangeLog:
                 childLog = NacosChangeLog(changelogFile=file)
                 for id in childLog.changeSetDict:
                     if id in changeSetDict:
-                        raise ChangeLogException(f"Repeat change set id: {id}. Please check your changelog")
+                        raise ChangeLogException(
+                            f"Repeat change set id: {id}. Please check your changelog"
+                        )
                     else:
                         changeSetDict[id] = childLog.changeSetDict[id]
                 changeSets.extend(childLog.changeSets)
@@ -263,28 +267,29 @@ class NacosChangeLog:
                     .filter_by(
                         change_set_id=id,
                         system_id=nacos_id,
-                        system_type=SYSTEM_TYPE.NACOS.value,
+                        system_type=SystemType.NACOS.value,
                     )
                     .first()
                 )
                 if log is None:
                     log = ConfigOpsChangeLog()
                     log.change_set_id = id
-                    log.system_type = SYSTEM_TYPE.NACOS.value
+                    log.system_type = SystemType.NACOS.value
                     log.system_id = nacos_id
-                    log.exectype = CHANGE_LOG_EXEXTYPE.INIT.value
+                    log.exectype = ChangelogExeType.INIT.value
                     log.author = changeSetObj.get("author", "")
                     log.comment = changeSetObj.get("comment", "")
+                    log.filename = changeSetObj.get("filename", "")
                     log.checksum = checksum
                     db.session.add(log)
-                elif CHANGE_LOG_EXEXTYPE.FAILED.matches(
+                elif ChangelogExeType.FAILED.matches(
                     log.exectype
-                ) or CHANGE_LOG_EXEXTYPE.INIT.matches(log.exectype):
+                ) or ChangelogExeType.INIT.matches(log.exectype):
                     log.checksum = checksum
                 else:
                     runOnChange = changeSetObj.get("runOnChange", False)
                     if runOnChange and log.checksum != checksum:
-                        log.exectype = CHANGE_LOG_EXEXTYPE.INIT.value
+                        log.exectype = ChangelogExeType.INIT.value
                         log.checksum = checksum
                     else:
                         is_execute = False
@@ -390,7 +395,7 @@ def apply_change(change_set_id: str, nacos_id: str, func):
         .filter_by(
             change_set_id=change_set_id,
             system_id=nacos_id,
-            system_type=SYSTEM_TYPE.NACOS.value,
+            system_type=SystemType.NACOS.value,
         )
         .first()
     )
@@ -398,14 +403,14 @@ def apply_change(change_set_id: str, nacos_id: str, func):
     if log is None:
         raise ChangeLogException(f"Change log not found. change_set_id:{change_set_id}")
 
-    if CHANGE_LOG_EXEXTYPE.EXECUTED.matches(log.exectype):
+    if ChangelogExeType.EXECUTED.matches(log.exectype):
         raise ChangeLogException(f"Change log executed. change_set_id:{change_set_id}")
     # 执行操作
     try:
         func()
-        log.exectype = CHANGE_LOG_EXEXTYPE.EXECUTED.value
+        log.exectype = ChangelogExeType.EXECUTED.value
     except Exception as e:
-        log.exectype = CHANGE_LOG_EXEXTYPE.FAILED.value
+        log.exectype = ChangelogExeType.FAILED.value
         raise e
     finally:
         db.session.commit()
@@ -417,7 +422,7 @@ def apply_changes(change_set_ids, nacos_id: str, func):
         .filter(
             ConfigOpsChangeLog.change_set_id.in_(change_set_ids),
             ConfigOpsChangeLog.system_id == nacos_id,
-            ConfigOpsChangeLog.system_type == SYSTEM_TYPE.NACOS.value,
+            ConfigOpsChangeLog.system_type == SystemType.NACOS.value,
         )
         .all()
     )
@@ -431,9 +436,9 @@ def apply_changes(change_set_ids, nacos_id: str, func):
     try:
         func()
         for log in logs:
-            log.exectype = CHANGE_LOG_EXEXTYPE.EXECUTED.value
+            log.exectype = ChangelogExeType.EXECUTED.value
     except Exception as e:
-        log.exectype = CHANGE_LOG_EXEXTYPE.FAILED.value
+        log.exectype = ChangelogExeType.FAILED.value
         raise e
     finally:
         db.session.commit()

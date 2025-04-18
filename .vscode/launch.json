@@ -5,17 +5,43 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python 调试程序: Flask",
+            "name": "ConfigOps Controller Debug",
             "type": "debugpy",
             "request": "launch",
             "module": "flask",
             "env": {
                 "FLASK_APP": "configops/app.py",
                 "FLASK_DEBUG": "1",
-                // "CONFIGOPS_CONFIG_FILE": "${workspaceFolder}/config.yaml",
+                "CONFIGOPS_CONFIG_FILE": "${workspaceFolder}/config.yaml",
             },
             "args": [
                 "run",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "5000",
+                "--debug",
+                "--no-debugger",
+                "--no-reload"
+            ],
+            "jinja": true,
+            "autoStartBrowser": false,
+            "justMyCode": false
+        },
+        {
+            "name": "ConfigOps Worker Debug",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "flask",
+            "env": {
+                "FLASK_APP": "configops/app.py",
+                "FLASK_DEBUG": "1",
+                "CONFIGOPS_CONFIG_FILE": "${workspaceFolder}/config_worker.yaml",
+            },
+            "args": [
+                "run",
+                "--port",
+                "5001",                
                 "--debug",
                 "--no-debugger",
                 "--no-reload"

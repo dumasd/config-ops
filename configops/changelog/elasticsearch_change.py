@@ -4,7 +4,7 @@ from ruamel import yaml as ryaml
 from jsonschema import Draft7Validator, ValidationError
 from configops.changelog import changelog_utils
 from configops.utils import config_validator, secret_util
-from configops.utils.constants import CHANGE_LOG_EXEXTYPE, SYSTEM_TYPE, extract_version
+from configops.utils.constants import ChangelogExeType, SystemType, extract_version
 from configops.database.db import db, ConfigOpsChangeLog
 from configops.utils.exception import ChangeLogException, ConfigOpsException
 
@@ -116,6 +116,7 @@ class ElasticsearchChangelog:
                     )
 
             base_dir = os.path.dirname(self.changelogFile)
+            changelog_file_name = os.path.basename(self.changelogFile)
             items = changeLogData.get("elasticsearchChangeLog", None)
 
             if items:
@@ -129,6 +130,7 @@ class ElasticsearchChangelog:
                         changeSetObj["ignore"] = ignore
                         if changeSetDict.get(id):
                             raise ChangeLogException(f"Repeat change set id {id}")
+                        changeSetObj["filename"] = changelog_file_name
                         changeSetDict[id] = changeSetObj
                         changes = changeSetObj["changes"]
                         for change in changes:
@@ -162,6 +164,7 @@ class ElasticsearchChangelog:
                             else:
                                 changeSetDict[id] = childLog.changeSetDict[id]
                         changeSets.extend(childLog.changeSets)
+
         elif os.path.isdir(self.changelogFile):
             changelogfiles = []
             for dirpath, dirnames, filenames in os.walk(self.changelogFile):
@@ -180,6 +183,7 @@ class ElasticsearchChangelog:
                     else:
                         changeSetDict[id] = childLog.changeSetDict[id]
                 changeSets.extend(childLog.changeSets)
+                
         else:
             raise ChangeLogException(
                 f"Changelog file or folder does not exists: {self.changelogFile}"
@@ -216,28 +220,29 @@ class ElasticsearchChangelog:
                     .filter_by(
                         change_set_id=id,
                         system_id=elasticsearch_id,
-                        system_type=SYSTEM_TYPE.ELASTICSEARCH.value,
+                        system_type=SystemType.ELASTICSEARCH.value,
                     )
                     .first()
                 )
                 if log is None:
                     log = ConfigOpsChangeLog()
                     log.change_set_id = id
-                    log.system_type = SYSTEM_TYPE.ELASTICSEARCH.value
+                    log.system_type = SystemType.ELASTICSEARCH.value
                     log.system_id = elasticsearch_id
-                    log.exectype = CHANGE_LOG_EXEXTYPE.INIT.value
+                    log.exectype = ChangelogExeType.INIT.value
                     log.author = changeSetObj.get("author", "")
                     log.comment = changeSetObj.get("comment", "")
+                    log.filename = changeSetObj.get("filename", "")
                     log.checksum = checksum
                     db.session.add(log)
-                elif CHANGE_LOG_EXEXTYPE.FAILED.matches(
+                elif ChangelogExeType.FAILED.matches(
                     log.exectype
-                ) or CHANGE_LOG_EXEXTYPE.INIT.matches(log.exectype):
+                ) or ChangelogExeType.INIT.matches(log.exectype):
                     log.checksum = checksum
                 else:
                     runOnChange = changeSetObj.get("runOnChange", False)
                     if runOnChange and log.checksum != checksum:
-                        log.exectype = CHANGE_LOG_EXEXTYPE.INIT.value
+                        log.exectype = ChangelogExeType.INIT.value
                         log.checksum = checksum
                     else:
                         is_execute = False
@@ -336,7 +341,7 @@ class ElasticsearchChangelog:
                         .filter_by(
                             change_set_id=id,
                             system_id=elasticsearch_id,
-                            system_type=SYSTEM_TYPE.ELASTICSEARCH.value,
+                            system_type=SystemType.ELASTICSEARCH.value,
                         )
                         .first()
                     )
@@ -362,10 +367,10 @@ class ElasticsearchChangelog:
                         change["message"] = str(e)
                         raise ConfigOpsException(str(e))
                 if log:
-                    log.exectype = CHANGE_LOG_EXEXTYPE.EXECUTED.value
+                    log.exectype = ChangelogExeType.EXECUTED.value
             except ConfigOpsException as e:
                 if log:
-                    log.exectype = CHANGE_LOG_EXEXTYPE.FAILED.value
+                    log.exectype = ChangelogExeType.FAILED.value
             finally:
                 db.session.commit()
         return changeSets

@@ -10,24 +10,6 @@ import re
 logger = logging.getLogger(__name__)
 
 
-class Config:
-    NACOS_CONFIGS = {
-        "default": {
-            "url": "http://localhost:8848",
-            "username": "nacos",
-            "password": "nacos",
-            "blacklist": [
-                {"namespace": "public", "group": "DEFAULT_GROUP", "dataId": "sss:ssss"}
-            ],
-        },
-        "nacos1": {
-            "url": "http://localhost:8848",
-            "username": "nacos",
-            "password": "nacos",
-        },
-    }
-
-
 class AwsConfig(Schema):
     credentials = fields.Str(required=False)
     config = fields.Str(required=False)
@@ -83,6 +65,7 @@ class NodeConfig(Schema):
         validate=validate.OneOf(["controller", "worker"]),
     )
     controller_url = fields.Str(required=False, validate=validate.URL())
+    secret = fields.Str(required=False)
     name = fields.Str(required=False)
 
 
@@ -96,8 +79,9 @@ class OidcConfig(Schema):
     client_secret = fields.Str(required=True)
     issuer = fields.Str(required=True, validate=validate.URL())
     scope = fields.Str(required=False, dump_default="openid profile email")
-    auto_login = fields.Bool(required=False, dump_default=False)
     groups_sync = fields.Str(required=False)
+    auto_login = fields.Bool(required=False, dump_default=False)
+    login_txt = fields.Str(required=False, default="Sign in with OIDC")
 
 
 class AuthConfig(Schema):
@@ -179,7 +163,7 @@ def get_nacos_cfg(nacos_id):
     return schmea.load(nacos_cfg)
 
 
-def get_database_cfg(db_id):
+def get_database_cfg(app, db_id):
     """
     Get database configuration
 
@@ -189,8 +173,7 @@ def get_database_cfg(db_id):
     :rtype: map
     :return: database info
     """
-    db_cfgs = current_app.config["database"]
-    db_cfg = db_cfgs.get(db_id, None)
+    db_cfg = get_config(app, f"database.{db_id}")
     if db_cfg == None:
         return None
     schema = DbConfig()
@@ -219,11 +202,12 @@ def get_java_home_dir(app):
     """
     Get java_home dir
     """
-    cfg = app.config.get("config")
-    if cfg:
-        java_home = cfg.get("java-home-dir")
-        if java_home and len(java_home.strip()) > 0:
-            return java_home
+    java_home = get_config(app, "config.java-home-dir")
+    if java_home:
+        return java_home
+    java_home = get_config(app, "config.java_home_dir")
+    if java_home:
+        return java_home
     return None
 
 
@@ -231,11 +215,7 @@ def get_liquibase_cfg(app):
     """
     Get liquibase configuration
     """
-    cfg = app.config.get("config")
-    if cfg:
-        liquibase_cfg = cfg.get("liquibase")
-        return liquibase_cfg
-    return None
+    return get_config(app, "config.liquibase")
 
 
 def get_node_cfg(app):
@@ -243,6 +223,8 @@ def get_node_cfg(app):
     if cfg:
         schema = NodeConfig()
         return schema.load(cfg)
+    else:
+        return {"role": "worker"}
 
 
 def get_auth_config(app):

@@ -82,6 +82,13 @@ pyinstaller app.spec
 pip3 install --upgrade setuptools wheel twine
 python3 setup.py sdist bdist_wheel
 python3 -m twine upload dist/*
+```
 
+
+
+```
+# gunicorn 启动应用
+pip install gunicorn
+gunicorn -w 4 'configops.app:create_app()'
 
 ```

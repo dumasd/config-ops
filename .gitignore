@@ -30,6 +30,7 @@ replay_pid*
 
 # Local debug config.yaml
 config.yaml
+config_worker.yaml
 
 saml/settings.json
 saml/cert.pem

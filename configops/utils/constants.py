@@ -15,8 +15,15 @@ MYSQL = "mysql"
 POSTGRESQL = "postgresql"
 ORACLE = "oracle"
 
+X_WORKSPACE = "X-Workspace"
+X_WORKER = "X-Worker"
 
-class CHANGE_LOG_EXEXTYPE(Enum):
+CONTROLLER_NAMESPACE = "CONFIG_OPS_CONTROLLER_NAMESPACE"
+WORKER_NAMESPACE = "CONFIG_OPS_WORKER_NAMESPACE"
+CLUSTER_REQUEST_ID = "CLUSTER_REQUEST_ID"
+
+
+class ChangelogExeType(Enum):
     INIT = "INIT"
     EXECUTED = "EXECUTED"
     FAILED = "FAILED"
@@ -26,19 +33,55 @@ class CHANGE_LOG_EXEXTYPE(Enum):
         return self.value == value
 
 
-class SYSTEM_TYPE(Enum):
+class SystemType(Enum):
     NACOS = "NACOS"
     ELASTICSEARCH = "ELASTICSEARCH"
     DATABASE = "DATABASE"
     REDIS = "REDIS"
 
 
-class NODE_ROLE(Enum):
+class NodeRole(Enum):
     CONTROLLER = "controller"
     WORKER = "worker"
 
     def matches(self, value):
         return self.value == value
+
+
+class PermissionType(Enum):
+    WEB_MENU = "WEB_MENU"
+    WORKSPACE = "WORKSPACE"
+    WORKER = "WORKER"
+    OBJECT = "OBJECT"
+
+
+class PermissionModule(Enum):
+    # 系统管理维度
+    GROUP_MANAGE = "GROUP_MANAGE"  # 用户组管理
+    WORKSPACE_MANAGE = "WORKSPACE_MANAGE"  # 工作空间管理
+    WORKSPACE_PERMISSION_MANAGE = "WORKSPACE_PERMISSION_MANAGE"
+
+    # 工作空间维度
+    WORKSPACE = "WORKSPACE"
+    WORKSPACE_WORKER_MANAGE = "WORKSPACE_WORKER_MANAGE"
+    WORKER_MANAGED_OBJECT_MANAGE = "WORKER_MANAGED_OBJECT_MANAGE"
+    MANAGED_OBJECT_PERMISSION_MANAGE = "MANAGED_OBJECT_PERMISSION_MANAGE"
+
+    # object
+    MANAGED_OBJECT_CHANGELOG_MANAGE = "MANAGED_OBJECT_CHANGELOG_MANAGE"
+
+    @staticmethod
+    def check_workspace(module) -> bool:
+        return (
+            module == PermissionModule.WORKSPACE_WORKER_MANAGE.name
+            or module == PermissionModule.WORKER_MANAGED_OBJECT_MANAGE.name
+            or module == PermissionModule.MANAGED_OBJECT_PERMISSION_MANAGE.name
+            or module == PermissionModule.MANAGED_OBJECT_CHANGELOG_MANAGE.name
+        )
+
+    @staticmethod
+    def check_object(module) -> bool:
+        return module == PermissionModule.MANAGED_OBJECT_CHANGELOG_MANAGE.name
 
 
 DIALECT_DRIVER_MAP = {

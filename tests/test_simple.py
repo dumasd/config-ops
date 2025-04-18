@@ -1,4 +1,4 @@
-import re, logging, os, shlex
+import re, logging, os, shlex, hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,7 @@ class TestString:
     def test_file(self):
         f = "/Users/wukai/IdeaProjects/Opensource/config-ops/tests/changelog/changelog-root.yaml"
         logger.info(os.path.isfile(f))
+        logger.info(f"filename: {os.path.basename(f)}")
 
     def test_shlex(self):
         def split_with_quotes(input_string):
@@ -56,6 +57,9 @@ class TestString:
             '--changelog-file=changelog-root.yaml --label-filter="before and api"'
         )
         logger.info(f"shlex split: {result}")
+
+    def test_hash(self):
+        hashlib.sha256()    
 
 
 class TestRegex:

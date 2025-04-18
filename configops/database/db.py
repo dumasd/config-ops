@@ -1,6 +1,15 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import String, Integer, DateTime, Index, UniqueConstraint
+from sqlalchemy import (
+    String,
+    BigInteger,
+    Integer,
+    DateTime,
+    Index,
+    UniqueConstraint,
+    func,
+    select,
+)
 import sqlalchemy
 import os
 import logging
@@ -21,6 +30,11 @@ class Base(DeclarativeBase):
         onupdate=sqlalchemy.func.now(),
         nullable=False,
     )
+
+    def to_dict(self):
+        return {
+            column.key: getattr(self, column.key) for column in self.__table__.columns
+        }
 
 
 db = SQLAlchemy(model_class=Base)
@@ -62,20 +76,25 @@ class Worker(Base):
     name = mapped_column(String(50), nullable=False)
     secret = mapped_column(String(255), nullable=False)
     description = mapped_column(String(255), nullable=True)
+    __table_args__ = (UniqueConstraint("name", name="uniq_name"),)
 
 
 class ManagedObjects(Base):
     __tablename__ = f"{table_name_prefix}managed_objects"
     id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     worker_id = mapped_column(String(36), nullable=False)
-    key = mapped_column(String(128), nullable=False)
+    system_id = mapped_column(String(128), nullable=False)
     system_type = mapped_column(String(30), nullable=False)
     url = mapped_column(String(512), nullable=False)
+    __table_args__ = (
+        UniqueConstraint("worker_id", "system_type", "system_id", name="uniq_object_key"),
+    )
 
 
 class User(Base):
     __tablename__ = f"{table_name_prefix}user"
     id = mapped_column(String(32), primary_key=True, nullable=False)
+    name = mapped_column(String(255), primary_key=True, nullable=False)
     email = mapped_column(String(64), nullable=True)
     status = mapped_column(String(12), nullable=False, default="active")
     source = mapped_column(String(32), nullable=False)
@@ -86,16 +105,6 @@ class Group(Base):
     id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = mapped_column(String(50), nullable=False)
     description = mapped_column(String(255), nullable=True)
-    type = mapped_column(String(10), nullable=False)
-    scope_id = mapped_column(String(36), nullable=False)
-
-
-class GroupPermission(Base):
-    __tablename__ = f"{table_name_prefix}group_permission"
-    id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    group_id = mapped_column(String(36), nullable=False)
-    permission_id = mapped_column(String(72), nullable=False)
-    module_id = mapped_column(String(72), nullable=False)
 
 
 class UserGroup(Base):
@@ -103,8 +112,27 @@ class UserGroup(Base):
     id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = mapped_column(String(36), nullable=False)
     group_id = mapped_column(String(36), nullable=False)
-    source_id = mapped_column(String(36), nullable=False)
+    __table_args__ = (
+        UniqueConstraint("user_id", "group_id", name="uniq_user_id_group_id"),
+    )
 
+
+class GroupPermission(Base):
+    __tablename__ = f"{table_name_prefix}group_permission"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    group_id = mapped_column(String(36), nullable=False)
+    source_id = mapped_column(String(36), nullable=False)
+    type = mapped_column(String(10), nullable=False)
+    permission = mapped_column(String(128), nullable=False)
+
+
+def paginate(stmt, page: int = 1, size: int = 10):
+    total_stmt = select(func.count()).select_from(stmt.subquery())
+    total = db.session.execute(total_stmt).scalar()
+    items = (
+        db.session.execute(stmt.offset((page - 1) * size).limit(size)).all()
+    )
+    return items, total
 
 def init(app):
     if app.config.get("SQLALCHEMY_DATABASE_URI") is None:
