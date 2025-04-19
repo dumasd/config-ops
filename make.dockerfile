@@ -1,9 +1,9 @@
 ARG PY_VER=3.10.17-slim-bookworm
+ARG BASE_PATH="/"
+ARG NPM_BUILD_ENV="production"
 
 FROM docker.io/node:20.19-bookworm-slim AS configops-node
 
-ARG BASE_PATH="/"
-ARG NPM_BUILD_ENV="production"
 ARG NPM_NODE_OPTIONS="--max-old-space-size=4096"
 
 RUN apt-get update -qq \
