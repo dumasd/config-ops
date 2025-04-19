@@ -30,8 +30,9 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
   } else {
     env = loadEnv(mode, root)
   }
+  
   return {
-    base: env.VITE_BASE_PATH,
+    base: env.VITE_BASE_PATH || '/',
     plugins: [
       Vue({
         script: {

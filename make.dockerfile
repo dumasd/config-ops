@@ -14,15 +14,18 @@ RUN apt-get update -qq \
 
 ENV BUILD_CMD="build:${NPM_BUILD_ENV}" \
     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    NODE_OPTIONS=${NPM_NODE_OPTIONS}
+    NODE_OPTIONS=${NPM_NODE_OPTIONS} \
+    VITE_BASE_PATH=${BASE_PATH} \
+    VITE_API_BASE_PATH=${BASE_PATH}
+
 # NPM ci first, as to NOT invalidate previous steps except for when package.json changes
 WORKDIR /app/configops-frontend
 
 COPY ./configops-frontend/ ./
 
 # This seems to be the most expensive step
-RUN echo "VITE_BASE_PATH=${BASE_PATH}" >> .env.${NPM_BUILD_ENV} && \
-    echo "VITE_API_BASE_PATH=${BASE_PATH}" >> .env.${NPM_BUILD_ENV} && \
+RUN echo "VITE_BASE_PATH=${VITE_BASE_PATH}" >> .env.${NPM_BUILD_ENV} && \
+    echo "VITE_API_BASE_PATH=${VITE_API_BASE_PATH}" >> .env.${NPM_BUILD_ENV} && \
     npm i -g pnpm && \
     pnpm install && \
     pnpm run ${BUILD_CMD}
