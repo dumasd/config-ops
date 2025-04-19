@@ -28,8 +28,6 @@ def __get_oidc_config(app: Flask):
 
 
 def init_app(app: Flask):
-    app.secret_key = "Y7r/BnzmlNCurDns7wDQLNJBQ6eqF3UuvS3f7L01iAI3SZr6oiUlPX5H"
-
     redis_uri = get_config(app, "config.redis_uri")
     if not redis_uri:
         redis_uri = os.getenv("SQLALCHEMY_DATABASE_URI")
@@ -64,6 +62,12 @@ def init_app(app: Flask):
 @bp.route("/api/oidc/info", methods=["GET"])
 def oidc_info():
     oidc = current_app.extensions.get(EXT_CONFIG_OPS_OIDC_NAME)
+    application_root = os.getenv("FLASK_APPLICATION_ROOT", "/")
+    sso_url = (
+        "/api/oidc/login"
+        if application_root == "/"
+        else f"{application_root}/api/oidc/login"
+    )
     if oidc:
         oidc_config = __get_oidc_config(current_app)
         auto_login = oidc_config.get("auto_login", False)
@@ -73,7 +77,7 @@ def oidc_info():
                 "enabled": True,
                 "auto_login": auto_login,
                 "login_txt": login_txt,
-                "sso_url": "/api/oidc/login",
+                "sso_url": sso_url,
             }
         ).response()
     else:

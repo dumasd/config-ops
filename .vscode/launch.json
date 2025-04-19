@@ -13,7 +13,8 @@
                 "FLASK_APP": "configops/app.py",
                 "FLASK_DEBUG": "1",
                 "CONFIGOPS_CONFIG_FILE": "${workspaceFolder}/config.yaml",
-                "FLASK_APPLICATION_ROOT": "/configops"
+                "FLASK_APPLICATION_ROOT": "/configops",
+                "SECRET_KEY": "Y7r/BnzmlNCurDns7wDQLNJBQ6eqF3UuvS3f7L01iAI3SZr6oiUlPX5H"
             },
             "args": [
                 "run",
