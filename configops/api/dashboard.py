@@ -6,7 +6,7 @@ It is designed to [explain what the file does or its main use case].
 """
 
 from flask import Blueprint, jsonify, make_response, request, current_app, session
-import logging, asyncio, threading
+import logging, asyncio, threading, os
 from marshmallow import Schema, fields, EXCLUDE
 from configops.utils.constants import PermissionModule
 from configops.database.db import db, ManagedObjects, Worker, GroupPermission
@@ -16,7 +16,9 @@ from configops.utils.constants import CONTROLLER_NAMESPACE, X_WORKSPACE
 from configops.cluster.messages import Message, MessageType
 import sqlalchemy
 
-bp = Blueprint("workplace", __name__)
+bp = Blueprint(
+    "workplace", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/")
+)
 
 logger = logging.getLogger(__name__)
 

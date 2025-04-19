@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 # @Author  : Bruce Wu
-import logging
+import logging, os
 from marshmallow import Schema, fields, EXCLUDE
 from configops.changelog.elasticsearch_change import ElasticsearchChangelog
 from configops.utils.exception import ConfigOpsException, ChangeLogException
 from configops.config import get_elasticsearch_cfg
 from flask import Blueprint, make_response, request
 
-bp = Blueprint("elasticsearch", __name__)
+bp = Blueprint(
+    "elasticsearch", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/")
+)
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,4 @@
-import logging
+import logging, os
 from flask import Blueprint, make_response, request, current_app
 from configops.utils import constants, config_handler, config_validator
 from marshmallow import Schema, fields, EXCLUDE
@@ -7,7 +7,7 @@ from configops.utils.exception import ConfigOpsException, ChangeLogException
 from configops.changelog.nacos_change import NacosChangeLog, apply_changes
 from configops.config import get_nacos_cfg
 
-bp = Blueprint("nacos", __name__)
+bp = Blueprint("nacos", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/"))
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,9 @@ def get_change_set():
 
     try:
         nacosChangeLog = NacosChangeLog(changelogFile=changelogFile)
-        result = nacosChangeLog.fetch_multi(client, nacos_id, count, contexts, variables)
+        result = nacosChangeLog.fetch_multi(
+            client, nacos_id, count, contexts, variables
+        )
         keys = ["ids", "changes"]
         return dict(zip(keys, result))
     except ChangeLogException as err:

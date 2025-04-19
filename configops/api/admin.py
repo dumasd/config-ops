@@ -16,8 +16,9 @@ from configops.api.utils import BaseResult, auth_required
 from marshmallow import Schema, fields, EXCLUDE, validate
 from configops.utils.constants import CONTROLLER_NAMESPACE
 import sqlalchemy
+import os
 
-bp = Blueprint("admin", __name__)
+bp = Blueprint("admin", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/"))
 
 logger = logging.getLogger(__name__)
 

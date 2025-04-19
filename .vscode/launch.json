@@ -13,6 +13,7 @@
                 "FLASK_APP": "configops/app.py",
                 "FLASK_DEBUG": "1",
                 "CONFIGOPS_CONFIG_FILE": "${workspaceFolder}/config.yaml",
+                "FLASK_APPLICATION_ROOT": "/configops"
             },
             "args": [
                 "run",

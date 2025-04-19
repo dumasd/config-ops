@@ -3,8 +3,9 @@ import logging
 from marshmallow import Schema, fields, EXCLUDE
 from configops.utils import config_handler
 from jinja2 import Template
+import os
 
-bp = Blueprint("common", __name__)
+bp = Blueprint("common", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/"))
 
 logger = logging.getLogger(__name__)
 

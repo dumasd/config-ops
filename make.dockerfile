@@ -2,7 +2,8 @@ ARG PY_VER=3.10.17-slim-bookworm
 
 FROM docker.io/node:20.19-bookworm-slim AS configops-node
 
-ARG NPM_BUILD_CMD="build:pro"
+ARG BASE_PATH="/"
+ARG NPM_BUILD_ENV="production"
 ARG NPM_NODE_OPTIONS="--max-old-space-size=4096"
 
 RUN apt-get update -qq \
@@ -10,7 +11,7 @@ RUN apt-get update -qq \
     build-essential \
     python3
 
-ENV BUILD_CMD=${NPM_BUILD_CMD} \
+ENV BUILD_CMD="build:${NPM_BUILD_ENV}" \
     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     NODE_OPTIONS=${NPM_NODE_OPTIONS}
 # NPM ci first, as to NOT invalidate previous steps except for when package.json changes
@@ -19,7 +20,9 @@ WORKDIR /app/configops-frontend
 COPY ./configops-frontend/ ./
 
 # This seems to be the most expensive step
-RUN npm i -g pnpm && \
+RUN echo "VITE_BASE_PATH=${BASE_PATH}" >> .env.${NPM_BUILD_ENV} && \
+    echo "VITE_API_BASE_PATH=${BASE_PATH}" >> .env.${NPM_BUILD_ENV} && \
+    npm i -g pnpm && \
     pnpm install && \
     pnpm run ${BUILD_CMD}
 
@@ -33,7 +36,8 @@ ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     FLASK_APP="configops.app:create_app()" \
     CONFIGOPS_HOME="/app/configops" \
-    CONFIGOPS_PORT=5000
+    CONFIGOPS_PORT=5000 \
+    FLASK_APPLICATION_ROOT=${BASE_PATH}
 
 RUN mkdir -p configops/static configops-frontend \
     && useradd --user-group -d ${CONFIGOPS_HOME} -m --no-log-init --shell /bin/bash configops \
@@ -49,12 +53,12 @@ RUN mkdir -p configops/static configops-frontend \
     && chown -R configops:configops ./* \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --chown=configops:configops configops-frontend/package.json configops-frontend/
+COPY --chown=configops:configops${BASE_PATH} configops-frontend/package.json configops-frontend/
 COPY --chown=configops:configops requirements.txt .
 RUN pip install --upgrade setuptools pip && \
     pip install -r requirements.txt
 
-COPY --chown=configops:configops --from=configops-node /app/configops-frontend/dist-pro/ configops/static/
+COPY --chown=configops:configops --from=configops-node /app/configops-frontend/dist-${NPM_BUILD_ENV}/ configops/static${BASE_PATH}
 COPY --chown=configops:configops configops configops
 
 COPY --chmod=755 ./docker/run-server.sh /usr/bin/

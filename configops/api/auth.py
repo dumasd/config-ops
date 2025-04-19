@@ -6,13 +6,13 @@ from configops import config as configops_config
 from configops.api.utils import BaseResult, auth_required
 from configops.utils.constants import PermissionType
 from configops.database.db import db, User, UserGroup, Group, GroupPermission, Workspace
-import logging, time, os
+import logging, os
 from redis import Redis
 import sqlalchemy
 
 
 logger = logging.getLogger(__name__)
-bp = Blueprint("auth", __name__)
+bp = Blueprint("auth", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/"))
 
 UNAUTHORIZED_ACTION_MESSAGE = "You are not authorized to perform this action."
 oauth = OAuth()

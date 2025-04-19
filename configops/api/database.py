@@ -14,7 +14,7 @@ from configops.utils.exception import ConfigOpsException
 
 logger = logging.getLogger(__name__)
 
-bp = Blueprint("database", __name__)
+bp = Blueprint("database", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/"))
 
 
 class DatabaseJsonEncoder(json.JSONEncoder):

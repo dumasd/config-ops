@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 from flask.json.provider import DefaultJSONProvider
 import argparse
 import logging
+import os
 from datetime import datetime
 from marshmallow import ValidationError
 from configops.api.common import bp as common_bp
@@ -40,6 +41,8 @@ def create_app(config_file=None):
     loggingConfig = DefaultLoggingConfigurator()
     loggingConfig.configure_default()
     app = Flask(__name__)
+    #app.config["APPLICATION_ROOT"] = os.getenv("FLASK_APPLICATION_ROOT", "/")
+    app.config["APPLICATION_ROOT"] = "/configops"
 
     @app.errorhandler(Exception)
     def handle_exception(error):
