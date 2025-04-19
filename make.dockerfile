@@ -57,7 +57,7 @@ RUN mkdir -p configops/static configops-frontend \
     && chown -R configops:configops ./* \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --chown=configops:configops${BASE_PATH} configops-frontend/package.json configops-frontend/
+COPY --chown=configops:configops configops-frontend/package.json configops-frontend/
 COPY --chown=configops:configops requirements.txt .
 RUN pip install --upgrade setuptools pip && \
     pip install -r requirements.txt
