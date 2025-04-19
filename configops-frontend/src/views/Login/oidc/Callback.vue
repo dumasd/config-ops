@@ -14,7 +14,6 @@ const redirect = ref<string>('')
 const { currentRoute, addRoute, push } = useRouter()
 
 oidcCallbackApi(currentRoute.value.query).then((res) => {
-  console.log('111111111')
   userStore.setUserInfo(res.data)
   // 是否使用动态路由
   if (appStore.getDynamicRouter) {
