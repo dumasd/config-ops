@@ -25,7 +25,7 @@ def static_proxy(path):
 
 
 def __static_file_path(path):
-    application_root = current_app.config.get("APPLICATION_ROOT", "/")
+    application_root = os.getenv("FLASK_APPLICATION_ROOT", "/")
     if application_root.startswith("/"):
         application_root = application_root[1:]
     if application_root:
