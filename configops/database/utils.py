@@ -2,6 +2,7 @@ from configops.utils.constants import DIALECT_DRIVER_MAP
 from configops.utils.exception import ConfigOpsException
 import sqlalchemy
 import logging
+from urllib.parse import quote_plus
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,9 @@ def create_database_engine(db_config):
     if driver is None:
         raise ConfigOpsException(f"Unsupported dialect {dialect}")
     try:
+        encoded_password = quote_plus(password)
         conn_string = (
-            f"{dialect}+{driver}://{username}:{password}@{url}:{port}/{schema}"
+            f"{dialect}+{driver}://{username}:{encoded_password}@{url}:{port}/{schema}"
         )
         return sqlalchemy.create_engine(conn_string)
     except Exception as e:
