@@ -154,7 +154,7 @@ if (userStore.getWorkspace) refresh()
     />
   </ContentWrap>
 
-  <Dialog v-model="dialogVisible" :title="dialogTitle">
+  <Dialog v-model="dialogVisible" :title="dialogTitle" width="70%">
     <Permission v-if="actionType === 'permission'" ref="permissionRef" :current-row="currentRow" />
     <template #footer>
       <BaseButton

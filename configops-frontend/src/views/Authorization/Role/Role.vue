@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { reactive, ref, unref } from 'vue'
-import { getGroupsApi, editGroupApi } from '@/api/admin'
+import { getGroupsApi, createGroupApi, editGroupApi } from '@/api/admin'
 import { useTable } from '@/hooks/web/useTable'
 import { useI18n } from '@/hooks/web/useI18n'
 import { Table, TableColumn } from '@/components/Table'
@@ -111,13 +111,23 @@ const save = async () => {
   const formData = await write?.submit()
   if (formData) {
     saveLoading.value = true
-    editGroupApi(formData)
-      .then(() => {
-        saveLoading.value = false
-      })
-      .finally(() => {
-        dialogVisible.value = false
-      })
+    if (actionType.value == 'edit') {
+      editGroupApi(formData)
+        .then(() => {
+          saveLoading.value = false
+        })
+        .finally(() => {
+          dialogVisible.value = false
+        })
+    } else {
+      createGroupApi(formData)
+        .then(() => {
+          saveLoading.value = false
+        })
+        .finally(() => {
+          dialogVisible.value = false
+        })
+    }
   }
 }
 </script>

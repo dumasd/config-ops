@@ -6,7 +6,7 @@ from configops.utils.constants import (
     PermissionModule,
     X_WORKSPACE,
 )
-from typing import Optional
+from typing import Optional, Union
 
 RESP_OK = 0
 RESP_ERROR = -1
@@ -42,7 +42,8 @@ def __check_permission__(
 
 
 def do_check_auth(
-    module: Optional[str | PermissionModule] = None, actions: Optional[list] = None
+    module: Optional[Union[str, PermissionModule]] = None,
+    actions: Optional[list] = None,
 ):
     if "userinfo" not in session:
         return make_response("You are not logged in.", 401)
@@ -69,7 +70,8 @@ def do_check_auth(
 
 
 def auth_required(
-    module: Optional[str | PermissionModule] = None, actions: Optional[list] = None
+    module: Optional[Union[str, PermissionModule]] = None,
+    actions: Optional[list] = None,
 ):
     def decorate(func):
         @wraps(func)

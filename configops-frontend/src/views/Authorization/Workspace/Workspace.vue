@@ -203,7 +203,7 @@ const delData = async (row: WorkspaceItem) => {
     />
   </ContentWrap>
 
-  <Dialog v-model="dialogVisible" :title="dialogTitle">
+  <Dialog v-model="dialogVisible" :title="dialogTitle" width="70%">
     <Detail v-if="actionType === 'detail'" :current-row="currentRow" />
     <Permission
       v-else-if="actionType === 'permission'"

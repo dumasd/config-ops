@@ -202,7 +202,7 @@ if (userStore.getWorkspace) refresh()
     />
   </ContentWrap>
 
-  <Dialog v-model="dialogVisible" :title="dialogTitle">
+  <Dialog v-model="dialogVisible" :title="dialogTitle" width="70%">
     <Write v-if="actionType !== 'detail'" ref="writeRef" :current-row="currentRow" />
     <Detail v-else :current-row="currentRow" />
 

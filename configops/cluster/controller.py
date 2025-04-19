@@ -10,6 +10,7 @@ from configops.database.db import (
 )
 from configops.cluster.messages import Message, MessageType
 from configops.utils.exception import ConfigOpsException
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class ControllerNamespace(Namespace):
         self.worker_map = {}
         self.send_future_map = {}
 
-    def is_worker_online(self, worker_id) -> ClusterWorkerInfo | None:
+    def is_worker_online(self, worker_id) -> Optional[ClusterWorkerInfo]:
         for worker_info in self.worker_map.values():
             if worker_info.id == worker_id:
                 return worker_info

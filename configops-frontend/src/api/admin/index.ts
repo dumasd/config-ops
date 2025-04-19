@@ -9,6 +9,10 @@ export const getGroupMenusApi = (group_id): Promise<IResponse<string[]>> => {
   return request.get({ url: '/api/admin/group/menus/v1', params: { id: group_id } })
 }
 
+export const createGroupApi = (item): Promise<IResponse<string[]>> => {
+  return request.post({ url: '/api/admin/group/v1', data: item })
+}
+
 export const editGroupApi = (item): Promise<IResponse<string[]>> => {
   return request.put({ url: '/api/admin/group/v1', data: item })
 }

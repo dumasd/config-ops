@@ -37,10 +37,10 @@
       const name = document.getElementById("nameInput").value;
 
       socket = io("https://devops.agileforge.tech", {
-        path: '/configops/socket.io',
+        path: '/configops.socket.io',
         auth: {
           name: name,
-          token: token
+          secret: token
         }
       });
 
