@@ -1,23 +1,71 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>SocketIO Test</title>
+  <meta charset="UTF-8" />
+  <title>Socket.IO Test</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
-
 <body>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script>
-        const socketio = io("http://127.0.0.1:5000");
-        socketio.on("connect", () => {
-            console.log("Connected");
-            socketio.send("Hello from browser");
-        });
+  <h1>Socket.IO Test</h1>
 
-        socketio.on("message", (data) => {
-            console.log("Received:", data);
-        });
-    </script>
+  <label>
+    Name:
+    <input type="text" id="nameInput" placeholder="Enter your name" />
+  </label>
+  <label>
+    Token:
+    <input type="text" id="tokenInput" placeholder="Enter your token" />
+  </label>
+  <button onclick="connectSocket()">Connect</button>
+
+  <div>
+    <input type="text" id="messageInput" placeholder="Type a message" />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <pre id="log"></pre>
+
+  <script>
+    let socket;
+
+    function log(msg) {
+      document.getElementById("log").textContent += msg + "\n";
+    }
+
+    function connectSocket() {
+      const token = document.getElementById("tokenInput").value;
+      const name = document.getElementById("nameInput").value;
+
+      socket = io("https://devops.agileforge.tech", {
+        path: '/configops/socket.io',
+        auth: {
+          name: name,
+          token: token
+        }
+      });
+
+      socket.on("connect", () => {
+        log("Connected! Socket ID: " + socket.id);
+      });
+
+      socket.on("disconnect", (reason) => {
+        log("Disconnected: " + reason);
+      });
+
+      socket.on("connect_error", (err) => {
+        log("Connection error: " + err.message);
+      });
+
+      socket.on("message", (data) => {
+        log("Received: " + data);
+      });
+    }
+
+    function sendMessage() {
+      const msg = document.getElementById("messageInput").value;
+      socket.emit("message", msg);
+      log("Sent: " + msg);
+    }
+  </script>
 </body>
-
 </html>
