@@ -18,6 +18,10 @@ const props = defineProps({
   currentRow: {
     type: Object as PropType<GroupItem>,
     default: () => null
+  },
+  isEdit: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -79,7 +83,7 @@ const formSchema = ref<FormSchema[]>([
     field: 'id',
     label: t('common.id'),
     component: 'Input',
-    hidden: true
+    hidden: props.isEdit
   }
 ])
 

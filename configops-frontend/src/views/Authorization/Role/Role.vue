@@ -142,7 +142,12 @@ const save = async () => {
   </ContentWrap>
 
   <Dialog v-model="dialogVisible" :title="dialogTitle">
-    <Write v-if="actionType !== 'detail'" ref="writeRef" :current-row="currentRow" />
+    <Write
+      v-if="actionType !== 'detail'"
+      ref="writeRef"
+      :is-edit="actionType === 'edit'"
+      :current-row="currentRow"
+    />
     <Detail v-else :current-row="currentRow" />
 
     <template #footer>

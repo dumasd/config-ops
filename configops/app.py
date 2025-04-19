@@ -27,8 +27,10 @@ logger = logging.getLogger(__name__)
 
 error_handler_logger = logging.getLogger("error_handler_logger")
 
-socketio = SocketIO(cors_allowed_origins="*")
-
+socketio = SocketIO(
+    cors_allowed_origins="*",
+    path=os.getenv("FLASK_APPLICATION_ROOT", "/") + "socket.io",
+)
 
 class CustomJSONProvider(DefaultJSONProvider):
     def default(self, obj):

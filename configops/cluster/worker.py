@@ -11,6 +11,7 @@ from configops.cluster.messages import Message, MessageType
 from configops.cluster.worker_handler import MESSAGE_HANDLER_MAP
 from configops.config import get_node_cfg
 from configops.api.utils import BaseResult
+from urllib.parse import urlparse
 
 
 logger = logging.getLogger(__name__)
@@ -125,13 +126,28 @@ class WorkerNamespace(socketio.ClientNamespace):
         if not secret:
             raise ConfigOpsException("[config.node.secret] is empty")
 
+        controller_url_parsed = urlparse(controller_url)
+
+        connection_url = (
+            f"{controller_url_parsed.scheme}://{controller_url_parsed.hostname}"
+        )
+        if controller_url_parsed.port:
+            connection_url += f":{controller_url_parsed.port}"
+
+        socketio_path = controller_url_parsed.path
+        if socketio_path and socketio_path.startswith("/"):
+            socketio_path = socketio_path[1:]
+        if not socketio_path:
+            socketio_path = "socket.io"
+
         while not sio.connected:
             try:
                 logger.info("Trying to connect")
                 sio.connect(
-                    controller_url,
-                    namespaces=["/controller"],
+                    url=connection_url,
                     auth={"name": name, "secret": secret},
+                    namespaces=["/controller"],
+                    socketio_path=socketio_path,
                 )
             except Exception as e:
                 logger.info(f"Connect fail. retry. {e}")

@@ -1,4 +1,5 @@
 import re, logging, os, shlex, hashlib
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -58,9 +59,16 @@ class TestString:
         )
         logger.info(f"shlex split: {result}")
 
-    def test_hash(self):
-        hashlib.sha256()    
-
+    def test_url_parse(self):
+        parsed = urlparse("https://www.example.com:9000/configops/socket.io")
+        logger.info(f"scheme: {parsed.scheme}, hostname: {parsed.hostname}, path: {parsed.path}, port: {parsed.port}, netloc:{parsed.netloc}")
+        connection_url = f"{parsed.scheme}://{parsed.hostname}"
+        if parsed.port:
+            connection_url += f":{parsed.port}"
+        socketio_path = parsed.path
+        if socketio_path and socketio_path.startswith("/"):
+            socketio_path = socketio_path[1:]    
+        logger.info(f"connection_url: {connection_url}, socketio_path: {socketio_path}")    
 
 class TestRegex:
     """
