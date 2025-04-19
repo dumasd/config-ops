@@ -5,7 +5,9 @@ from configops.utils import config_handler
 from jinja2 import Template
 import os
 
-bp = Blueprint("common", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/"))
+# Tip: internal api remove prefix
+# bp = Blueprint("common", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/"))
+bp = Blueprint("common", __name__)
 
 logger = logging.getLogger(__name__)
 
