@@ -36,13 +36,6 @@ def __get_socketio_path():
         return "/socket.io"
 
 
-os.getenv("FLASK_APPLICATION_ROOT", "/")
-socketio = SocketIO(
-    cors_allowed_origins="*",
-    path=__get_socketio_path(),
-)
-
-
 class CustomJSONProvider(DefaultJSONProvider):
     def default(self, obj):
         if isinstance(obj, datetime):
@@ -92,11 +85,16 @@ def create_app(config_file=None):
     auth_init_app(app)
 
     if constants.NodeRole.CONTROLLER.matches(node_config["role"]):
+        socketio = SocketIO(
+            cors_allowed_origins="*",
+            path=__get_socketio_path(),
+        )
+        app.config[constants.CONTROLLER_SOCKETIO] = socketio
         clueter_controller.register(socketio, app)
+        socketio.init_app(app)
     else:
         clueter_worker.register(app)
 
-    socketio.init_app(app)
     logger.info(f"Flask static folder: {app.static_folder}")
     return app
 
@@ -116,7 +114,12 @@ if __name__ == "__main__":
     debug = False
     if args.debug:
         debug = True
+
     app = create_app(config_file=args.config)
-    # app.run(host=args.host, port=args.port, debug=debug)
-    socketio.run(app, host=args.host, port=args.port, debug=debug)
+    socketio = app.config.get(constants.CONTROLLER_SOCKETIO)
+
+    if socketio:
+        socketio.run(app, host=args.host, port=args.port, debug=debug)
+    else:
+        app.run(host=args.host, port=args.port, debug=debug)
     logger.info("Started flask app")
