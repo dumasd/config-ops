@@ -344,7 +344,7 @@ def read_worker():
         worker_dict["online"] = (
             True if controller_ns.is_worker_online(worker.id) else False
         )
-        worker_dict.pop("secret")
+        #worker_dict.pop("secret")
         resp_data.append(worker_dict)
 
     return BaseResult(data=resp_data).response(total)
