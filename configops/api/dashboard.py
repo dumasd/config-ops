@@ -100,7 +100,7 @@ async def get_changelogs():
 
     page = int(request.args.get("page", 1))
     size = int(request.args.get("size", 10))
-    q = request.args.get("q", "")
+    q = str(request.args.get("q", ""))
     start_time = request.args.get("start_time", "")
     end_time = request.args.get("end_time", "")
     message = Message(

@@ -1,8 +1,8 @@
 import request from '@/axios'
 import { WorkspaceItem, GroupPermissionsItem, ManagedObjectItem, GroupItem } from './types'
 
-export const getGroupsApi = (): Promise<IResponse<GroupItem[]>> => {
-  return request.get({ url: '/api/admin/group/v1' })
+export const getGroupsApi = (searchParams): Promise<IResponse<GroupItem[]>> => {
+  return request.get({ url: '/api/admin/group/v1', params: searchParams })
 }
 
 export const getGroupMenusApi = (group_id): Promise<IResponse<string[]>> => {
@@ -42,7 +42,7 @@ export const editWorkspacePermissionApi = (id, data: GroupPermissionsItem[]) => 
 }
 
 export const getWorkerApi = (searchParams) => {
-  return request.get({ url: '/api/admin/worker/v1', data: searchParams })
+  return request.get({ url: '/api/admin/worker/v1', params: searchParams })
 }
 
 export const createWorkerApi = (item) => {

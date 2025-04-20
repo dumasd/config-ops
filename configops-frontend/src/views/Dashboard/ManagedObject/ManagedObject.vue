@@ -18,7 +18,11 @@ const userStore = useUserStoreWithOut()
 
 const { tableRegister, tableState, tableMethods } = useTable({
   fetchDataApi: async () => {
-    const res = await getManagedObjectApi(searchParams.value)
+    const res = await getManagedObjectApi({
+      page: currentPage.value,
+      size: pageSize.value,
+      ...unref(searchParams)
+    })
     return {
       list: res.data || [],
       total: res.total
@@ -80,11 +84,9 @@ const searchSchema = reactive<FormSchema[]>([
   }
 ])
 
-const searchParams = ref({ page: 1, size: 10 })
+const searchParams = ref({})
 const setSearchParams = (data: any) => {
   searchParams.value = data
-  searchParams.value.page = currentPage.value
-  searchParams.value.size = pageSize.value
   getList()
 }
 
@@ -142,6 +144,8 @@ if (userStore.getWorkspace) refresh()
       <BaseButton type="primary" @click="AddAction">{{ t('exampleDemo.add') }}</BaseButton>
     </div> -->
     <Table
+      v-model:pageSize="pageSize"
+      v-model:currentPage="currentPage"
       :columns="tableColumns"
       default-expand-all
       node-key="id"

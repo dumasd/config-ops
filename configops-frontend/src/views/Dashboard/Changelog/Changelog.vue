@@ -20,7 +20,11 @@ const { required } = useValidator()
 const { tableRegister, tableState, tableMethods } = useTable({
   immediate: false,
   fetchDataApi: async () => {
-    const res = await getChangelogsApi(searchParams.value)
+    const res = await getChangelogsApi({
+      page: currentPage.value,
+      size: pageSize.value,
+      ...unref(searchParams)
+    })
     return {
       list: res.data || [],
       total: res.total
@@ -155,12 +159,10 @@ const searchSchema = reactive<FormSchema[]>([
   },
 ])
 
-const searchParams = ref({ page: 1, size: 10 })
+const searchParams = ref({})
 
 const setSearchParams = (data: any) => {
   searchParams.value = data
-  searchParams.value.page = currentPage.value
-  searchParams.value.size = pageSize.value
   currentObjectId.value = data.managed_object_id
   getList()
 }
@@ -215,6 +217,8 @@ fetchManagedObjects()
         </BaseButton>
     </div>
     <Table
+      v-model:pageSize="pageSize"
+      v-model:currentPage="currentPage"
       :columns="tableColumns"
       node-key="change_set_id"
       row-key="change_set_id"

@@ -26,7 +26,11 @@ const id = ref('')
 
 const { tableRegister, tableState, tableMethods } = useTable({
   fetchDataApi: async () => {
-    const res = await getWorkspacesApi(searchParams.value)
+    const res = await getWorkspacesApi({
+      page: currentPage.value,
+      size: pageSize.value,
+      ...unref(searchParams)
+    })
     return {
       list: res.data || [],
       total: res.total
@@ -90,17 +94,14 @@ const tableColumns = reactive<TableColumn[]>([
 const searchSchema = reactive<FormSchema[]>([
   {
     field: 'q',
-    //label: t('role.roleName'),
     component: 'Input'
   }
 ])
 
-const searchParams = ref({ page: 1, size: 10 })
+const searchParams = ref({})
 
 const setSearchParams = (data: any) => {
   searchParams.value = data
-  searchParams.value.page = currentPage.value
-  searchParams.value.size = pageSize.value
   getList()
 }
 
@@ -191,13 +192,15 @@ const delData = async (row: WorkspaceItem) => {
       <BaseButton type="primary" @click="AddAction">{{ t('exampleDemo.add') }}</BaseButton>
     </div>
     <Table
+      v-model:pageSize="pageSize"
+      v-model:currentPage="currentPage"
       :columns="tableColumns"
       default-expand-all
       node-key="id"
       :data="dataList"
       :loading="loading"
       :pagination="{
-        total
+        total: total
       }"
       @register="tableRegister"
     />

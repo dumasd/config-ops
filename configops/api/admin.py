@@ -83,7 +83,7 @@ class ApiWorkspacePermissionSchema(Schema):
 def read_group():
     page = int(request.args.get("page", 1))
     size = int(request.args.get("size", 10))
-    q = request.args.get("q")
+    q = str(request.args.get("q", ""))
 
     query = db.session.query(Group)
     if q:
@@ -322,15 +322,15 @@ def edit_workspace_permission():
 def read_worker():
     page = int(request.args.get("page", 1))
     size = int(request.args.get("size", 10))
+    q = str(request.args.get("q", ""))
     workspace_id = request.headers.get(constants.X_WORKSPACE)
-    q = request.args.get("q", "")
     controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
 
     query = db.session.query(Worker)
     if q:
         query = query.filter(
-            Worker.workspace_id
-            == workspace_id & (Worker.id.like(f"%{q}%") | Worker.name.like(f"%{q}%"))
+            Worker.workspace_id == workspace_id,
+            (Worker.id.like(f"%{q}%") | Worker.name.like(f"%{q}%")),
         )
     else:
         query = query.filter(Worker.workspace_id == workspace_id)
@@ -344,7 +344,7 @@ def read_worker():
         worker_dict["online"] = (
             True if controller_ns.is_worker_online(worker.id) else False
         )
-        #worker_dict.pop("secret")
+        # worker_dict.pop("secret")
         resp_data.append(worker_dict)
 
     return BaseResult(data=resp_data).response(total)
@@ -442,7 +442,7 @@ def get_worker_detail():
 def get_managed_object():
     page = int(request.args.get("page", 1))
     size = int(request.args.get("size", 10))
-    q = request.args.get("q")
+    q = str(request.args.get("q", ""))
     workspace_id = request.headers[constants.X_WORKSPACE]
     conditions = [Worker.workspace_id == workspace_id]
     if q:

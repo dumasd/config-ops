@@ -93,7 +93,8 @@ const nodeClick = (treeData: any) => {
 }
 
 const rules = reactive({
-  name: [required()]
+  name: [required()],
+  id: [required()]
 })
 
 const { formRegister, formMethods } = useForm()

@@ -15,7 +15,11 @@ const { t } = useI18n()
 
 const { tableRegister, tableState, tableMethods } = useTable({
   fetchDataApi: async () => {
-    const res = await getGroupsApi()
+    const res = await getGroupsApi({
+      page: currentPage.value,
+      size: pageSize.value,
+      ...unref(searchParams)
+    })
     return {
       list: res.data || [],
       total: res.total
@@ -23,7 +27,7 @@ const { tableRegister, tableState, tableMethods } = useTable({
   }
 })
 
-const { dataList, loading, total } = tableState
+const { dataList, loading, total, currentPage, pageSize } = tableState
 const { getList } = tableMethods
 
 const tableColumns = reactive<TableColumn[]>([
@@ -70,8 +74,7 @@ const tableColumns = reactive<TableColumn[]>([
 
 const searchSchema = reactive<FormSchema[]>([
   {
-    field: 'roleName',
-    label: t('role.roleName'),
+    field: 'q',
     component: 'Input'
   }
 ])
@@ -114,18 +117,20 @@ const save = async () => {
     if (actionType.value == 'edit') {
       editGroupApi(formData)
         .then(() => {
-          saveLoading.value = false
+          dialogVisible.value = false
+          getList()
         })
         .finally(() => {
-          dialogVisible.value = false
+          saveLoading.value = false
         })
     } else {
       createGroupApi(formData)
         .then(() => {
-          saveLoading.value = false
+          dialogVisible.value = false
+          getList()
         })
         .finally(() => {
-          dialogVisible.value = false
+          saveLoading.value = false
         })
     }
   }
@@ -139,6 +144,8 @@ const save = async () => {
       <BaseButton type="primary" @click="AddAction">{{ t('exampleDemo.add') }}</BaseButton>
     </div>
     <Table
+      v-model:pageSize="pageSize"
+      v-model:currentPage="currentPage"
       :columns="tableColumns"
       default-expand-all
       node-key="id"
