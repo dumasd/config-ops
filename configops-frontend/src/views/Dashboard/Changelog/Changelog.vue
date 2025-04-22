@@ -11,6 +11,8 @@ import { FormSchema } from '@/components/Form'
 import { ContentWrap } from '@/components/ContentWrap'
 import { useValidator } from '@/hooks/web/useValidator'
 import { BaseButton } from '@/components/Button'
+import Changeset from './components/Changeset.vue'
+import { Dialog } from '@/components/Dialog'
 import { ElOption, FormRules } from 'element-plus'
 
 const { t } = useI18n()
@@ -68,12 +70,12 @@ const tableColumns = reactive<TableColumn[]>([
   {
     field: 'change_set_id',
     label: t('changelog.changeSetId'),
-    width: 260
+    width: 240
   },
   {
     field: 'exectype',
     label: t('changelog.execStatus'),
-    width: 130
+    width: 120
   },
   {
     field: 'execute_date',
@@ -91,7 +93,7 @@ const tableColumns = reactive<TableColumn[]>([
   {
     field: 'author',
     label: t('changelog.author'),
-    width: 120,
+    width: 100,
   },
   {
     field: 'comment',
@@ -100,7 +102,7 @@ const tableColumns = reactive<TableColumn[]>([
   {
     field: 'action',
     label: t('userDemo.action'),
-    width: 150,
+    width: 200,
     slots: {
       default: (data: any) => {
         const row = data.row
@@ -108,6 +110,9 @@ const tableColumns = reactive<TableColumn[]>([
           <>
             <BaseButton type="danger" onClick={() => delData(row)}>
               {t('exampleDemo.del')}
+            </BaseButton>
+            <BaseButton type="danger" onClick={() => action(row, 'detail')}>
+              {t('exampleDemo.detail')}
             </BaseButton>
           </>
         )
@@ -179,11 +184,7 @@ const delLoading = ref(false)
 const managedObjects = ref<ManagedObjectItem[]>([])
 
 const action = (row: any, type: string) => {
-  if (type === 'permission') {
-    dialogTitle.value = t('permission.configuration')
-  } else {
-    dialogTitle.value = t(type === 'edit' ? 'exampleDemo.edit' : 'exampleDemo.detail')
-  }
+  dialogTitle.value = t(type === 'edit' ? 'exampleDemo.edit' : 'exampleDemo.detail')
   actionType.value = type
   currentRow.value = row
   dialogVisible.value = true
@@ -231,4 +232,10 @@ fetchManagedObjects()
     />
   </ContentWrap>
 
+  <Dialog v-model="dialogVisible" :title="dialogTitle" width="80%" max-height="500px">
+    <Changeset :current-row="currentRow" :current-object-id="currentObjectId" />
+    <template #footer>
+      <BaseButton @click="dialogVisible = false">{{ t('dialogDemo.close') }}</BaseButton>
+    </template>
+  </Dialog>
 </template>

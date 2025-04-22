@@ -3,10 +3,12 @@ from configops.changelog import changelog_utils
 from configops.utils import config_handler, config_validator
 from configops.utils.constants import ChangelogExeType, SystemType, extract_version
 from configops.utils.exception import ChangeLogException
+from configops.config import get_node_cfg, get_config
 from ruamel import yaml as ryaml
 from jsonschema import Draft7Validator, ValidationError
 from configops.utils.nacos_client import ConfigOpsNacosClient
-from configops.database.db import db, ConfigOpsChangeLog
+from configops.database.db import db, ConfigOpsChangeLog, ConfigOpsChangeLogChanges
+
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +101,9 @@ schema = {
 
 
 class NacosChangeLog:
-    def __init__(self, changelogFile=None):
+    def __init__(self, changelogFile=None, app=None):
         self.changelogFile = changelogFile
+        self.app = app
         self.__init_change_log()
 
     def __init_change_log(self):
@@ -131,14 +134,16 @@ class NacosChangeLog:
                     changeSetObj = item.get("changeSet")
                     includeObj = item.get("include")
                     if changeSetObj:
-                        id = str(changeSetObj["id"])
+                        change_set_id = str(changeSetObj["id"])
                         ignore = changeSetObj.get("ignore", False)
                         changeSetObj["ignore"] = ignore
-                        if changeSetDict.get(id) is not None:
-                            raise ChangeLogException(f"Repeat change set id {id}")
+                        if changeSetDict.get(change_set_id) is not None:
+                            raise ChangeLogException(
+                                f"Repeat change set id {change_set_id}"
+                            )
 
                         changeSetObj["filename"] = changelog_file_name
-                        changeSetDict[id] = changeSetObj
+                        changeSetDict[change_set_id] = changeSetObj
                         changes = changeSetObj["changes"]
 
                         changeSetChangeDict = {}
@@ -146,33 +151,33 @@ class NacosChangeLog:
                             namespace = change.get("namespace", "")
                             group = change["group"]
                             dataId = change["dataId"]
-                            format = change["format"]
+                            _format = change["format"]
                             patchContent = change.get("patchContent", "")
                             deleteContent = change.get("deleteContent", "")
                             config_key = f"{namespace}/{group}/{dataId}"
 
                             if changeSetChangeDict.get(config_key) is not None:
                                 raise ChangeLogException(
-                                    f"Repeated nacos change. changeSetId:{id}, namespace:{namespace}, group:{group}, dataId:{dataId}"
+                                    f"Repeated nacos change. changeSetId:{change_set_id}, namespace:{namespace}, group:{group}, dataId:{dataId}"
                                 )
                             changeSetChangeDict[config_key] = change
 
                             if len(patchContent.strip()) > 0:
                                 suc, msg = config_validator.validate_content(
-                                    patchContent, format
+                                    patchContent, _format
                                 )
                                 if not suc:
                                     raise ChangeLogException(
-                                        f"PatchContent Invalid!!! changeLogFile: {self.changelogFile}, changeSetId: {id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {format}. errorMsg: {msg}"
+                                        f"PatchContent Invalid!!! changeLogFile: {self.changelogFile}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
                                     )
 
                             if len(deleteContent.strip()) > 0:
                                 suc, msg = config_validator.validate_content(
-                                    deleteContent, format
+                                    deleteContent, _format
                                 )
                                 if not suc:
                                     raise ChangeLogException(
-                                        f"DeleteContent Invalid!!! changeLogFile: {self.changelogFile}, changeSetId: {id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {format}. errorMsg: {msg}"
+                                        f"DeleteContent Invalid!!! changeLogFile: {self.changelogFile}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
                                     )
 
                         if not ignore:
@@ -186,14 +191,18 @@ class NacosChangeLog:
                                 f"Repeat include file!!! changeLogFile: {self.changelogFile}, file: {file}"
                             )
                         includeFiles.append(file)
-                        childLog = NacosChangeLog(changelogFile=f"{base_dir}/{file}")
-                        for id in childLog.changeSetDict:
-                            if id in changeSetDict:
+                        childLog = NacosChangeLog(
+                            changelogFile=f"{base_dir}/{file}", app=self.app
+                        )
+                        for change_set_id in childLog.changeSetDict:
+                            if change_set_id in changeSetDict:
                                 raise ChangeLogException(
-                                    f"Repeat change set id: {id}. Please check your changelog"
+                                    f"Repeat change set id: {change_set_id}. Please check your changelog"
                                 )
                             else:
-                                changeSetDict[id] = childLog.changeSetDict[id]
+                                changeSetDict[change_set_id] = childLog.changeSetDict[
+                                    change_set_id
+                                ]
                         changeSets.extend(childLog.changeSets)
 
         elif os.path.isdir(self.changelogFile):
@@ -205,14 +214,16 @@ class NacosChangeLog:
             # 根据文件名排序
             sorted_changelogfiles = sorted(changelogfiles, key=extract_version)
             for file in sorted_changelogfiles:
-                childLog = NacosChangeLog(changelogFile=file)
-                for id in childLog.changeSetDict:
-                    if id in changeSetDict:
+                childLog = NacosChangeLog(changelogFile=file, app=self.app)
+                for change_set_id in childLog.changeSetDict:
+                    if change_set_id in changeSetDict:
                         raise ChangeLogException(
-                            f"Repeat change set id: {id}. Please check your changelog"
+                            f"Repeat change set id: {change_set_id}. Please check your changelog"
                         )
                     else:
-                        changeSetDict[id] = childLog.changeSetDict[id]
+                        changeSetDict[change_set_id] = childLog.changeSetDict[
+                            change_set_id
+                        ]
                 changeSets.extend(childLog.changeSets)
 
         else:
@@ -222,6 +233,89 @@ class NacosChangeLog:
 
         self.changeSetDict = changeSetDict
         self.changeSets = changeSets
+
+    def __check_change_log(
+        self, changeSetObj, nacos_id: str, contexts: str, variables: dict
+    ) -> bool:
+        change_set_id = str(changeSetObj["id"])
+        # 计算checksum
+        checksum = changelog_utils.get_change_set_checksum(
+            {"changes": changeSetObj["changes"]}
+        )
+        is_execute = True
+        log = (
+            db.session.query(ConfigOpsChangeLog)
+            .filter_by(
+                change_set_id=change_set_id,
+                system_id=nacos_id,
+                system_type=SystemType.NACOS.value,
+            )
+            .first()
+        )
+        if log is None:
+            log = ConfigOpsChangeLog()
+            log.change_set_id = change_set_id
+            log.system_type = SystemType.NACOS.value
+            log.system_id = nacos_id
+            log.exectype = ChangelogExeType.INIT.value
+            log.author = changeSetObj.get("author", "")
+            log.comment = changeSetObj.get("comment", "")
+            log.filename = changeSetObj.get("filename", "")
+            #log.contexts = contexts
+            log.checksum = checksum
+            db.session.add(log)
+        elif ChangelogExeType.FAILED.matches(
+            log.exectype
+        ) or ChangelogExeType.INIT.matches(log.exectype):
+            log.checksum = checksum
+        else:
+            runOnChange = changeSetObj.get("runOnChange", False)
+            if runOnChange and log.checksum != checksum:
+                log.exectype = ChangelogExeType.INIT.value
+                log.checksum = checksum
+            else:
+                is_execute = False
+
+        _secret = None
+        if self.app:
+            _secret = get_config(self.app, "config.node.secret")
+
+        if _secret:
+            nacos_changes = []
+            for change in changeSetObj["changes"]:
+                nacos_change = change.copy()
+                namespace = string.Template(change["namespace"]).substitute(variables)
+                group = string.Template(change["group"]).substitute(variables)
+                dataId = string.Template(change["dataId"]).substitute(variables)
+                nacos_change["namespace"] = namespace
+                nacos_change["group"] = group
+                nacos_change["dataId"] = dataId
+                nacos_changes.append(nacos_change)
+            log_changes = (
+                db.session.query(ConfigOpsChangeLogChanges)
+                .filter_by(
+                    change_set_id=change_set_id,
+                    system_id=nacos_id,
+                    system_type=SystemType.NACOS.value,
+                )
+                .first()
+            )
+            if log_changes is None:
+                log_changes = ConfigOpsChangeLogChanges(
+                    change_set_id=change_set_id,
+                    system_type=SystemType.NACOS.value,
+                    system_id=nacos_id,
+                    changes=changelog_utils.pack_encrypt_changes(
+                        nacos_changes, _secret
+                    ),
+                )
+                db.session.add(log_changes)
+            else:
+                log_changes.changes = changelog_utils.pack_encrypt_changes(
+                    nacos_changes, _secret
+                )
+
+        return is_execute
 
     def fetch_multi(
         self,
@@ -241,77 +335,37 @@ class NacosChangeLog:
         resultChangeConfigDict = {}
         changeSetIds = []
         for changeSetObj in self.changeSets:
-            id = str(changeSetObj["id"])
+            change_set_id = str(changeSetObj["id"])
             # 判断是否在指定的contexts里面
             changeSetCtx = changeSetObj.get("context")
             if not changelog_utils.is_ctx_included(contexts, changeSetCtx):
                 continue
 
-            # 计算checksum
-            checksum = changelog_utils.get_change_set_checksum(
-                {"changes": changeSetObj["changes"]}
-            )
-
-            is_execute = True
             if (
                 spec_changesets
                 and len(spec_changesets) > 0
-                and id not in spec_changesets
+                and change_set_id not in spec_changesets
             ):
-                is_execute = False
+                continue
 
+            is_execute = True
             # 查询log
             if check_log:
-                log = (
-                    db.session.query(ConfigOpsChangeLog)
-                    .filter_by(
-                        change_set_id=id,
-                        system_id=nacos_id,
-                        system_type=SystemType.NACOS.value,
-                    )
-                    .first()
+                is_execute = self.__check_change_log(
+                    changeSetObj, nacos_id, contexts, vars
                 )
-                if log is None:
-                    log = ConfigOpsChangeLog()
-                    log.change_set_id = id
-                    log.system_type = SystemType.NACOS.value
-                    log.system_id = nacos_id
-                    log.exectype = ChangelogExeType.INIT.value
-                    log.author = changeSetObj.get("author", "")
-                    log.comment = changeSetObj.get("comment", "")
-                    log.filename = changeSetObj.get("filename", "")
-                    log.checksum = checksum
-                    db.session.add(log)
-                elif ChangelogExeType.FAILED.matches(
-                    log.exectype
-                ) or ChangelogExeType.INIT.matches(log.exectype):
-                    log.checksum = checksum
-                else:
-                    runOnChange = changeSetObj.get("runOnChange", False)
-                    if runOnChange and log.checksum != checksum:
-                        log.exectype = ChangelogExeType.INIT.value
-                        log.checksum = checksum
-                    else:
-                        is_execute = False
 
             if is_execute:
-                logger.info(f"Found change set log: {id}")
+                logger.info(f"Found change set log: {change_set_id}")
 
-                changeSetIds.append(id)
+                changeSetIds.append(change_set_id)
 
                 for change in changeSetObj["changes"]:
                     logger.info(f"current change: {change}")
-
-                    namespaceTemplate = string.Template(change["namespace"])
-                    namespace = namespaceTemplate.substitute(vars)
-
-                    groupTemplate = string.Template(change["group"])
-                    group = groupTemplate.substitute(vars)
-
-                    dataIdTemplate = string.Template(change["dataId"])
-                    dataId = dataIdTemplate.substitute(vars)
-
-                    format = change["format"]
+                    namespace = string.Template(change["namespace"]).substitute(vars)
+                    group = string.Template(change["group"]).substitute(vars)
+                    dataId = string.Template(change["dataId"]).substitute(vars)
+                    _format = change["format"]
 
                     nacosConfig = change.copy()
                     nacosConfig["namespace"] = namespace
@@ -324,7 +378,7 @@ class NacosChangeLog:
                         remoteConfigsCache, namespace, group, dataId, client
                     )
                     if remoteConfig:
-                        if remoteConfig["type"] != format:
+                        if remoteConfig["type"] != _format:
                             raise ChangeLogException(
                                 f"Format does not match. namespace:{namespace}, group:{group}, dataId:{dataId}"
                             )
@@ -341,7 +395,7 @@ class NacosChangeLog:
                     # 直接追加内容，放到 nextContent
                     nextContentRes = config_handler.delete_patch_by_str(
                         nextContent,
-                        format,
+                        _format,
                         nacosConfig.get("deleteContent", ""),
                         nacosConfig.get("patchContent", ""),
                     )
@@ -352,14 +406,14 @@ class NacosChangeLog:
                         res = config_handler.patch_by_str(
                             previousConfig.get("deleteContent", ""),
                             nacosConfig.get("deleteContent", ""),
-                            format,
+                            _format,
                         )
                         nacosConfig["deleteContent"] = res["nextContent"]
 
                         res = config_handler.patch_by_str(
                             previousConfig.get("patchContent", ""),
                             nacosConfig.get("patchContent", ""),
-                            format,
+                            _format,
                         )
                         nacosConfig["patchContent"] = res["nextContent"]
 

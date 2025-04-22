@@ -158,6 +158,9 @@ def register(socketio, app) -> ControllerNamespace:
     MESSAGE_HANDLER_MAP[MessageType.DELETE_CHANGE_LOG.name] = (
         CommonFuturedMessageHandler()
     )
+    MESSAGE_HANDLER_MAP[MessageType.QUERY_CHANGE_SET.name] = (
+        CommonFuturedMessageHandler()
+    )
 
     controller = ControllerNamespace("/controller", app)
     socketio.on_namespace(controller)

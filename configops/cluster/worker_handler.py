@@ -1,10 +1,16 @@
 from configops.cluster.messages import Message, MessageType
 from configops.utils.constants import SystemType
-from configops.config import get_database_cfg
+from configops.config import get_database_cfg, get_node_cfg
 import sqlalchemy, datetime
-from configops.database.db import db, ConfigOpsChangeLog, paginate
+from configops.database.db import (
+    db,
+    ConfigOpsChangeLog,
+    ConfigOpsChangeLogChanges,
+    paginate,
+)
 from configops.database.utils import create_database_engine
 from configops.api.utils import BaseResult
+from configops.changelog import changelog_utils
 
 
 class BaseMessageHandler:
@@ -189,9 +195,38 @@ class DeleteChangelogMessageHandler(BaseMessageHandler):
         return BaseResult.ok()
 
 
+class QueryChangesetMessageHandler(BaseMessageHandler):
+    def handle(self, message: Message, namespace) -> BaseResult:
+        data = message.data
+        change_set_id = data["change_set_id"]
+        system_id = data["system_id"]
+        system_type = SystemType[data["system_type"]]
+
+        app = namespace.app
+        with app.app_context():
+            log_changes = (
+                db.session.query(ConfigOpsChangeLogChanges)
+                .filter(
+                    ConfigOpsChangeLogChanges.change_set_id == change_set_id,
+                    ConfigOpsChangeLogChanges.system_id == system_id,
+                    ConfigOpsChangeLogChanges.system_type == system_type.name,
+                )
+                .first()
+            )
+            if log_changes is None:
+                return BaseResult.ok()
+
+            _secret = get_node_cfg(app)["secret"]
+            changes = changelog_utils.unpack_encrypt_changes(
+                log_changes.changes, _secret
+            )
+            return BaseResult.ok(data=changes)
+
+
 # =====================================================================================================================================
 
 MESSAGE_HANDLER_MAP = {
     MessageType.QUERY_CHANGE_LOG.name: QueryChangelogMessageHandler(),
     MessageType.DELETE_CHANGE_LOG.name: DeleteChangelogMessageHandler(),
+    MessageType.QUERY_CHANGE_SET.name: QueryChangesetMessageHandler(),
 }

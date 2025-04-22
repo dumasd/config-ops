@@ -134,7 +134,7 @@ async def get_changelogs():
 @bp.route("/api/dashboard/changelogs/v1", methods=["DELETE"])
 async def delete_changelogs():
     check_auth_resp = do_check_auth(
-        module=PermissionModule.MANAGED_OBJECT_CHANGELOG_MANAGE, actions=["READ"]
+        module=PermissionModule.MANAGED_OBJECT_CHANGELOG_MANAGE, actions=["DELETE"]
     )
     if check_auth_resp:
         return check_auth_resp
@@ -173,6 +173,52 @@ async def delete_changelogs():
     event = threading.Event()
     controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
     future = CallbackFuture(event)
+    controller_ns.send_message(managed_object.worker_id, message, future)
+
+    if event.wait(5):
+        result = future.result()
+        if result:
+            return result
+        else:
+            raise future.exception()
+    else:
+        return BaseResult.error(
+            "Deletion timed out. Please refresh the data or try again."
+        ).response()
+
+
+@bp.route("/api/dashboard/changeset/v1", methods=["GET"])
+async def get_changeset():
+    check_auth_resp = do_check_auth(
+        module=PermissionModule.MANAGED_OBJECT_CHANGELOG_MANAGE, actions=["READ"]
+    )
+    if check_auth_resp:
+        return check_auth_resp
+
+    managed_object_id = request.args["managed_object_id"]
+    change_set_id = request.args["change_set_id"]
+    system_id = request.args["system_id"]
+    system_type = request.args["system_type"]
+
+    managed_object = (
+        db.session.query(ManagedObjects)
+        .filter(ManagedObjects.id == managed_object_id)
+        .first()
+    )
+
+    message = Message(
+        type=MessageType.QUERY_CHANGE_SET,
+        data={
+            "system_id": system_id,
+            "system_type": system_type,
+            "change_set_id": change_set_id,
+        },
+    )
+
+    event = threading.Event()
+    controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
+    future = CallbackFuture(event)
+
     controller_ns.send_message(managed_object.worker_id, message, future)
 
     if event.wait(5):

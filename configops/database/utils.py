@@ -7,14 +7,15 @@ from urllib.parse import quote_plus
 logger = logging.getLogger(__name__)
 
 
-def create_database_engine(db_config):
+def create_database_engine(db_config, schema: str = None):
     url = db_config.get("url")
     username = db_config.get("username")
     password = db_config.get("password")
     port = db_config.get("port")
     dialect = db_config.get("dialect")
     driver = DIALECT_DRIVER_MAP.get(dialect)
-    schema = db_config.get("changelogschema", "liquibase")
+    if schema is None:
+        schema = db_config.get("changelogschema", "liquibase")
     if driver is None:
         raise ConfigOpsException(f"Unsupported dialect {dialect}")
     try:

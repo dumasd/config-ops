@@ -5,7 +5,7 @@ from marshmallow import Schema, fields, EXCLUDE
 from configops.changelog.elasticsearch_change import ElasticsearchChangelog
 from configops.utils.exception import ConfigOpsException, ChangeLogException
 from configops.config import get_elasticsearch_cfg
-from flask import Blueprint, make_response, request
+from flask import Blueprint, make_response, request, current_app
 
 bp = Blueprint(
     "elasticsearch", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/")
@@ -39,7 +39,9 @@ def get_change_set():
         return make_response(f"Elasticsearch id not found in config file: {esId}", 404)
 
     try:
-        esChangeLog = ElasticsearchChangelog(changelogFile=changelogFile)
+        esChangeLog = ElasticsearchChangelog(
+            changelogFile=changelogFile, app=current_app
+        )
         result = esChangeLog.fetch_multi(esId, count, contexts, variables, True)
         return result
     except ChangeLogException as err:
@@ -60,7 +62,9 @@ def apply_change_set():
     if cfg is None:
         return make_response(f"Elasticsearch id not found in config file: {esId}", 404)
     try:
-        esChangeLog = ElasticsearchChangelog(changelogFile=changelogFile)
+        esChangeLog = ElasticsearchChangelog(
+            changelogFile=changelogFile, app=current_app
+        )
         return esChangeLog.apply(cfg, esId, count, contexts, variables, True)
     except ChangeLogException as err:
         logger.error("Elasticsearch changelog invalid.", exc_info=True)

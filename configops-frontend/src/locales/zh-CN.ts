@@ -598,5 +598,13 @@ export default {
     checksum: '校验和',
     comment: '注释',
     author: '作者'
+  },
+  changeset: {
+    namespace: '命名空间',
+    group: 'Group',
+    dataId: 'Data Id',
+    format: '格式',
+    path: '路径',
+    method: '方法'
   }
 }

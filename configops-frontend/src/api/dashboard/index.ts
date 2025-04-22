@@ -19,3 +19,7 @@ export const deleteChangelogsApi = (
     data: data
   })
 }
+
+export const getChangesetApi = (searchParams): Promise<IResponse<ChangelogItem[]>> => {
+  return request.get({ url: '/api/dashboard/changeset/v1', params: searchParams })
+}

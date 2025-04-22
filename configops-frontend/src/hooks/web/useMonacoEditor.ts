@@ -73,7 +73,7 @@ export function useMonacoEditor(language: string = 'javascript') {
   function updateVal(val: string) {
     nextTick(() => {
       if (getOption(monaco.editor.EditorOption.readOnly)) {
-        updateOptions({ readOnly: false })
+        updateOptions({ readOnly: true })
       }
       monacoEditor?.setValue(val)
       setTimeout(async () => {

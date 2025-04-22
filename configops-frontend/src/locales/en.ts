@@ -609,5 +609,13 @@ export default {
     checksum: 'Checksum',
     comment: 'Comments',
     author: 'Author'
+  },
+  changeset: {
+    namespace: 'Namespace',
+    group: 'Group',
+    dataId: 'Data Id',
+    format: 'Format',
+    path: 'Path',
+    method: 'Method'
   }
 }

@@ -99,7 +99,7 @@ def get_change_set():
     changelogFile = data.get("changeLogFile")
 
     try:
-        nacosChangeLog = NacosChangeLog(changelogFile=changelogFile)
+        nacosChangeLog = NacosChangeLog(changelogFile=changelogFile, app=current_app)
         result = nacosChangeLog.fetch_multi(
             client, nacos_id, count, contexts, variables
         )
@@ -135,17 +135,17 @@ def apply_change_set():
             group = change.get("group")
             data_id = change.get("dataId")
             content = change.get("content")
-            format = change.get("format")
+            _format = change.get("format")
             if content is None or len(content.strip()) == 0:
                 raise ConfigOpsException(
                     f"Push content is empty. namespace:{namespace}, group:{group}, data_id:{data_id}"
                 )
             validation_bool, validation_msg = config_validator.validate_content(
-                content, format
+                content, _format
             )
             if not validation_bool:
                 raise ConfigOpsException(
-                    f"Push content format invalid. namespace:{namespace}, group:{group}, data_id:{data_id}, format:{format}. {validation_msg}"
+                    f"Push content format invalid. namespace:{namespace}, group:{group}, data_id:{data_id}, format:{_format}. {validation_msg}"
                 )
 
         for change in changes:
@@ -153,10 +153,10 @@ def apply_change_set():
             group = change.get("group")
             data_id = change.get("dataId")
             content = change.get("content")
-            format = change.get("format")
+            _format = change.get("format")
             client.namespace = namespace
             res = client.publish_config_post(
-                data_id=data_id, group=group, content=content, config_type=format
+                data_id=data_id, group=group, content=content, config_type=_format
             )
             if not res:
                 raise ConfigOpsException(

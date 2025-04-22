@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, make_response, request, current_app
-import logging, sys, secrets
+import logging, sys, secrets, base64
 from marshmallow import Schema, fields, EXCLUDE
 from configops.utils import constants
 from configops.utils.constants import PermissionModule, PermissionType
@@ -358,7 +358,7 @@ def create_worker():
     _exists = db.session.query(Worker).filter_by(name=data["name"]).first()
     if _exists:
         return make_response("Agent name alredy exists", 401)
-    token = secrets.token_urlsafe(32)
+    token = base64.b64encode(secrets.token_bytes(32)).decode("utf-8")
     worker = Worker(
         workspace_id=workspace_id,
         name=data["name"],

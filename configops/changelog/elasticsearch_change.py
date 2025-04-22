@@ -5,8 +5,9 @@ from jsonschema import Draft7Validator, ValidationError
 from configops.changelog import changelog_utils
 from configops.utils import config_validator, secret_util
 from configops.utils.constants import ChangelogExeType, SystemType, extract_version
-from configops.database.db import db, ConfigOpsChangeLog
+from configops.database.db import db, ConfigOpsChangeLog, ConfigOpsChangeLogChanges
 from configops.utils.exception import ChangeLogException, ConfigOpsException
+from configops.config import get_config
 
 logger = logging.getLogger(__name__)
 schema = {
@@ -94,8 +95,9 @@ schema = {
 
 
 class ElasticsearchChangelog:
-    def __init__(self, changelogFile=None):
+    def __init__(self, changelogFile=None, app=None):
         self.changelogFile = changelogFile
+        self.app = app
         self.__init_change_log()
 
     def __init_change_log(self):
@@ -125,13 +127,15 @@ class ElasticsearchChangelog:
                     changeSetObj = item.get("changeSet")
                     includeObj = item.get("include")
                     if changeSetObj:
-                        id = str(changeSetObj["id"])
+                        change_set_id = str(changeSetObj["id"])
                         ignore = changeSetObj.get("ignore", False)
                         changeSetObj["ignore"] = ignore
-                        if changeSetDict.get(id):
-                            raise ChangeLogException(f"Repeat change set id {id}")
+                        if changeSetDict.get(change_set_id):
+                            raise ChangeLogException(
+                                f"Repeat change set id {change_set_id}"
+                            )
                         changeSetObj["filename"] = changelog_file_name
-                        changeSetDict[id] = changeSetObj
+                        changeSetDict[change_set_id] = changeSetObj
                         changes = changeSetObj["changes"]
                         for change in changes:
                             method = change.get("method")
@@ -141,7 +145,7 @@ class ElasticsearchChangelog:
                                 suc, _ = config_validator.validate_json(body)
                                 if not suc:
                                     raise ChangeLogException(
-                                        f"Body is not json. changeSetId:{id}, method:{method}, path:{path}, body:{body}"
+                                        f"Body is not json. changeSetId:{change_set_id}, method:{method}, path:{path}, body:{body}"
                                     )
                         if not ignore:
                             changeSets.append(changeSetObj)
@@ -154,15 +158,17 @@ class ElasticsearchChangelog:
                             )
                         includeFiles.append(file)
                         childLog = ElasticsearchChangelog(
-                            changelogFile=f"{base_dir}/{file}"
+                            changelogFile=file, app=self.app
                         )
-                        for id in childLog.changeSetDict:
-                            if id in changeSetDict:
+                        for change_set_id in childLog.changeSetDict:
+                            if change_set_id in changeSetDict:
                                 raise ChangeLogException(
-                                    f"Repeat change set id: {id}. Please check your changelog"
+                                    f"Repeat change set id: {change_set_id}. Please check your changelog"
                                 )
                             else:
-                                changeSetDict[id] = childLog.changeSetDict[id]
+                                changeSetDict[change_set_id] = childLog.changeSetDict[
+                                    change_set_id
+                                ]
                         changeSets.extend(childLog.changeSets)
 
         elif os.path.isdir(self.changelogFile):
@@ -174,22 +180,103 @@ class ElasticsearchChangelog:
             # 根据文件名排序
             sorted_changelogfiles = sorted(changelogfiles, key=extract_version)
             for file in sorted_changelogfiles:
-                childLog = ElasticsearchChangelog(changelogFile=file)
-                for id in childLog.changeSetDict:
-                    if id in changeSetDict:
+                childLog = ElasticsearchChangelog(changelogFile=file, app=self.app)
+                for change_set_id in childLog.changeSetDict:
+                    if change_set_id in changeSetDict:
                         raise ChangeLogException(
-                            f"Repeat change set id: {id}. Please check your changelog"
+                            f"Repeat change set id: {change_set_id}. Please check your changelog"
                         )
                     else:
-                        changeSetDict[id] = childLog.changeSetDict[id]
+                        changeSetDict[change_set_id] = childLog.changeSetDict[
+                            change_set_id
+                        ]
                 changeSets.extend(childLog.changeSets)
-                
+
         else:
             raise ChangeLogException(
                 f"Changelog file or folder does not exists: {self.changelogFile}"
             )
         self.changeSets = changeSets
         self.changeSetDict = changeSetDict
+
+    def __check_change_log(
+        self, changeSetObj, elasticsearch_id: str, contexts: str, variables: dict
+    ) -> bool:
+        change_set_id = str(changeSetObj["id"])
+        # 计算checksum
+        checksum = changelog_utils.get_change_set_checksum(
+            {"changes": changeSetObj["changes"]}
+        )
+        is_execute = True
+        log = (
+            db.session.query(ConfigOpsChangeLog)
+            .filter_by(
+                change_set_id=change_set_id,
+                system_id=elasticsearch_id,
+                system_type=SystemType.ELASTICSEARCH.value,
+            )
+            .first()
+        )
+        if log is None:
+            log = ConfigOpsChangeLog()
+            log.change_set_id = change_set_id
+            log.system_type = SystemType.ELASTICSEARCH.value
+            log.system_id = elasticsearch_id
+            log.exectype = ChangelogExeType.INIT.value
+            log.author = changeSetObj.get("author", "")
+            log.comment = changeSetObj.get("comment", "")
+            log.filename = changeSetObj.get("filename", "")
+            #log.contexts = contexts
+            log.checksum = checksum
+            db.session.add(log)
+        elif ChangelogExeType.FAILED.matches(
+            log.exectype
+        ) or ChangelogExeType.INIT.matches(log.exectype):
+            log.checksum = checksum
+        else:
+            runOnChange = changeSetObj.get("runOnChange", False)
+            if runOnChange and log.checksum != checksum:
+                log.exectype = ChangelogExeType.INIT.value
+                log.checksum = checksum
+            else:
+                is_execute = False
+
+        _secret = None
+        if self.app:
+            _secret = get_config(self.app, "config.node.secret")
+
+        if _secret:
+            elasicsearch_changes = []
+            for change in changeSetObj["changes"]:
+                elasicsearch_change = change.copy()
+                elasicsearch_change["path"] = string.Template(
+                    change["path"]
+                ).substitute(variables)
+                elasicsearch_changes.append(elasicsearch_change)
+            log_changes = (
+                db.session.query(ConfigOpsChangeLogChanges)
+                .filter_by(
+                    change_set_id=change_set_id,
+                    system_id=elasticsearch_id,
+                    system_type=SystemType.ELASTICSEARCH.value,
+                )
+                .first()
+            )
+            if log_changes is None:
+                log_changes = ConfigOpsChangeLogChanges(
+                    change_set_id=change_set_id,
+                    system_type=SystemType.ELASTICSEARCH.value,
+                    system_id=elasticsearch_id,
+                    changes=changelog_utils.pack_encrypt_changes(
+                        elasicsearch_changes, _secret
+                    ),
+                )
+                db.session.add(log_changes)
+            else:
+                log_changes.changes = changelog_utils.pack_encrypt_changes(
+                    elasicsearch_changes, _secret
+                )
+        return is_execute
 
     def fetch_multi(
         self,
@@ -202,58 +289,24 @@ class ElasticsearchChangelog:
         idx = 0
         finalChangeSets = []
         for changeSetObj in self.changeSets:
-            id = str(changeSetObj["id"])
+            change_set_id = str(changeSetObj["id"])
             # 判断是否在指定的contexts里面
             changeSetCtx = changeSetObj.get("context")
             if not changelog_utils.is_ctx_included(contexts, changeSetCtx):
                 continue
-            # 计算checksum
-            checksum = changelog_utils.get_change_set_checksum(
-                {"changes": changeSetObj["changes"]}
-            )
 
             is_execute = True
 
             if check_log:
-                log = (
-                    db.session.query(ConfigOpsChangeLog)
-                    .filter_by(
-                        change_set_id=id,
-                        system_id=elasticsearch_id,
-                        system_type=SystemType.ELASTICSEARCH.value,
-                    )
-                    .first()
+                is_execute = self.__check_change_log(
+                    changeSetObj, elasticsearch_id, contexts, vars
                 )
-                if log is None:
-                    log = ConfigOpsChangeLog()
-                    log.change_set_id = id
-                    log.system_type = SystemType.ELASTICSEARCH.value
-                    log.system_id = elasticsearch_id
-                    log.exectype = ChangelogExeType.INIT.value
-                    log.author = changeSetObj.get("author", "")
-                    log.comment = changeSetObj.get("comment", "")
-                    log.filename = changeSetObj.get("filename", "")
-                    log.checksum = checksum
-                    db.session.add(log)
-                elif ChangelogExeType.FAILED.matches(
-                    log.exectype
-                ) or ChangelogExeType.INIT.matches(log.exectype):
-                    log.checksum = checksum
-                else:
-                    runOnChange = changeSetObj.get("runOnChange", False)
-                    if runOnChange and log.checksum != checksum:
-                        log.exectype = ChangelogExeType.INIT.value
-                        log.checksum = checksum
-                    else:
-                        is_execute = False
 
             if is_execute:
-                logger.info(f"Found change set log: {id}")
+                logger.info(f"Found change set log: {change_set_id}")
                 finalChangeSet = changeSetObj.copy()
                 for change in finalChangeSet["changes"]:
-                    pathTemplate = string.Template(change["path"])
-                    path = pathTemplate.substitute(vars)
-                    change["path"] = path
+                    change["path"] = string.Template(change["path"]).substitute(vars)
                 finalChangeSets.append(finalChangeSet)
 
             idx += 1
@@ -332,14 +385,14 @@ class ElasticsearchChangelog:
 
         for changeSet in changeSets:
             try:
-                id = str(changeSet["id"])
+                change_set_id = str(changeSet["id"])
                 changes = changeSet["changes"]
                 log = None
                 if check_log:
                     log = (
                         db.session.query(ConfigOpsChangeLog)
                         .filter_by(
-                            change_set_id=id,
+                            change_set_id=change_set_id,
                             system_id=elasticsearch_id,
                             system_type=SystemType.ELASTICSEARCH.value,
                         )
@@ -360,7 +413,7 @@ class ElasticsearchChangelog:
                         change["message"] = f"{resp.text}"
                     except Exception as e:
                         logger.error(
-                            f"Execute elastic request error. changeSetId: {id}, path: {path}, method: {method}. {e}",
+                            f"Execute elastic request error. changeSetId: {change_set_id}, path: {path}, method: {method}. {e}",
                             exc_info=True,
                         )
                         change["success"] = False

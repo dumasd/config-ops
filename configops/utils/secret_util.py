@@ -1,10 +1,11 @@
-# AWS secret manager 工具
-
 import threading, logging, json, os
 import botocore
 from dataclasses import dataclass
 from configops import config as configops_config
 import aws_secretsmanager_caching
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import padding
 
 logger = logging.getLogger(__name__)
 
@@ -79,3 +80,35 @@ def get_secret_data(cfg: map, password_name="password") -> SecretData:
             db_info = json.loads(secret_string)
             return SecretData(password=db_info["password"])
     return SecretData(password=cfg[password_name])
+
+
+def encrypt_data(data: bytes, secret_key: bytes) -> bytes:
+    """使用 AES CBC 模式加密数据"""
+    # 填充数据至 AES 块大小的倍数
+    padder = padding.PKCS7(128).padder()
+    padded_data = padder.update(data) + padder.finalize()
+    iv = os.urandom(16)
+    cipher = Cipher(
+        algorithms.AES(secret_key), modes.CBC(iv), backend=default_backend()
+    )
+    encryptor = cipher.encryptor()
+    encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
+
+    # 返回 IV 和加密数据（IV 存储在加密数据的前面）
+    return iv + encrypted_data
+
+
+def decrypt_data(encrypted_data: bytes, secret_key: bytes) -> bytes:
+    """使用 AES CBC 模式解密数据"""
+    iv = encrypted_data[:16]  # 提取 IV
+    cipher_data = encrypted_data[16:]  # 提取加密数据
+
+    cipher = Cipher(
+        algorithms.AES(secret_key), modes.CBC(iv), backend=default_backend()
+    )
+    decryptor = cipher.decryptor()
+    decrypted_data = decryptor.update(cipher_data) + decryptor.finalize()
+
+    unpadder = padding.PKCS7(128).unpadder()
+    unpadded_data = unpadder.update(decrypted_data) + unpadder.finalize()
+    return unpadded_data

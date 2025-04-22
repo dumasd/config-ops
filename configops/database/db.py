@@ -5,7 +5,7 @@ from sqlalchemy import (
     BigInteger,
     Integer,
     DateTime,
-    Index,
+    LargeBinary,
     UniqueConstraint,
     func,
     select,
@@ -50,8 +50,22 @@ class ConfigOpsChangeLog(Base):
     checksum = mapped_column(String(128), nullable=True, comment="checksum")
     author = mapped_column(String(128), comment="作者")
     filename = mapped_column(String(1024))
+    #contexts = mapped_column(String(1024), comment="执行上下文")
     comment = mapped_column(String(2048))
+    __table_args__ = (
+        UniqueConstraint(
+            "change_set_id", "system_type", "system_id", name="uix_change"
+        ),
+    )
 
+
+class ConfigOpsChangeLogChanges(Base):
+    __tablename__ = "CONFIGOPS_CHANGE_LOG_CHANGES"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    change_set_id = mapped_column(String(100), nullable=False, comment="变更集ID")
+    system_id = mapped_column(String(32), nullable=False, comment="系统ID")
+    system_type = mapped_column(String(30), nullable=False, comment="系统类型")
+    changes: Mapped[bytes] = mapped_column(LargeBinary)
     __table_args__ = (
         UniqueConstraint(
             "change_set_id", "system_type", "system_id", name="uix_change"
@@ -87,7 +101,9 @@ class ManagedObjects(Base):
     system_type = mapped_column(String(30), nullable=False)
     url = mapped_column(String(512), nullable=False)
     __table_args__ = (
-        UniqueConstraint("worker_id", "system_type", "system_id", name="uniq_object_key"),
+        UniqueConstraint(
+            "worker_id", "system_type", "system_id", name="uniq_object_key"
+        ),
     )
 
 
@@ -129,10 +145,9 @@ class GroupPermission(Base):
 def paginate(stmt, page: int = 1, size: int = 10):
     total_stmt = select(func.count()).select_from(stmt.subquery())
     total = db.session.execute(total_stmt).scalar()
-    items = (
-        db.session.execute(stmt.offset((page - 1) * size).limit(size)).all()
-    )
+    items = db.session.execute(stmt.offset((page - 1) * size).limit(size)).all()
     return items, total
+
 
 def init(app):
     if app.config.get("SQLALCHEMY_DATABASE_URI") is None:

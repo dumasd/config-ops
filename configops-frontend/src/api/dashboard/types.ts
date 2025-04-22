@@ -8,7 +8,7 @@ export interface ManagedObjectItem {
 }
 
 export type ChangelogItem = {
-  id: string
+  change_set_id: string
   system_id: string
   system_type: string
   author: string
