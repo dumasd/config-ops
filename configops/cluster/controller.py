@@ -153,7 +153,7 @@ class ManagedObjectsMessageHandler(BaseMessageHandler):
 class CommonFuturedMessageHandler(BaseMessageHandler):
 
     def handle(self, sid, message: Message, namespace: ControllerNamespace):
-        future = namespace.send_future_map.get(message.request_id)
+        future = namespace.send_future_map.pop(message.request_id)
         if future:
             future.set_result(message.data)
 
