@@ -38,7 +38,14 @@ class ControllerNamespace(Namespace):
     def send_message(self, worker_id, message: Message, future: asyncio.Future = None):
         worker_info = self.is_worker_online(worker_id)
         if worker_info:
-            self.send(message.to_dict())
+            # self.send(message.to_dict(), to=worker_info.sid)
+            emit(
+                "message",
+                message.to_dict(),
+                to=worker_info.sid,
+                namespace=self.namespace,
+                broadcast=False,
+            )
             if future:
                 self.send_future_map[message.request_id] = future
         elif future:
@@ -53,10 +60,19 @@ class ControllerNamespace(Namespace):
             emit(
                 "error",
                 {"message": "Connection Failure: Not found worker in controller"},
+                to=request.sid,
+                namespace=self.namespace,
+                broadcast=False,
             )
             disconnect()
         if worker_secret != worker.secret:
-            emit("error", {"message": "Connection Failure: Unauthorized"})
+            emit(
+                "error",
+                {"message": "Connection Failure: Unauthorized"},
+                to=request.sid,
+                namespace=self.namespace,
+                broadcast=False,
+            )
             disconnect()
         worker_info = ClusterWorkerInfo(worker.id, request.sid, worker.name)
         self.worker_map[request.sid] = worker_info
