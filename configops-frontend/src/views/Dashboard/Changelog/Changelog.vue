@@ -130,32 +130,32 @@ const searchSchema = reactive<FormSchema[]>([
     field: 'managed_object_id',
     component: 'Select',
     componentProps: {
-        style: {
-          width: '380px'
-        },
-        clearable: false,
-        slots: {
-          default: ()=> {
-            return (
-              <>  
-                {managedObjects.value.map((item) => (
-                  <ElOption key={item.id} label={item.system_id +' ('+ item.system_type + ')'} value={item.id} >
-                    <span style="float: left">{item.system_id +' ('+ item.system_type +')'}</span>
-                    <span
-                      style="
+      style: {
+        width: '395px'
+      },
+      clearable: false,
+      slots: {
+        default: () => {
+          return (
+            <>
+              {managedObjects.value.map((item) => (
+                <ElOption key={item.id} label={item.system_id + ' (' + item.system_type + ') | ' + item.worker_name} value={item.id} >
+                  <span style="float: left">{item.system_id + ' (' + item.system_type + ')'}</span>
+                  <span
+                    style="
                         float: right;
                         color: var(--el-text-color-secondary);
                       "
-                    >
-                      {item.worker_name}
-                    </span>
-                  </ElOption>
-                ))}
-              </>
-            )
-          }
-        },
-      }
+                  >
+                    {item.worker_name}
+                  </span>
+                </ElOption>
+              ))}
+            </>
+          )
+        }
+      },
+    }
   },
   {
     field: 'q',
@@ -213,23 +213,14 @@ fetchManagedObjects()
   <ContentWrap>
     <Search :schema="searchSchema" :rules="searchFormRules" :showReset="false" @search="setSearchParams" />
     <div class="mb-10px">
-        <BaseButton :loading="delLoading" type="danger" @click="delData()">
-          {{ t('exampleDemo.del') }}
-        </BaseButton>
+      <BaseButton :loading="delLoading" type="danger" @click="delData()">
+        {{ t('exampleDemo.del') }}
+      </BaseButton>
     </div>
-    <Table
-      v-model:pageSize="pageSize"
-      v-model:currentPage="currentPage"
-      :columns="tableColumns"
-      node-key="change_set_id"
-      row-key="change_set_id"
-      :data="dataList"
-      :loading="loading"
-      :pagination="{
+    <Table v-model:pageSize="pageSize" v-model:currentPage="currentPage" :columns="tableColumns"
+      node-key="change_set_id" row-key="change_set_id" :data="dataList" :loading="loading" :pagination="{
         total
-      }"
-      @register="tableRegister"
-    />
+      }" @register="tableRegister" />
   </ContentWrap>
 
   <Dialog v-model="dialogVisible" :title="dialogTitle" width="80%" max-height="500px">

@@ -67,6 +67,7 @@ def list_managed_objects():
         .where(
             Worker.workspace_id == workerspace_id, GroupPermission.group_id.in_(groups)
         )
+        .order_by(Worker.name, ManagedObjects.system_type)
     )
     items = db.session.execute(stmt).all()
     data = [
