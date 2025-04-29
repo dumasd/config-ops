@@ -3,7 +3,7 @@ from configops.changelog import changelog_utils
 from configops.utils import config_handler, config_validator
 from configops.utils.constants import ChangelogExeType, SystemType, extract_version
 from configops.utils.exception import ChangeLogException
-from configops.config import get_node_cfg, get_config
+from configops.config import get_config
 from ruamel import yaml as ryaml
 from jsonschema import Draft7Validator, ValidationError
 from configops.utils.nacos_client import ConfigOpsNacosClient
@@ -261,7 +261,7 @@ class NacosChangeLog:
             log.author = changeSetObj.get("author", "")
             log.comment = changeSetObj.get("comment", "")
             log.filename = changeSetObj.get("filename", "")
-            #log.contexts = contexts
+            # log.contexts = contexts
             log.checksum = checksum
             db.session.add(log)
         elif ChangelogExeType.FAILED.matches(
@@ -374,16 +374,29 @@ class NacosChangeLog:
                     nacosConfig["content"] = ""
                     nacosConfig["id"] = ""
 
-                    remoteConfig, _ = self._get_remote_config(
+                    remote_config, _ = self._get_remote_config(
                         remoteConfigsCache, namespace, group, dataId, client
                     )
-                    if remoteConfig:
-                        if remoteConfig["type"] != _format:
+                    if remote_config:
+                        remote_config_format = remote_config["type"]
+                        remote_config_content = remote_config["content"]
+
+                        if remote_config_format != _format:
                             raise ChangeLogException(
-                                f"Format does not match. namespace:{namespace}, group:{group}, dataId:{dataId}"
+                                f"Config format not match. namespace/group/dataId:{namespace}/{group}/{dataId}; changelogFormat:{_format}, nacosFormat:{remote_config_format}"
                             )
-                        nacosConfig["content"] = remoteConfig["content"]
-                        nacosConfig["id"] = remoteConfig["id"]
+
+                        if len(remote_config_content.strip()) > 0:
+                            suc, msg = config_validator.validate_content(
+                                remote_config_content, _format
+                            )
+                            if not suc:
+                                raise ChangeLogException(
+                                    f"Current Nacos Config Content Invalid!!! namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
+                                )
+
+                        nacosConfig["content"] = remote_config_content
+                        nacosConfig["id"] = remote_config["id"]
 
                     configKey = f"{namespace}/{group}/{dataId}"
 
