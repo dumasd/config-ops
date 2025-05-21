@@ -88,6 +88,7 @@ def create_app(config_file=None):
         socketio = SocketIO(
             cors_allowed_origins="*",
             path=__get_socketio_path(),
+            max_http_buffer_size=50 * 1024 * 1024,
         )
         app.config[constants.CONTROLLER_SOCKETIO] = socketio
         clueter_controller.register(socketio, app)

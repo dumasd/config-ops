@@ -76,6 +76,7 @@ class WorkerNamespace(socketio.ClientNamespace):
 
     def on_disconnect(self):
         logger.info("❌ Disconnected from controller")
+        #self.connect_with_retry()
 
     def on_connect_error(self, data):
         print("⚠️ Connection failed:", data)
@@ -151,7 +152,7 @@ class WorkerNamespace(socketio.ClientNamespace):
                 )
             except Exception as e:
                 logger.info(f"Connect fail. retry. {e}")
-                time.sleep(2)
+                time.sleep(5)
 
 
 # =======================================================================================

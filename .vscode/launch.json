@@ -21,7 +21,7 @@
                 "--host",
                 "0.0.0.0",
                 "--port",
-                "5000",
+                "5005",
                 "--debug",
                 "--no-debugger",
                 "--no-reload"
@@ -43,7 +43,7 @@
             "args": [
                 "run",
                 "--port",
-                "5001",                
+                "5000",                
                 "--debug",
                 "--no-debugger",
                 "--no-reload"

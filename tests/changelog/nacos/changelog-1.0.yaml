@@ -1,6 +1,6 @@
 nacosChangeLog:
   - changeSet:
-      id: 20240810 # 所有changeSet的ID不可重复
+      id: configops-111 # 所有changeSet的ID不可重复
       author: bruce.wu
       comment: 注释
       ignore: false
@@ -27,9 +27,9 @@ nacosChangeLog:
           group: group
           dataId: config.properties
           format: properties
-          patchContent: |-
+          deleteContent: |-
             delete.aaa = 9
-            delete.ccc = fff
+            delete.ccc = fff  
         - namespace: blue
           group: group
           dataId: config.json
@@ -44,7 +44,7 @@ nacosChangeLog:
                 "province": "Jiangsu",
                 "city": "Nanjing"
               },
-              "steps": [1, 2, 3],
+              "steps": [1001, 1002],
               "positions": [
                 {"id": 1000, "name": "Developer"},
                 {"id": 1001, "name": "Designer"}

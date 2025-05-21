@@ -40,7 +40,7 @@ def get_change_set():
 
     try:
         esChangeLog = ElasticsearchChangelog(
-            changelogFile=changelogFile, app=current_app
+            changelog_file=changelogFile, app=current_app
         )
         result = esChangeLog.fetch_multi(esId, count, contexts, variables, True)
         return result
@@ -63,7 +63,7 @@ def apply_change_set():
         return make_response(f"Elasticsearch id not found in config file: {esId}", 404)
     try:
         esChangeLog = ElasticsearchChangelog(
-            changelogFile=changelogFile, app=current_app
+            changelog_file=changelogFile, app=current_app
         )
         return esChangeLog.apply(cfg, esId, count, contexts, variables, True)
     except ChangeLogException as err:

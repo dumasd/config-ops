@@ -397,75 +397,75 @@ def patch_by_str(content, edit, type):
                 "content": "",
                 "nextContent": "",
             }
-        format, current, yml = parse_content(edit, format=type)
+        _f, current, yml = parse_content(edit, format=type)
     else:
-        format, current, yml = parse_content(content, format=type)
+        _f, current, yml = parse_content(content, format=type)
 
     if needPatch:
-        if format == constants.YAML:
+        if _f == constants.YAML:
             suc, msg = yaml_patch_content(edit, current)
             if suc is False:
                 raise ConfigOpsException(f"yaml patch error. {msg}")
             return {
-                "format": format,
+                "format": _f,
                 "content": content,
                 "nextContent": yaml_to_string(current, yml),
             }
-        elif format == constants.PROPERTIES:
+        elif _f == constants.PROPERTIES:
             suc, msg = properties_patch_content(edit, current)
             if suc is False:
                 raise ConfigOpsException(f"yaml patch error. {msg}")
             return {
-                "format": format,
+                "format": _f,
                 "content": content,
                 "nextContent": properties_to_string(current),
             }
-        elif format == constants.JSON:
+        elif _f == constants.JSON:
             suc, msg = json_patch_content(edit, current)
             return {
-                "format": format,
+                "format": _f,
                 "content": content,
                 "nextContent": json_to_string(current),
             }
         else:
             raise ConfigOpsException(f"Unsupport patch format. {type}")
     else:
-        if format == constants.UNKNOWN:
-            format = constants.TEXT
-        return {"format": format, "content": content, "nextContent": edit}
+        if _f == constants.UNKNOWN:
+            _f = constants.TEXT
+        return {"format": _f, "content": content, "nextContent": edit}
 
 
 def delete_by_str(content, edit, type):
     if len(content.strip()) == 0:
         return {"format": type, "content": "", "nextContent": ""}
-    format, current, yml = parse_content(content, format=type)
-    if format == constants.YAML:
+    _f, current, yml = parse_content(content, format=type)
+    if _f == constants.YAML:
         suc, msg = yaml_delete_content(edit, current)
         if suc is False:
             raise ConfigOpsException(f"yaml delete error. {msg}")
         return {
-            "format": format,
+            "format": _f,
             "content": content,
             "nextContent": yaml_to_string(current, yml),
         }
-    elif format == constants.PROPERTIES:
+    elif _f == constants.PROPERTIES:
         suc, msg = properties_delete_content(edit, current)
         if suc is False:
             raise ConfigOpsException(f"properties delete error. {msg}")
         return {
-            "format": format,
+            "format": _f,
             "content": content,
             "nextContent": properties_to_string(current),
         }
-    elif format == constants.JSON:
+    elif _f == constants.JSON:
         suc, msg = json_delete_content(edit, current)
         return {
-            "format": format,
+            "format": _f,
             "content": content,
             "nextContent": json_to_string(current),
         }
     else:
-        raise ConfigOpsException(f"Unsupported delete format. {format}")
+        raise ConfigOpsException(f"Unsupported delete format. {_f}")
 
 
 def delete_patch_by_str(content, type, deleteContent="", patchContent=""):

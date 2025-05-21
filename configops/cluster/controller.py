@@ -38,7 +38,6 @@ class ControllerNamespace(Namespace):
     def send_message(self, worker_id, message: Message, future: asyncio.Future = None):
         worker_info = self.is_worker_online(worker_id)
         if worker_info:
-            # self.send(message.to_dict(), to=worker_info.sid)
             emit(
                 "message",
                 message.to_dict(),

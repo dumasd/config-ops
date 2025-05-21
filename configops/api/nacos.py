@@ -99,7 +99,7 @@ def get_change_set():
     changelogFile = data.get("changeLogFile")
 
     try:
-        nacosChangeLog = NacosChangeLog(changelogFile=changelogFile, app=current_app)
+        nacosChangeLog = NacosChangeLog(changelog_file=changelogFile, app=current_app)
         result = nacosChangeLog.fetch_multi(
             client, nacos_id, count, contexts, variables
         )

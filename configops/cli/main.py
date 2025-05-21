@@ -36,7 +36,7 @@ def cli() -> None:
     help="The vairable used in changelog file. This parameter can be used multiple times for multiple vairable. [key]=[value]",
 )
 def update_nacos(changelog_file, url, username, password, changesets, contexts, var):
-    vars = dict(item.split("=") for item in var)
+    variables = dict(item.split("=") for item in var)
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=url,
         username=username,
@@ -48,9 +48,9 @@ def update_nacos(changelog_file, url, username, password, changesets, contexts, 
         if changesets:
             spec_changesets = [item for item in changesets.split(",") if item]
 
-        nacosChangeLog = NacosChangeLog(changelogFile=changelog_file)
+        nacosChangeLog = NacosChangeLog(changelog_file=changelog_file)
         result = nacosChangeLog.fetch_multi(
-            client, "", 0, contexts, vars, False, spec_changesets
+            client, "", 0, contexts, variables, False, spec_changesets
         )
         click.echo(f"Change set ids:{result[0]}")
         nacosConfigs = result[1]
@@ -100,15 +100,15 @@ def update_nacos(changelog_file, url, username, password, changesets, contexts, 
     help="The vairable used in changelog file. This parameter can be used multiple times for multiple vairable. [key]=[value]",
 )
 def update_nacos_check(changelog_file, url, username, password, contexts, var):
-    vars = dict(item.split("=") for item in var)
+    variables = dict(item.split("=") for item in var)
     client = nacos_client.ConfigOpsNacosClient(
         server_addresses=url,
         username=username,
         password=password,
     )
     try:
-        nacosChangeLog = NacosChangeLog(changelogFile=changelog_file)
-        result = nacosChangeLog.fetch_multi(client, "", 0, contexts, vars, False)
+        nacosChangeLog = NacosChangeLog(changelog_file=changelog_file)
+        result = nacosChangeLog.fetch_multi(client, "", 0, contexts, variables, False)
         click.echo(f"Change set ids:{result[0]}")
         click.echo(f"Affected nacos config list:")
         nacosConfigs = result[1]

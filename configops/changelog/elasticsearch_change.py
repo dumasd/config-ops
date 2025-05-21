@@ -95,17 +95,17 @@ schema = {
 
 
 class ElasticsearchChangelog:
-    def __init__(self, changelogFile=None, app=None):
-        self.changelogFile = changelogFile
+    def __init__(self, changelog_file=None, app=None):
+        self.changelog_file = changelog_file
         self.app = app
         self.__init_change_log()
 
     def __init_change_log(self):
         changeSets = []
         changeSetDict = {}
-        if os.path.isfile(self.changelogFile):
+        if os.path.isfile(self.changelog_file):
             changeLogData = None
-            with open(self.changelogFile, "r", encoding="utf-8") as file:
+            with open(self.changelog_file, "r", encoding="utf-8") as file:
                 try:
                     yaml = ryaml.YAML()
                     yaml.preserve_quotes = True
@@ -114,15 +114,14 @@ class ElasticsearchChangelog:
                     validator.validate(changeLogData)
                 except ValidationError as e:
                     raise ChangeLogException(
-                        f"Elasticsearch changelog validation error: {self.changelogFile} \n{e}"
+                        f"Elasticsearch changelog validation error: {self.changelog_file} \n{e}"
                     )
 
-            base_dir = os.path.dirname(self.changelogFile)
-            changelog_file_name = os.path.basename(self.changelogFile)
+            changelog_file_name = os.path.basename(self.changelog_file)
             items = changeLogData.get("elasticsearchChangeLog", None)
 
             if items:
-                includeFiles = []
+                include_files = []
                 for item in items:
                     changeSetObj = item.get("changeSet")
                     includeObj = item.get("include")
@@ -152,60 +151,60 @@ class ElasticsearchChangelog:
 
                     elif includeObj:
                         file = includeObj["file"]
-                        if file in includeFiles:
+                        if file in include_files:
                             raise ChangeLogException(
-                                f"Repeat include file!!! changeLogFile: {self.changelogFile}, file: {file}"
+                                f"Repeat include file!!! changeLogFile: {self.changelog_file}, file: {file}"
                             )
-                        includeFiles.append(file)
+                        include_files.append(file)
                         childLog = ElasticsearchChangelog(
-                            changelogFile=file, app=self.app
+                            changelog_file=file, app=self.app
                         )
-                        for change_set_id in childLog.changeSetDict:
+                        for change_set_id in childLog.change_set_dict:
                             if change_set_id in changeSetDict:
                                 raise ChangeLogException(
                                     f"Repeat change set id: {change_set_id}. Please check your changelog"
                                 )
                             else:
-                                changeSetDict[change_set_id] = childLog.changeSetDict[
+                                changeSetDict[change_set_id] = childLog.change_set_dict[
                                     change_set_id
                                 ]
-                        changeSets.extend(childLog.changeSets)
+                        changeSets.extend(childLog.change_set_list)
 
-        elif os.path.isdir(self.changelogFile):
+        elif os.path.isdir(self.changelog_file):
             changelogfiles = []
-            for dirpath, dirnames, filenames in os.walk(self.changelogFile):
+            for dirpath, dirnames, filenames in os.walk(self.changelog_file):
                 for filename in filenames:
                     if filename.endswith((".yaml", ".yml")):
                         changelogfiles.append(os.path.join(dirpath, filename))
             # 根据文件名排序
             sorted_changelogfiles = sorted(changelogfiles, key=extract_version)
             for file in sorted_changelogfiles:
-                childLog = ElasticsearchChangelog(changelogFile=file, app=self.app)
-                for change_set_id in childLog.changeSetDict:
+                childLog = ElasticsearchChangelog(changelog_file=file, app=self.app)
+                for change_set_id in childLog.change_set_dict:
                     if change_set_id in changeSetDict:
                         raise ChangeLogException(
                             f"Repeat change set id: {change_set_id}. Please check your changelog"
                         )
                     else:
-                        changeSetDict[change_set_id] = childLog.changeSetDict[
+                        changeSetDict[change_set_id] = childLog.change_set_dict[
                             change_set_id
                         ]
-                changeSets.extend(childLog.changeSets)
+                changeSets.extend(childLog.change_set_list)
 
         else:
             raise ChangeLogException(
-                f"Changelog file or folder does not exists: {self.changelogFile}"
+                f"Changelog file or folder does not exists: {self.changelog_file}"
             )
-        self.changeSets = changeSets
-        self.changeSetDict = changeSetDict
+        self.change_set_list = changeSets
+        self.change_set_dict = changeSetDict
 
     def __check_change_log(
-        self, changeSetObj, elasticsearch_id: str, contexts: str, variables: dict
+        self, change_set_obj, elasticsearch_id: str, contexts: str, variables: dict
     ) -> bool:
-        change_set_id = str(changeSetObj["id"])
+        change_set_id = str(change_set_obj["id"])
         # 计算checksum
         checksum = changelog_utils.get_change_set_checksum(
-            {"changes": changeSetObj["changes"]}
+            {"changes": change_set_obj["changes"]}
         )
         is_execute = True
         log = (
@@ -223,10 +222,10 @@ class ElasticsearchChangelog:
             log.system_type = SystemType.ELASTICSEARCH.value
             log.system_id = elasticsearch_id
             log.exectype = ChangelogExeType.INIT.value
-            log.author = changeSetObj.get("author", "")
-            log.comment = changeSetObj.get("comment", "")
-            log.filename = changeSetObj.get("filename", "")
-            #log.contexts = contexts
+            log.author = change_set_obj.get("author", "")
+            log.comment = change_set_obj.get("comment", "")
+            log.filename = change_set_obj.get("filename", "")
+            # log.contexts = contexts
             log.checksum = checksum
             db.session.add(log)
         elif ChangelogExeType.FAILED.matches(
@@ -234,7 +233,7 @@ class ElasticsearchChangelog:
         ) or ChangelogExeType.INIT.matches(log.exectype):
             log.checksum = checksum
         else:
-            runOnChange = changeSetObj.get("runOnChange", False)
+            runOnChange = change_set_obj.get("runOnChange", False)
             if runOnChange and log.checksum != checksum:
                 log.exectype = ChangelogExeType.INIT.value
                 log.checksum = checksum
@@ -247,7 +246,7 @@ class ElasticsearchChangelog:
 
         if _secret:
             elasicsearch_changes = []
-            for change in changeSetObj["changes"]:
+            for change in change_set_obj["changes"]:
                 elasicsearch_change = change.copy()
                 elasicsearch_change["path"] = string.Template(
                     change["path"]
@@ -287,11 +286,11 @@ class ElasticsearchChangelog:
         check_log: bool = True,
     ):
         idx = 0
-        finalChangeSets = []
-        for changeSetObj in self.changeSets:
-            change_set_id = str(changeSetObj["id"])
+        final_change_sets = []
+        for change_set_obj in self.change_set_list:
+            change_set_id = str(change_set_obj["id"])
             # 判断是否在指定的contexts里面
-            changeSetCtx = changeSetObj.get("context")
+            changeSetCtx = change_set_obj.get("context")
             if not changelog_utils.is_ctx_included(contexts, changeSetCtx):
                 continue
 
@@ -299,15 +298,15 @@ class ElasticsearchChangelog:
 
             if check_log:
                 is_execute = self.__check_change_log(
-                    changeSetObj, elasticsearch_id, contexts, vars
+                    change_set_obj, elasticsearch_id, contexts, vars
                 )
 
             if is_execute:
                 logger.info(f"Found change set log: {change_set_id}")
-                finalChangeSet = changeSetObj.copy()
-                for change in finalChangeSet["changes"]:
+                final_change_set = change_set_obj.copy()
+                for change in final_change_set["changes"]:
                     change["path"] = string.Template(change["path"]).substitute(vars)
-                finalChangeSets.append(finalChangeSet)
+                final_change_sets.append(final_change_set)
 
             idx += 1
             if count > 0 and idx >= count:
@@ -316,7 +315,7 @@ class ElasticsearchChangelog:
         if check_log:
             db.session.commit()
 
-        return finalChangeSets
+        return final_change_sets
 
     def __request(self, cfg, method, path, data):
         url = cfg.get("url")
