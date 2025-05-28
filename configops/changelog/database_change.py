@@ -268,5 +268,5 @@ class DatabaseChangeLog:
                     and change_sets[change_set_id]["filename"] != filename
                 ):
                     raise ChangeLogException(
-                        f"ChangeSetId is already defined in an earlier changelog file. ChangeSetId:{change_set_id}, Current file:{change_sets[change_set_id]["filename"]}, previous file:{filename}"
+                        f"ChangeSetId is already defined in an earlier changelog. ChangeSetId:{change_set_id}, Current file:{change_sets[change_set_id]["filename"]}, previous file:{filename}"
                     )

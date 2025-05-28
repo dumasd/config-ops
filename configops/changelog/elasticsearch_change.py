@@ -217,9 +217,13 @@ class ElasticsearchChangelog:
             .first()
         )
         if log is not None:
-            if log.filename != current_filename:
+            if (
+                log.filename
+                and len(log.filename) > 0
+                and log.filename != current_filename
+            ):
                 raise ChangeLogException(
-                    f"This changeSetId is already defined in an earlier changelog file. changeSetId:{change_set_id}, Current file:{current_filename}, previous file:{log.filename}"
+                    f"This changeSetId is already defined in an earlier changelog. changeSetId:{change_set_id}, Current file:{current_filename}, previous file:{log.filename}"
                 )
             if ChangelogExeType.FAILED.matches(
                 log.exectype
