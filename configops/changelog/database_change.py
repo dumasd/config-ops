@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 LIQUIBASE_CMD_UPDATE = "update"
 LIQUIBASE_CMD_UPDATE_SQL = "update-sql"
+LIQUIBASE_CMD_HISTORY = "history"
 
 
 class DatabaseChangeLog:
@@ -60,7 +61,8 @@ class DatabaseChangeLog:
 
     def run_liquibase_cmd(self, command: str, cwd=None, args=None, db_id=None):
         command = command.strip()
-        cmd_args_str = ""
+        command_args_str = ""
+        history_command_args_str = ""
         if db_id:
             db_config = get_database_cfg(self.app, db_id)
             if db_config == None:
@@ -70,17 +72,22 @@ class DatabaseChangeLog:
             host = db_config["url"]
             port = db_config["port"]
             username = db_config["username"]
+            changelog_schema = db_config.get("changelogschema", "liquibase")
 
             secret_data = secret_util.get_secret_data(db_config)
             password = secret_data.password
 
             # jdbc:database_type://hostname:port/database_name
-            cmd_args_str = (
-                cmd_args_str
-                + f" --url jdbc:{dialect}://{host}:{port} --username {username} --password {password}"
+            command_database_args_str = f" --url jdbc:{dialect}://{host}:{port} --username {username} --password {password}"
+            command_args_str = (
+                command_args_str
+                + command_database_args_str
+                + f" --liquibase-schema-name {changelog_schema}"
             )
-            changelogSchema = db_config.get("changelogschema", "liquibase")
-            cmd_args_str = cmd_args_str + f" --liquibase-schema-name {changelogSchema}"
+            history_command_args_str = (
+                command_database_args_str
+                + f" --default-schema-name {changelog_schema} --format TEXT"
+            )
 
         # 设置classpath 和 defaultsFile
         liquibase_cfg = get_liquibase_cfg(self.app)
@@ -88,36 +95,34 @@ class DatabaseChangeLog:
             defaultsFile = liquibase_cfg.get("defaults-file")
             jdbcDriverDir = liquibase_cfg.get("jdbc-drivers-dir")
             defaultsFileOpt = (
-                cmd_args_str.find("--defaults-file") < 0
-                or cmd_args_str.find("--defaultsFile") < 0
+                command_args_str.find("--defaults-file") < 0
+                or command_args_str.find("--defaultsFile") < 0
             )
-            classpathOpt = cmd_args_str.find("--classpath") < 0
-
             if defaultsFile and os.path.exists(defaultsFile) and defaultsFileOpt:
-                cmd_args_str = (
-                    cmd_args_str + " --defaults-file " + os.path.abspath(defaultsFile)
+                command_args_str = (
+                    command_args_str
+                    + " --defaults-file "
+                    + os.path.abspath(defaultsFile)
                 )
 
+            classpathOpt = command_args_str.find("--classpath") < 0
             if jdbcDriverDir and os.path.exists(jdbcDriverDir) and classpathOpt:
                 separator = ";" if platform.system() == "Windows" else ":"
                 base = os.path.abspath(jdbcDriverDir)
-
                 jar_files = [f for f in os.listdir(jdbcDriverDir) if f.endswith(".jar")]
-
                 classpath = separator.join(os.path.join(base, jar) for jar in jar_files)
-
-                cmd_args_str = cmd_args_str + " --classpath " + classpath
+                command_args_str = command_args_str + " --classpath " + classpath
 
         if args:
-            cmd_args_str = cmd_args_str + " " + args
+            command_args_str = command_args_str + " " + args
 
         # 解析changelogFile
         working_dir = cwd if cwd else os.getcwd()
         if self.changelog_file:
             cmd_changelog_file = os.path.relpath(self.changelog_file, working_dir)
-            cmd_args_str = cmd_args_str + " --changelog-file " + cmd_changelog_file
-
-        logger.info(f"Liquibase command: liquibase {command} {cmd_args_str}")
+            command_args_str = (
+                command_args_str + " --changelog-file " + cmd_changelog_file
+            )
 
         try:
             custom_env = os.environ.copy()
@@ -128,22 +133,47 @@ class DatabaseChangeLog:
 
             if command == LIQUIBASE_CMD_UPDATE:
                 # 先跑一遍update-sql找出执行的sql，并保存起来
-                liquibase_update_sql_cmd = shlex.split(
-                    f"liquibase {LIQUIBASE_CMD_UPDATE_SQL} {cmd_args_str.strip()}"
+                logger.info(
+                    f"Liquibase command: liquibase update-sql {command_args_str}"
                 )
-                completed_process = subprocess.run(
-                    liquibase_update_sql_cmd,
+                liquibase_update_sql_sh = shlex.split(
+                    f"liquibase {LIQUIBASE_CMD_UPDATE_SQL} {command_args_str.strip()}"
+                )
+                update_sql_completed_process = subprocess.run(
+                    liquibase_update_sql_sh,
                     cwd=working_dir,
                     capture_output=True,
                     env=custom_env,
                 )
-                stdout = completed_process.stdout.decode()
-                stderr = completed_process.stderr.decode()
-                self.__save_changelog_changes(db_id, stdout)
+                change_sets = self.__get_change_sets__(
+                    update_sql_completed_process.stdout.decode()
+                )
 
-            liquibase_cmd = shlex.split(f"liquibase {command} {cmd_args_str.strip()}")
+                # 跑一遍history找到已经执行记录，校验changesetId和filename
+                if len(change_sets) > 0:
+                    logger.info(
+                        f"Liquibase command: liquibase history {history_command_args_str}"
+                    )
+                    liquibase_history_sh = shlex.split(
+                        f"liquibase {LIQUIBASE_CMD_HISTORY} {history_command_args_str.strip()}"
+                    )
+                    history_completed_process = subprocess.run(
+                        liquibase_history_sh,
+                        cwd=working_dir,
+                        capture_output=True,
+                        env=custom_env,
+                    )
+                    self.__check_changelog__(
+                        change_sets, history_completed_process.stdout.decode()
+                    )
+
+                self.__save_changelog_changes__(db_id, change_sets)
+
+            liquibase_cmd_sh = shlex.split(
+                f"liquibase {command} {command_args_str.strip()}"
+            )
             completed_process = subprocess.run(
-                liquibase_cmd,
+                liquibase_cmd_sh,
                 cwd=working_dir,
                 capture_output=True,
                 env=custom_env,
@@ -163,38 +193,12 @@ class DatabaseChangeLog:
             if self.is_temp_changelog_file:
                 os.remove(self.changelog_file)
 
-    def __save_changelog_changes(self, db_id, stdout):
-        # 保存changelog changes
-        if not stdout:
-            return
-        lines = stdout.split("\n")
-        change_set_changes = {}
-        start_change_set = False
-        change_set_id = None
-        for line in lines:
-            end_match = re.search(r"^--\s+Release\sDatabase\sLock", line)
-            if end_match:
-                break
-            databasechangelog_match = re.search(
-                r"databasechangelog", line, re.IGNORECASE
-            )
-            if databasechangelog_match:
-                continue
-            match = re.search(r"^--\s+Changeset\s+(\S+)::(\S+)::(\S+)", line)
-            if match:
-                start_change_set = True
-                change_set_id = match.group(2)
-            elif start_change_set and not line.startswith("--"):
-                changes = change_set_changes.get(change_set_id, "")
-                changes = f"{changes}\n{line}"
-                change_set_changes[change_set_id] = changes
-
+    def __save_changelog_changes__(self, db_id, change_sets):
         _secret = None
         if self.app:
             _secret = get_config(self.app, "config.node.secret")
-
-        if _secret and len(change_set_changes) > 0:
-            for change_set_id, changes in change_set_changes.items():
+        if _secret and len(change_sets) > 0:
+            for change_set_id, change_set in change_sets.items():
                 log_changes = (
                     db.session.query(ConfigOpsChangeLogChanges)
                     .filter_by(
@@ -209,11 +213,60 @@ class DatabaseChangeLog:
                         change_set_id=change_set_id,
                         system_type=SystemType.DATABASE.value,
                         system_id=db_id,
-                        changes=changelog_utils.pack_encrypt_changes(changes, _secret),
+                        changes=changelog_utils.pack_encrypt_changes(
+                            change_set["changes"], _secret
+                        ),
                     )
                     db.session.add(log_changes)
                 else:
                     log_changes.changes = changelog_utils.pack_encrypt_changes(
-                        changes, _secret
+                        change_set["changes"], _secret
                     )
             db.session.commit()
+
+    def __get_change_sets__(self, stdout):
+        change_sets = {}
+        if not stdout:
+            return change_sets
+        lines = stdout.split("\n")
+        start_change_set = False
+        change_set_id = None
+        for line in lines:
+            end_match = re.search(r"^--\s+Release\sDatabase\sLock", line)
+            if end_match:
+                break
+            is_databasechangelog_match = re.search(
+                r"databasechangelog", line, re.IGNORECASE
+            )
+            if is_databasechangelog_match:
+                continue
+            match = re.search(r"^--\s+Changeset\s+(\S+)::(\S+)::(\S+)", line)
+            if match:
+                start_change_set = True
+                filename = match.group(1)
+                change_set_id = match.group(2)
+            elif start_change_set and not line.startswith("--"):
+                changes = change_sets.get(change_set_id, "")
+                changes = f"{changes}\n{line}"
+                change_sets[change_set_id] = {
+                    "filename": filename,
+                    "changes": changes,
+                }
+        return change_sets
+
+    def __check_changelog__(self, change_sets, stdout):
+        if not stdout:
+            return
+        lines = stdout.split("\n")
+        for line in lines:
+            match = re.search(r"^\s+(\S+)::(\S+)::(\S+)", line)
+            if match:
+                filename = match.group(1)
+                change_set_id = match.group(2)
+                if (
+                    change_set_id in change_sets
+                    and change_sets[change_set_id]["filename"] != filename
+                ):
+                    raise ChangeLogException(
+                        f"ChangeSetId is already defined in an earlier changelog file. ChangeSetId:{change_set_id}, Current file:{change_sets[change_set_id]["filename"]}, previous file:{filename}"
+                    )

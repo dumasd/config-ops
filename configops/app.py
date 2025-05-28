@@ -50,13 +50,13 @@ def create_app(config_file=None):
 
     @app.errorhandler(Exception)
     def handle_exception(error):
-        error_handler_logger.error("f Catch global exception {error}", exc_info=True)
+        error_handler_logger.error(f"Catch global exception {error}", exc_info=True)
         type_name = type(error).__name__
         return f"{type_name}: {str(error)}", 500
 
     @app.errorhandler(ValidationError)
     def handle_validation_error(error):
-        error_handler_logger.error("f Catch validation error {error}", exc_info=True)
+        error_handler_logger.error(f"Catch validation error {error}", exc_info=True)
         return jsonify(error.messages), 400
 
     config = load_config(config_file)

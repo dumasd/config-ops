@@ -202,10 +202,10 @@ class ElasticsearchChangelog:
         self, change_set_obj, elasticsearch_id: str, contexts: str, variables: dict
     ) -> bool:
         change_set_id = str(change_set_obj["id"])
-        # 计算checksum
         checksum = changelog_utils.get_change_set_checksum(
             {"changes": change_set_obj["changes"]}
         )
+        current_filename = change_set_obj["filename"]
         is_execute = True
         log = (
             db.session.query(ConfigOpsChangeLog)
@@ -216,7 +216,23 @@ class ElasticsearchChangelog:
             )
             .first()
         )
-        if log is None:
+        if log is not None:
+            if log.filename != current_filename:
+                raise ChangeLogException(
+                    f"This changeSetId is already defined in an earlier changelog file. changeSetId:{change_set_id}, Current file:{current_filename}, previous file:{log.filename}"
+                )
+            if ChangelogExeType.FAILED.matches(
+                log.exectype
+            ) or ChangelogExeType.INIT.matches(log.exectype):
+                log.checksum = checksum
+            else:
+                runOnChange = change_set_obj.get("runOnChange", False)
+                if runOnChange and log.checksum != checksum:
+                    log.exectype = ChangelogExeType.INIT.value
+                    log.checksum = checksum
+                else:
+                    is_execute = False
+        else:
             log = ConfigOpsChangeLog()
             log.change_set_id = change_set_id
             log.system_type = SystemType.ELASTICSEARCH.value
@@ -225,20 +241,8 @@ class ElasticsearchChangelog:
             log.author = change_set_obj.get("author", "")
             log.comment = change_set_obj.get("comment", "")
             log.filename = change_set_obj.get("filename", "")
-            # log.contexts = contexts
             log.checksum = checksum
             db.session.add(log)
-        elif ChangelogExeType.FAILED.matches(
-            log.exectype
-        ) or ChangelogExeType.INIT.matches(log.exectype):
-            log.checksum = checksum
-        else:
-            runOnChange = change_set_obj.get("runOnChange", False)
-            if runOnChange and log.checksum != checksum:
-                log.exectype = ChangelogExeType.INIT.value
-                log.checksum = checksum
-            else:
-                is_execute = False
 
         _secret = None
         if self.app:

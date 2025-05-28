@@ -1,7 +1,7 @@
 import logging, click
 from configops.utils import nacos_client
 from configops.utils.exception import ChangeLogException
-from configops.changelog.nacos_change import NacosChangeLog, apply_changes
+from configops.changelog.nacos_change import NacosChangeLog
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 @click.group()
 def cli() -> None:
     __print_banner()
-    pass
 
 
 @cli.command(
@@ -50,7 +49,13 @@ def update_nacos(changelog_file, url, username, password, changesets, contexts, 
 
         nacosChangeLog = NacosChangeLog(changelog_file=changelog_file)
         result = nacosChangeLog.fetch_multi(
-            client, "", 0, contexts, variables, False, spec_changesets
+            client=client,
+            nacos_id="",
+            count=0,
+            contexts=contexts,
+            vars=variables,
+            check_log=False,
+            spec_changesets=spec_changesets,
         )
         click.echo(f"Change set ids:{result[0]}")
         nacosConfigs = result[1]
@@ -108,9 +113,16 @@ def update_nacos_check(changelog_file, url, username, password, contexts, var):
     )
     try:
         nacosChangeLog = NacosChangeLog(changelog_file=changelog_file)
-        result = nacosChangeLog.fetch_multi(client, "", 0, contexts, variables, False)
+        result = nacosChangeLog.fetch_multi(
+            client=client,
+            nacos_id="",
+            count=0,
+            contexts=contexts,
+            vars=variables,
+            check_log=False,
+        )
         click.echo(f"Change set ids:{result[0]}")
-        click.echo(f"Affected nacos config list:")
+        # click.echo(f"Affected nacos config list: {result[1]}")
         nacosConfigs = result[1]
         for nacosConfig in nacosConfigs:
             namespace = nacosConfig["namespace"]

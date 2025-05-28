@@ -65,6 +65,7 @@ class GetChangeSetSchema(Schema):
     count = fields.Int(required=False)
     contexts = fields.Str(required=False)
     vars = fields.Dict()
+    allowedDataIds = fields.List(fields.Str(), required=False)
 
     class Meta:
         unknown = EXCLUDE
@@ -96,12 +97,18 @@ def get_change_set():
     count = data.get("count", 0)
     contexts = data.get("contexts")
     variables = data.get("vars", {})
-    changelogFile = data.get("changeLogFile")
+    changelog_file = data.get("changeLogFile")
+    allowed_data_ids = data.get("allowedDataIds")
 
     try:
-        nacosChangeLog = NacosChangeLog(changelog_file=changelogFile, app=current_app)
+        nacosChangeLog = NacosChangeLog(changelog_file=changelog_file, app=current_app)
         result = nacosChangeLog.fetch_multi(
-            client, nacos_id, count, contexts, variables
+            client=client,
+            nacos_id=nacos_id,
+            count=count,
+            contexts=contexts,
+            vars=variables,
+            allowed_data_ids=allowed_data_ids,
         )
         keys = ["ids", "changes"]
         return dict(zip(keys, result))

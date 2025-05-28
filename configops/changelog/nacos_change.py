@@ -239,13 +239,14 @@ class NacosChangeLog:
         self.change_set_list = change_set_list
 
     def __check_change_log(
-        self, changeSetObj, nacos_id: str, contexts: str, variables: dict
+        self, change_set_obj, nacos_id: str, contexts: str, variables: dict
     ) -> bool:
-        change_set_id = str(changeSetObj["id"])
+        change_set_id = str(change_set_obj["id"])
         # 计算checksum
         checksum = changelog_utils.get_change_set_checksum(
-            {"changes": changeSetObj["changes"]}
+            {"changes": change_set_obj["changes"]}
         )
+        current_filename = change_set_obj["filename"]
         is_execute = True
         log = (
             db.session.query(ConfigOpsChangeLog)
@@ -256,29 +257,33 @@ class NacosChangeLog:
             )
             .first()
         )
-        if log is None:
+        if log is not None:
+            if log.filename != current_filename:
+                raise ChangeLogException(
+                    f"ChangeSetId is already defined in an earlier changelog file. changeSetId:{change_set_id}, Current file:{current_filename}, previous file:{log.filename}"
+                )
+            if ChangelogExeType.FAILED.matches(
+                log.exectype
+            ) or ChangelogExeType.INIT.matches(log.exectype):
+                log.checksum = checksum
+            else:
+                runOnChange = change_set_obj.get("runOnChange", False)
+                if runOnChange and log.checksum != checksum:
+                    log.exectype = ChangelogExeType.INIT.value
+                    log.checksum = checksum
+                else:
+                    is_execute = False
+        else:
             log = ConfigOpsChangeLog()
             log.change_set_id = change_set_id
             log.system_type = SystemType.NACOS.value
             log.system_id = nacos_id
             log.exectype = ChangelogExeType.INIT.value
-            log.author = changeSetObj.get("author", "")
-            log.comment = changeSetObj.get("comment", "")
-            log.filename = changeSetObj.get("filename", "")
-            # log.contexts = contexts
+            log.author = change_set_obj.get("author", "")
+            log.comment = change_set_obj.get("comment", "")
+            log.filename = change_set_obj["filename"]
             log.checksum = checksum
             db.session.add(log)
-        elif ChangelogExeType.FAILED.matches(
-            log.exectype
-        ) or ChangelogExeType.INIT.matches(log.exectype):
-            log.checksum = checksum
-        else:
-            runOnChange = changeSetObj.get("runOnChange", False)
-            if runOnChange and log.checksum != checksum:
-                log.exectype = ChangelogExeType.INIT.value
-                log.checksum = checksum
-            else:
-                is_execute = False
 
         _secret = None
         if self.app:
@@ -286,7 +291,7 @@ class NacosChangeLog:
 
         if _secret:
             nacos_changes = []
-            for change in changeSetObj["changes"]:
+            for change in change_set_obj["changes"]:
                 nacos_change = change.copy()
                 namespace = string.Template(change["namespace"]).substitute(variables)
                 group = string.Template(change["group"]).substitute(variables)
@@ -330,6 +335,7 @@ class NacosChangeLog:
         vars: dict = {},
         check_log: bool = True,
         spec_changesets=[],
+        allowed_data_ids: list = None,
     ):
         """
         获取多个当前需要执行的changeset
@@ -340,6 +346,7 @@ class NacosChangeLog:
         change_set_ids = []
         for change_set_obj in self.change_set_list:
             change_set_id = str(change_set_obj["id"])
+            changelog_filename = change_set_obj["filename"]
             # 判断是否在指定的contexts里面
             change_set_ctx = change_set_obj.get("context")
             if not changelog_utils.is_ctx_included(contexts, change_set_ctx):
@@ -361,9 +368,7 @@ class NacosChangeLog:
 
             if is_execute:
                 logger.info(f"Found change set log: {change_set_id}")
-
                 change_set_ids.append(change_set_id)
-
                 for change in change_set_obj["changes"]:
                     logger.info(f"current change: {change}")
                     namespace = string.Template(change["namespace"]).substitute(vars)
@@ -371,6 +376,14 @@ class NacosChangeLog:
                     dataId = string.Template(change["dataId"]).substitute(vars)
                     _format = change["format"]
 
+                    if (
+                        allowed_data_ids
+                        and len(allowed_data_ids) > 0
+                        and dataId not in allowed_data_ids
+                    ):
+                        raise ChangeLogException(
+                            f"Config dataId is not allowed. changelogFile:{changelog_filename}, changeSetId:{change_set_id}, namespace/group/dataId:{namespace}/{group}/{dataId}, allowed dataId:{allowed_data_ids}"
+                        )
                     nacos_config = change.copy()
                     nacos_config["namespace"] = namespace
                     nacos_config["group"] = group
@@ -387,7 +400,7 @@ class NacosChangeLog:
 
                         if remote_config_format != _format:
                             raise ChangeLogException(
-                                f"Config format not match. namespace/group/dataId:{namespace}/{group}/{dataId}; changelogFormat:{_format}, nacosFormat:{remote_config_format}"
+                                f"Config format not match. changelogFile:{changelog_filename}, changeSetId:{change_set_id}, namespace/group/dataId:{namespace}/{group}/{dataId}, changelogFormat:{_format}, nacosFormat:{remote_config_format}"
                             )
 
                         if len(remote_config_content.strip()) > 0:
@@ -396,7 +409,7 @@ class NacosChangeLog:
                             )
                             if not suc:
                                 raise ChangeLogException(
-                                    f"Current Nacos Config Content Invalid!!! namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
+                                    f"Current Nacos Config Content Invalid!!! changelogFile:{changelog_filename}, changeSetId:{change_set_id}, namespace/group/dataId:{namespace}/{group}/{dataId}, format: {_format}. errorMsg: {msg}"
                                 )
 
                         nacos_config["content"] = remote_config_content

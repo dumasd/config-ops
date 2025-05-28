@@ -76,3 +76,22 @@ UPDATE test.databasechangeloglock SET `LOCKED` = 0, LOCKEDBY = NULL, LOCKGRANTED
                 change_set_changes[change_set_id] = changes
 
         logger.info("change_set_changes: %s", change_set_changes)
+
+    def test_read_stdout_history(self):
+        stdout = """Liquibase History for jdbc:mysql://localhost:3306
+
+- Database updated at 2025/4/22 下午2:43. Applied 2 changeset(s) in 0.0s, DeploymentId: 5304189396
+  changelog-1.0.yaml::maven-example-1.0.1-release::bruce.wu
+  changelog-1.0.yaml::gradle-example-1.0.2-release::bruce.wu
+
+- Database updated at 2025/4/22 下午2:43. Applied 1 changeset(s), DeploymentId: 5304189399
+  changelog-1.1.yaml::maven-example-1.1.1-release::henry.hua
+    """    
+        lines = stdout.split("\n")
+        for line in lines:
+            match = re.search(r"^\s+(\S+)::(\S+)::(\S+)", line)
+            if match:
+                filename = match.group(1)
+                change_set_id = match.group(2)
+                author = match.group(3)
+                logger.info("filename:%s, change_set_id:%s, author:%s", filename, change_set_id, author)
