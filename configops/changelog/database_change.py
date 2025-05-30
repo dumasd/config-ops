@@ -111,7 +111,8 @@ class DatabaseChangeLog:
                 base = os.path.abspath(jdbcDriverDir)
                 jar_files = [f for f in os.listdir(jdbcDriverDir) if f.endswith(".jar")]
                 classpath = separator.join(os.path.join(base, jar) for jar in jar_files)
-                command_args_str = command_args_str + " --classpath " + classpath
+                if classpath:
+                    command_args_str = command_args_str + " --classpath " + classpath
 
         if args:
             command_args_str = command_args_str + " " + args
@@ -139,15 +140,15 @@ class DatabaseChangeLog:
                 liquibase_update_sql_sh = shlex.split(
                     f"liquibase {LIQUIBASE_CMD_UPDATE_SQL} {command_args_str.strip()}"
                 )
-                update_sql_completed_process = subprocess.run(
+                with subprocess.Popen(
                     liquibase_update_sql_sh,
                     cwd=working_dir,
-                    capture_output=True,
                     env=custom_env,
-                )
-                change_sets = self.__get_change_sets__(
-                    update_sql_completed_process.stdout.decode()
-                )
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                ) as update_sql_proc:
+                    change_sets = self.__get_change_sets__(update_sql_proc.stdout)
 
                 # 跑一遍history找到已经执行记录，校验changesetId和filename
                 if len(change_sets) > 0:
@@ -157,38 +158,44 @@ class DatabaseChangeLog:
                     liquibase_history_sh = shlex.split(
                         f"liquibase {LIQUIBASE_CMD_HISTORY} {history_command_args_str.strip()}"
                     )
-                    history_completed_process = subprocess.run(
+                    with subprocess.Popen(
                         liquibase_history_sh,
                         cwd=working_dir,
-                        capture_output=True,
                         env=custom_env,
-                    )
-                    self.__check_changelog__(
-                        change_sets, history_completed_process.stdout.decode()
-                    )
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                    ) as history_proc:
+                        self.__check_changelog__(change_sets, history_proc.stdout)
 
-                self.__save_changelog_changes__(db_id, change_sets)
+                    self.__save_changelog_changes__(db_id, change_sets)
 
+            logger.info(f"Liquibase command: liquibase {command} {command_args_str}")
             liquibase_cmd_sh = shlex.split(
                 f"liquibase {command} {command_args_str.strip()}"
             )
-            completed_process = subprocess.run(
+
+            with subprocess.Popen(
                 liquibase_cmd_sh,
                 cwd=working_dir,
-                capture_output=True,
                 env=custom_env,
-            )
-            stdout = completed_process.stdout.decode()
-            stderr = completed_process.stderr.decode()
-            if stderr:
-                logger.info(f"Liqubase run stderr. \n{stderr}")
-            if stdout:
-                logger.info(f"Liqubase run stdout. \n{stdout}")
-            return {
-                "stdout": stdout,
-                "stderr": stderr,
-                "retcode": completed_process.returncode,
-            }
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            ) as cmd_proc:
+                stderr = ""
+                stdout = ""
+                for line in cmd_proc.stderr:
+                    stderr = stderr + line
+                for line in cmd_proc.stdout:
+                    stdout = stdout + line
+                logger.info(f"Liqubase run stderr::: \n{stderr}")
+                logger.info(f"Liqubase run stdout::: \n{stdout}")
+                return {
+                    "stdout": stdout,
+                    "stderr": stderr,
+                    "retcode": cmd_proc.returncode,
+                }
         finally:
             if self.is_temp_changelog_file:
                 os.remove(self.changelog_file)
@@ -228,10 +235,9 @@ class DatabaseChangeLog:
         change_sets = {}
         if not stdout:
             return change_sets
-        lines = stdout.split("\n")
         start_change_set = False
         change_set_id = None
-        for line in lines:
+        for line in stdout:
             end_match = re.search(r"^--\s+Release\sDatabase\sLock", line)
             if end_match:
                 break
@@ -255,10 +261,8 @@ class DatabaseChangeLog:
         return change_sets
 
     def __check_changelog__(self, change_sets, stdout):
-        if not stdout:
-            return
-        lines = stdout.split("\n")
-        for line in lines:
+        for line in stdout:
+            line = line.strip()
             match = re.search(r"^\s+(\S+)::(\S+)::(\S+)", line)
             if match:
                 filename = match.group(1)
@@ -268,5 +272,5 @@ class DatabaseChangeLog:
                     and change_sets[change_set_id]["filename"] != filename
                 ):
                     raise ChangeLogException(
-                        f"ChangeSetId is already defined in an earlier changelog. ChangeSetId:{change_set_id}, Current file:{change_sets[change_set_id]["filename"]}, previous file:{filename}"
+                        f"ChangeSetId is already defined in an earlier changelog. ChangeSetId:{change_set_id}, Current file:{change_sets[change_set_id]['filename']}, previous file:{filename}"
                     )
