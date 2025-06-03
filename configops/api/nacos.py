@@ -1,10 +1,10 @@
 import logging, os
 from flask import Blueprint, make_response, request, current_app
-from configops.utils import constants, config_handler, config_validator
+from configops.utils import config_validator
 from marshmallow import Schema, fields, EXCLUDE
 from configops.utils import nacos_client
 from configops.utils.exception import ConfigOpsException, ChangeLogException
-from configops.changelog.nacos_change import NacosChangeLog, apply_changes
+from configops.changelog.nacos_change import NacosChangeLog
 from configops.config import get_nacos_cfg
 
 bp = Blueprint("nacos", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/"))
@@ -171,8 +171,8 @@ def apply_change_set():
                 )
 
     try:
-        apply_changes(change_set_ids, nacos_id, push_changes)
+        NacosChangeLog.apply_changes(change_set_ids, nacos_id, push_changes)
     except Exception as ex:
-        logger.error(f"Apply config error. {ex}")
+        logger.error(f"Apply config error. {ex}", stack_info=True)
         return make_response(f"Apply config error:{str(ex)}", 500)
     return "OK"

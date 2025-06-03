@@ -118,13 +118,25 @@ def yaml_patch(patch, current):
             elif isinstance(current[key], CommentedSeq) and isinstance(
                 patch[key], CommentedSeq
             ):
-                for idx, item in enumerate(patch[key]):
-                    if item not in current[key]:
-                        current[key].append(item)
-                        if patch[key].ca.items.get(idx):
+                for patch_idx, patch_item in enumerate(patch[key]):
+                    continue_flag = True
+                    if isinstance(patch_item, dict) and patch_item.get("id"):
+                        # 如果是字典且有id字段，则使用id字段作为唯一标识
+                        patch_item_id = patch_item.get("id")
+                        for current_idx, current_item in enumerate(current[key]):
+                            if (
+                                isinstance(current_item, dict)
+                                and current_item.get("id") == patch_item_id
+                            ):
+                                current[key][current_idx] = patch_item
+                                continue_flag = False
+
+                    if continue_flag and patch_item not in current[key]:
+                        current[key].append(patch_item)
+                        if patch[key].ca.items.get(patch_idx):
                             current[key].ca.items[len(current[key]) - 1] = patch[
                                 key
-                            ].ca.items[idx]
+                            ].ca.items[patch_idx]
             else:
                 # 保留键的注释
                 current[key] = patch[key]
@@ -135,19 +147,6 @@ def yaml_patch(patch, current):
             # 添加新键的注释
             if patch.ca.items.get(key):
                 current.ca.items[key] = patch.ca.items[key]
-    """
-    if isinstance(current, dict) and isinstance(patch, dict):
-        for key in patch:
-            if key in current:
-                if isinstance(current[key], dict) and isinstance(patch[key], dict):
-                    yaml_patch(patch[key], current[key])
-                elif not isinstance(current[key], dict) and not isinstance(
-                    patch[key], dict
-                ):
-                    current[key] = patch[key]
-            else:
-                current[key] = patch[key]
-    """
 
 
 def yaml_delete(patch, current):

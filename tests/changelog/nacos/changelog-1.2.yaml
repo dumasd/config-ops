@@ -15,4 +15,18 @@ nacosChangeLog:
           # 追加内容
           patchContent: |-
             server:
-              port: 8007
+              port: 8007  
+              servlet:
+                context-path: /blue
+            gtt:
+              path:
+                - /blue/**
+                - /blue2/**
+            spring:
+              cloud:
+                gateway:
+                  routes:
+                    - id: blue
+                      uri: lb://blue-service
+                      predicates:
+                        - Path=/blue/**                      

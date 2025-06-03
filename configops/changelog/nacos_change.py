@@ -104,9 +104,9 @@ class NacosChangeLog:
     def __init__(self, changelog_file=None, app=None):
         self.changelog_file = changelog_file
         self.app = app
-        self.__init_change_log()
+        self.__init_change_log__()
 
-    def __init_change_log(self):
+    def __init_change_log__(self):
         change_set_dict = {}
         change_set_list = []
 
@@ -238,7 +238,7 @@ class NacosChangeLog:
         self.change_set_dict = change_set_dict
         self.change_set_list = change_set_list
 
-    def __check_change_log(
+    def __check_change_log__(
         self, change_set_obj, nacos_id: str, contexts: str, variables: dict
     ) -> bool:
         change_set_id = str(change_set_obj["id"])
@@ -366,7 +366,7 @@ class NacosChangeLog:
             is_execute = True
             # 查询log
             if check_log:
-                is_execute = self.__check_change_log(
+                is_execute = self.__check_change_log__(
                     change_set_obj, nacos_id, contexts, vars
                 )
 
@@ -481,57 +481,61 @@ class NacosChangeLog:
                 return item, namespace_group_configs
         return None, namespace_group_configs
 
-
-def apply_change(change_set_id: str, nacos_id: str, func):
-    log = (
-        db.session.query(ConfigOpsChangeLog)
-        .filter_by(
-            change_set_id=change_set_id,
-            system_id=nacos_id,
-            system_type=SystemType.NACOS.value,
-        )
-        .first()
-    )
-
-    if log is None:
-        raise ChangeLogException(f"Change log not found. change_set_id:{change_set_id}")
-
-    if ChangelogExeType.EXECUTED.matches(log.exectype):
-        raise ChangeLogException(f"Change log executed. change_set_id:{change_set_id}")
-    # 执行操作
-    try:
-        func()
-        log.exectype = ChangelogExeType.EXECUTED.value
-    except Exception as e:
-        log.exectype = ChangelogExeType.FAILED.value
-        raise e
-    finally:
-        db.session.commit()
-
-
-def apply_changes(change_set_ids, nacos_id: str, func):
-    logs = (
-        db.session.query(ConfigOpsChangeLog)
-        .filter(
-            ConfigOpsChangeLog.change_set_id.in_(change_set_ids),
-            ConfigOpsChangeLog.system_id == nacos_id,
-            ConfigOpsChangeLog.system_type == SystemType.NACOS.value,
-        )
-        .all()
-    )
-
-    if logs is None or len(logs) == 0:
-        raise ChangeLogException(
-            f"Change log not found. change_set_ids:{change_set_ids}"
+    @staticmethod
+    def apply_changes(change_set_ids, nacos_id: str, func):
+        logs = (
+            db.session.query(ConfigOpsChangeLog)
+            .filter(
+                ConfigOpsChangeLog.change_set_id.in_(change_set_ids),
+                ConfigOpsChangeLog.system_id == nacos_id,
+                ConfigOpsChangeLog.system_type == SystemType.NACOS.value,
+            )
+            .all()
         )
 
-    # 执行操作
-    try:
-        func()
-        for log in logs:
+        if logs is None or len(logs) == 0:
+            raise ChangeLogException(
+                f"Change log not found. change_set_ids:{change_set_ids}"
+            )
+
+        # 执行操作
+        try:
+            func()
+            for log in logs:
+                log.exectype = ChangelogExeType.EXECUTED.value
+        except Exception as e:
+            log.exectype = ChangelogExeType.FAILED.value
+            raise e
+        finally:
+            db.session.commit()
+
+    @staticmethod
+    def apply_change(change_set_id: str, nacos_id: str, func):
+        log = (
+            db.session.query(ConfigOpsChangeLog)
+            .filter_by(
+                change_set_id=change_set_id,
+                system_id=nacos_id,
+                system_type=SystemType.NACOS.value,
+            )
+            .first()
+        )
+
+        if log is None:
+            raise ChangeLogException(
+                f"Change log not found. change_set_id:{change_set_id}"
+            )
+
+        if ChangelogExeType.EXECUTED.matches(log.exectype):
+            raise ChangeLogException(
+                f"Change log executed. change_set_id:{change_set_id}"
+            )
+        # 执行操作
+        try:
+            func()
             log.exectype = ChangelogExeType.EXECUTED.value
-    except Exception as e:
-        log.exectype = ChangelogExeType.FAILED.value
-        raise e
-    finally:
-        db.session.commit()
+        except Exception as e:
+            log.exectype = ChangelogExeType.FAILED.value
+            raise e
+        finally:
+            db.session.commit()

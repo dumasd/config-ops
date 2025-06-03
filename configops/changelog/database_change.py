@@ -25,9 +25,9 @@ class DatabaseChangeLog:
         self.changelog_file = changelog_file
         self.is_temp_changelog_file = False
         self.app = app
-        self.__init_changelog()
+        self.__init_changelog__()
 
-    def __init_changelog(self):
+    def __init_changelog__(self):
         changelog_file = self.changelog_file
         if not changelog_file:
             return
