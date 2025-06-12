@@ -16,13 +16,13 @@ _AWS_NEPTUNEDB_SERVICE_NAME = "neptune-db"
 
 class BaseExecutor:
     def execute_gremlin(self, system_cfg, querys: list, **kwargs):
-        raise NotImplementedError()
+        raise NotImplementedError("Gremlin script execution is not supported.")
 
     def execute_opencypher(self, system_cfg, querys: list, **kwargs):
-        raise NotImplementedError()
+        raise NotImplementedError("OpenCypher script execution is not supported.")
 
     def execute_sparql(self, system_cfg, querys: list, **kwargs):
-        raise NotImplementedError()
+        raise NotImplementedError("Sparql script execution is not supported.")
 
 
 class NeptuneExecutor(BaseExecutor):
