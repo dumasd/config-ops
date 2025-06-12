@@ -616,6 +616,8 @@ export default {
     dataId: 'Data Id',
     format: 'Format',
     path: 'Path',
-    method: 'Method'
+    method: 'Method',
+    type: 'Type',
+    dataset: 'Dataset'
   }
 }

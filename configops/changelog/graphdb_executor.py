@@ -50,7 +50,7 @@ class NeptuneExecutor(BaseExecutor):
                         try:
                             future_result = client.submit_async(part.strip())
                             result = future_result.result().one()
-                            logger.info(f"Neptune run gremlin result: {result}")
+                            logger.info(f"Neptune execute gremlin. result: {result}")
                         except KeyError:
                             pass
         finally:
@@ -131,7 +131,7 @@ class Neo4jExecutor(BaseExecutor):
             allow_redirects=True,
         )
         logger.info(
-            f"Neo4j execute opencypher. status: {response.status_code}, text: {response.text}"
+            f"Neo4j execute openCypher. status: {response.status_code}, text: {response.text}"
         )
         if response.status_code < 200 or response.status_code >= 300:
             raise ChangeLogException(response.text)
@@ -164,7 +164,7 @@ class JenafusekiExecutor(BaseExecutor):
         for query in querys:
             sparql.setQuery(query)
             query_result = sparql.query()
-            logger.info(f"Sparql query result {query_result}")
+            logger.info(f"Jenafuseki execute sparql. result: {query_result}")
 
 
 class JanusgraphExecutor(BaseExecutor):

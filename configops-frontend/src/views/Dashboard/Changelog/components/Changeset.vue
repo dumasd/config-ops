@@ -59,7 +59,18 @@ const getChangesetDetail = () => {
                 label: t('changeset.path')
             }
         )
-    } else if (props.currentRow.system_type === 'DATABASE') { 
+    } else if (props.currentRow.system_type === 'GRAPHDB') {
+        schema.push(
+            {
+                field: 'type',
+                label: t('changeset.type')
+            },
+            {
+                field: 'dataset',
+                label: t('changeset.dataset')
+            }
+        )
+    } else if (props.currentRow.system_type === 'DATABASE') {
         //
     } else {
         return
@@ -73,10 +84,10 @@ const getChangesetDetail = () => {
     }
 
     getChangesetApi(searchParams).then((res) => {
-        if (props.currentRow?.system_type === 'NACOS' || props.currentRow?.system_type === 'ELASTICSEARCH') {
-            changes.value = res.data as []
-        } else if (props.currentRow?.system_type === 'DATABASE') {
+        if (props.currentRow?.system_type === 'DATABASE') {
             single_change.value = String( res.data )
+        } else {
+            changes.value = res.data as []
         }
     })
 }
@@ -96,8 +107,8 @@ const codeEditorOption = ref({
 </script>
 
 <template>
-  <!-- NACOS、DATABASE -->
-  <div v-if="props.currentRow?.system_type === 'NACOS' || props.currentRow?.system_type === 'ELASTICSEARCH'">
+  <!-- NACOS -->
+  <div v-if="props.currentRow?.system_type === 'NACOS'">
     <ContentWrap v-for="change, idx of changes" :key="idx" >
         <Descriptions
             :column="4"
@@ -105,15 +116,41 @@ const codeEditorOption = ref({
             :schema="schema"
         />
         <ElRow :gutter="10" justify="space-between" class="px-5">
-            <ElCol :xl="12" :lg="12" :md="24" :sm="24" :xs="24" v-if="props.currentRow?.system_type === 'NACOS'">
+            <ElCol :xl="12" :lg="12" :md="24" :sm="24" :xs="24">
                 <CodeEditor :model-value="getProperty(change, 'patchContent', '')" :language="getProperty(change, 'format', '')" height="220px" width="98%" :language-selector="false" :theme-selector="false" :editor-option="codeEditorOption"/>
             </ElCol>
-            <ElCol :xl="12" :lg="12" :md="24" :sm="24" :xs="24" v-if="props.currentRow?.system_type === 'NACOS'">
+            <ElCol :xl="12" :lg="12" :md="24" :sm="24" :xs="24">
                 <CodeEditor :model-value="getProperty(change, 'deleteContent', '')" :language="getProperty(change, 'format', '')" height="220px" width="98%" :language-selector="false" :theme-selector="false" :editor-option="codeEditorOption"/>
             </ElCol>
-
-            <ElCol :xl="20" :lg="20" :md="24" :sm="24" :xs="24" v-if="props.currentRow?.system_type === 'ELASTICSEARCH'">
+        </ElRow>
+    </ContentWrap>
+  </div>
+  <!-- ELASTICSEARCH -->
+  <div v-else-if="props.currentRow?.system_type === 'ELASTICSEARCH'">
+    <ContentWrap v-for="change, idx of changes" :key="idx" >
+        <Descriptions
+            :column="4"
+            :data="change"
+            :schema="schema"
+        />
+        <ElRow :gutter="10" justify="space-between" class="px-5">
+            <ElCol :xl="20" :lg="20" :md="24" :sm="24" :xs="24">
                 <CodeEditor :model-value="getProperty(change, 'body', '')" language="json" height="220px" width="95%" :language-selector="false" :theme-selector="false" :editor-option="codeEditorOption"/>
+            </ElCol>
+        </ElRow>
+    </ContentWrap>
+  </div>
+  <!-- GRAPHDB -->
+  <div v-else-if="props.currentRow?.system_type === 'GRAPHDB'">
+    <ContentWrap v-for="change, idx of changes" :key="idx" >
+        <Descriptions
+            :column="4"
+            :data="change"
+            :schema="schema"
+        />
+        <ElRow :gutter="10" justify="space-between" class="px-5">
+            <ElCol :xl="20" :lg="20" :md="24" :sm="24" :xs="24">
+                <CodeEditor :model-value="getProperty(change, 'query', '')" language="txt" height="220px" width="95%" :language-selector="false" :theme-selector="false" :editor-option="codeEditorOption"/>
             </ElCol>
         </ElRow>
     </ContentWrap>

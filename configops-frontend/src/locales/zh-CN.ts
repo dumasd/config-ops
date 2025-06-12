@@ -605,6 +605,8 @@ export default {
     dataId: 'Data Id',
     format: '格式',
     path: '路径',
-    method: '方法'
+    method: '方法',
+    type: '类型',
+    dataset: '数据集'
   }
 }
