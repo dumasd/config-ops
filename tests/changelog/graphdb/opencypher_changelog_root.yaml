@@ -1,0 +1,15 @@
+graphdbChangeLog:
+  - changeSet:
+      id: openCypher-example-1.0.1-release
+      author: bruce.wu
+      comment: 注释
+      ignore: false
+      runOnChange: true
+      changes:
+        - type: openCypher # 语句类型 openCypher
+          dataset: neo4j # CREATE CONSTRAINT person_name IF NOT EXISTS FOR (p:Person) REQUIRE p.name IS UNIQUE;
+          query: |-
+              CREATE (alice:Person {name: "Alice", age: 30, city: "New York"}), (bob:Person {name: "Bob", age: 25, city: "San Francisco"}), (acme:Company {name: "ACME Corp", industry: "Tech"}); 
+              MATCH (a:Person {name: "Alice"}), (b:Person {name: "Bob"}) CREATE (a)-[:KNOWS {since: 2015}]->(b);
+              MATCH (a:Person {name: "Alice"}), (c:Company {name: "ACME Corp"}) CREATE (a)-[:WORKS_AT {since: 2018}]->(c);
+              MATCH (b:Person {name: "Bob"}), (c:Company {name: "ACME Corp"}) CREATE (b)-[:WORKS_AT {since: 2020}]->(c);

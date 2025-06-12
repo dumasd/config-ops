@@ -1,0 +1,33 @@
+graphdbChangeLog:
+  - changeSet:
+      id: maven-example-1.0.1-release
+      author: bruce.wu
+      comment: 注释
+      ignore: false
+      runOnChange: true
+      changes:
+        - type: sparql # 语句类型 sparql  https://www.w3.org/TR/2013/REC-sparql11-overview-20130321/
+          path: /sparql # 请求路径，不填默认为 /sparql
+          query: |-
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            PREFIX ex: <http://example.org/>
+
+            INSERT DATA {
+              ex:Person1 rdf:type ex:Person ;
+                         rdfs:label "Alice" ;
+                         ex:age "30"^^xsd:int .
+              ex:Person2 rdf:type ex:Person ;
+                         rdfs:label "Bob" ;
+                         ex:age "25"^^xsd:int .
+            }
+        - type: gremlin # 语句类型 gremlin
+          path: /gremlin # 请求路径，不填默认为 /gremlin
+          query: |-
+            g.addV('Person').property('name', 'Alice').property('age', 30);
+            g.addV('Person').property('name', 'Bob').property('age', 25);
+        - type: openCypher # 语句类型 openCypher
+          path: /openCypher # 请求路径，不填默认为 /openCypher
+          query: |-

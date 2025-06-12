@@ -168,7 +168,7 @@ class NacosChangeLog:
                                 )
                                 if not suc:
                                     raise ChangeLogException(
-                                        f"PatchContent Invalid!!! changeLogFile: {self.changelog_file}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
+                                        f"PatchContent Invalid!!! changelogFile: {self.changelog_file}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
                                     )
 
                             if len(deleteContent.strip()) > 0:
@@ -177,7 +177,7 @@ class NacosChangeLog:
                                 )
                                 if not suc:
                                     raise ChangeLogException(
-                                        f"DeleteContent Invalid!!! changeLogFile: {self.changelog_file}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
+                                        f"DeleteContent Invalid!!! changelogFile: {self.changelog_file}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
                                     )
 
                         if not ignore:
@@ -188,7 +188,7 @@ class NacosChangeLog:
                         file = include_obj["file"]
                         if file in include_files:
                             raise ChangeLogException(
-                                f"Repeat include file!!! changeLogFile: {self.changelog_file}, file: {file}"
+                                f"Repeat include file!!! changelogFile: {self.changelog_file}, file: {file}"
                             )
                         include_files.append(file)
                         child_nacos_change_log = NacosChangeLog(
@@ -197,7 +197,7 @@ class NacosChangeLog:
                         for change_set_id in child_nacos_change_log.change_set_dict:
                             if change_set_id in change_set_dict:
                                 raise ChangeLogException(
-                                    f"Repeat change set id: {change_set_id}. Please check your changelog"
+                                    f"Repeat changeSetId: {change_set_id}. Please check your changelog"
                                 )
                             else:
                                 change_set_dict[change_set_id] = (
@@ -498,42 +498,10 @@ class NacosChangeLog:
                 f"Change log not found. change_set_ids:{change_set_ids}"
             )
 
-        # 执行操作
         try:
             func()
             for log in logs:
                 log.exectype = ChangelogExeType.EXECUTED.value
-        except Exception as e:
-            log.exectype = ChangelogExeType.FAILED.value
-            raise e
-        finally:
-            db.session.commit()
-
-    @staticmethod
-    def apply_change(change_set_id: str, nacos_id: str, func):
-        log = (
-            db.session.query(ConfigOpsChangeLog)
-            .filter_by(
-                change_set_id=change_set_id,
-                system_id=nacos_id,
-                system_type=SystemType.NACOS.value,
-            )
-            .first()
-        )
-
-        if log is None:
-            raise ChangeLogException(
-                f"Change log not found. change_set_id:{change_set_id}"
-            )
-
-        if ChangelogExeType.EXECUTED.matches(log.exectype):
-            raise ChangeLogException(
-                f"Change log executed. change_set_id:{change_set_id}"
-            )
-        # 执行操作
-        try:
-            func()
-            log.exectype = ChangelogExeType.EXECUTED.value
         except Exception as e:
             log.exectype = ChangelogExeType.FAILED.value
             raise e

@@ -1,0 +1,37 @@
+graphdbChangeLog:
+  - changeSet:
+      id: sparql-example-1.0.1-release
+      author: bruce.wu
+      comment: 注释
+      ignore: false
+      runOnChange: true
+      changes:
+        - type: sparql # 语句类型 sparql  https://www.w3.org/TR/2013/REC-sparql11-overview-20130321/
+          dataset: hello
+          query: |-
+            PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
+            PREFIX sn: <http://www.snee.com/hr/>
+
+            INSERT DATA {
+              GRAPH sn:employees {
+                sn:emp1 vcard:given-name "Heidi".
+                sn:emp1 vcard:family-name "Smith".
+                sn:emp1 vcard:title "CEO".
+                sn:emp1 sn:hireDate "2015-01-13".
+                sn:emp1 sn:completedOrientation "2015-01-30".
+                sn:emp2 vcard:given-name "John".
+                sn:emp2 vcard:family-name "Smith" .
+                sn:emp2 vcard:title "Engineer".
+                sn:emp2 sn:hireDate "2015-01-28".
+                sn:emp2 sn:completedOrientation "2015-01-30".
+                sn:emp2 sn:completedOrientation "2015-03-15".
+                sn:emp3 vcard:given-name "Francis".
+                sn:emp3 vcard:family-name "Jones".
+                sn:emp3 vcard:title "Vice President".
+                sn:emp3 sn:hireDate "2015-02-13".
+                sn:emp4 vcard:given-name "Jane".
+                sn:emp4 vcard:family-name "Berger".
+                sn:emp4 vcard:title "Sales".
+                sn:emp4 sn:hireDate "2015-03-10".
+              }  
+            }

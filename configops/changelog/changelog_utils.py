@@ -5,9 +5,51 @@ import base64
 from configops.utils.secret_util import encrypt_data, decrypt_data
 
 
+def __clean_string__(value: str) -> str:
+    """
+    Clean a string by removing leading and trailing whitespace and converting it to lowercase.
+
+    Args:
+        s (str): The string to clean.
+
+    Returns:
+        str: The cleaned string.
+    """
+    return value.replace(" ", "").replace("\n", "").replace("\t", "").replace(";", "")
+
+
+def __normalize_change__(change):
+    new_change = {}
+    for k, v in change.items():
+        if (k == "query" or k == "body") and isinstance(v, str):
+            new_change[k] = __clean_string__(v)
+        else:
+            new_change[k] = v
+    return new_change
+
+
 def get_change_set_checksum(changes):
     changes_str = yaml.dump(changes, sort_keys=True)
     return hashlib.sha256(changes_str.encode()).hexdigest()
+
+
+def get_change_set_checksum_new(changes) -> str:
+    """
+    Calculate the checksum of a changeset dictionary.
+
+    Args:
+        changes (dict): The changeset dictionary to calculate the checksum for.
+
+    Returns:
+        str: The SHA-256 checksum of the changeset.
+    """
+    new_changes = []
+    for change in changes:
+        change_str = yaml.dump(__normalize_change__(change), sort_keys=True)
+        change_hash = hashlib.sha256(change_str.encode()).hexdigest()
+        new_changes.append(change_hash)
+
+    return hashlib.sha256("".join(new_changes).encode()).hexdigest()
 
 
 def is_ctx_included(contexts: str, changeSetCtx: str) -> bool:

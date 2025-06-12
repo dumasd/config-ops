@@ -53,6 +53,15 @@ class EsConfig(Schema):
     api_key = fields.Str(required=False)
     secretmanager = fields.Nested(SecretManager, required=False)
 
+class GraphdbConfig(Schema):
+    dialect = fields.Str(required=True)
+    host = fields.Str(required=True)
+    port = fields.Integer(required=True)
+    username = fields.Str(required=False)
+    password = fields.Str(required=False)
+    secure = fields.Boolean(required=False)
+    secretmanager = fields.Nested(SecretManager, required=False)
+
 
 class NodeConfig(Schema):
     """
@@ -197,6 +206,22 @@ def get_elasticsearch_cfg(es_id):
     data = EsConfig().load(cfg)
     return data
 
+def get_graphdb_cfg(system_id):
+    """
+    Get graphdb configuration
+
+    :type db_id: str
+    :param db_id: database id
+
+    :rtype: map
+    :return: database info
+    """
+    cfgs = current_app.config["graphdb"]
+    cfg = cfgs.get(system_id, None)
+    if cfg == None:
+        return None
+    data = GraphdbConfig().load(cfg)
+    return data
 
 def get_java_home_dir(app):
     """

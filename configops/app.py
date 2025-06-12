@@ -9,6 +9,7 @@ from configops.api.common import bp as common_bp
 from configops.api.nacos import bp as nacos_bp
 from configops.api.database import bp as database_bp
 from configops.api.elasticsearch import bp as elasticsearch_bp
+from configops.api.graphdb import bp as graphdb_bp
 from configops.api.auth import bp as auth_bp
 from configops.api.admin import bp as admin_bp
 from configops.api.dashboard import bp as dashboard_bp
@@ -80,6 +81,7 @@ def create_app(config_file=None):
         app.register_blueprint(nacos_bp)
         app.register_blueprint(database_bp)
         app.register_blueprint(elasticsearch_bp)
+        app.register_blueprint(graphdb_bp)
 
     db.init(app)
     auth_init_app(app)

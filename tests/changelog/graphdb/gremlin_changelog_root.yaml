@@ -1,0 +1,23 @@
+graphdbChangeLog:
+  - changeSet:
+      id: gremlin-example-1.0.1-release
+      author: bruce.wu
+      comment: 注释
+      ignore: false
+      runOnChange: true
+      changes:
+        - type: gremlin # 语句类型 gremlin
+          query: |-
+            g.addV('Person').property('name', 'Bob').property('age', 25);
+            g.addV('Person').property('name', 'Alice').property('age', 30);
+            g.addV('Person').property('name', 'Bruce').property('age', 31);
+  - changeSet:
+      id: gremlin-example-1.0.1-release-2
+      author: bruce.wu
+      comment: 注释
+      ignore: false
+      runOnChange: true
+      changes:
+        - type: gremlin
+          query: |-
+            g.V().hasLabel('Person').valueMap()

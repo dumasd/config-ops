@@ -1,23 +1,20 @@
-###### logging configuration
+# -------- logging configurations --------
 logging:
   level: INFO
   format: "[%(asctime)s] %(levelname)s %(name)s %(message)s"
 
-###### Nacos configurations
+# -------- Nacos Configurations --------
 nacos:
   default: # Nacos ID
-    url: http://localhost:8848  # 必须加端口
+    url: http://localhost:8848 # 必须加端口
     username: nacos
     password: nacos
-    # 使用了三方平台管理密码
-    # secretmanager:
+    # secretmanager:           # 使用了三方平台管理密码
     #  aws:
-    #      # 使用哪个 aws config profile访问aws-secretmanager
-    #      profile: default
-    #      # 密钥名称
-    #      secretid: secret_name
+    #    profile: default      # 使用哪个 aws config profile访问aws-secretmanager
+    #    secretid: secret_name # 密钥名称
 
-###### Database configurations
+# -------- Relation Database Configurations --------
 database:
   local: # Database ID
     url: localhost
@@ -25,17 +22,13 @@ database:
     username: root
     password: "1234"
     dialect: mysql
-    # liquibase的数据库变更日志表放入哪个schmea中，默认为liquibase
-    changelogschema: liquibase
-    # 使用了三方平台管理密码
-    # secretmanager:
+    changelogschema: liquibase  # liquibase的数据库变更日志表放入哪个schmea中，默认为liquibase
+    # secretmanager:           # 使用了三方平台管理密码
     #   aws:
-    #     # 使用哪个 aws profile访问aws-secretsmanager，不填默认default
-    #     profile: "default"
-    #     # 密钥ID
-    #     secretid: "secret_id"
+    #     profile: "default"     # 使用哪个 aws profile访问aws-secretsmanager，不填默认default
+    #     secretid: "secret_id"  # 密钥ID
 
-###### elasticsearch配置
+# -------- ElasticSearch Configurations ---------
 elasticsearch:
   local: # ES ID
     url: http://localhost:9200
@@ -51,21 +44,33 @@ elasticsearch:
     #      # 密钥名称
     #      secretid: secret_name
 
-###### AWS configuration
+
+# -------- Graph Database Configurations --------
+graphdb:
+  neptune_dev:
+    dialect: neptune
+    secure: true
+    host: your.cluster.endpoint.neptune.amazonaws.com
+    port: 8182
+    aws_iam_authentication:
+      enabled: true
+      region: us-east-1
+      access_key: YOUR_AWS_ACCESS_KEY_ID
+      secret_key: YOUR_AWS_SECRET_ACCESS_KEY
+
+
+# --------- AWS configurations ----------
 aws:
-  # aws credentials 文件位置，不配置默认 ~/.aws/credentials
-  credentials: ~/.aws/credentials
-  # aws config文件位置，不配置默认 ~/.aws/config
-  config: ~/.aws/config
-  # 或者直接使用access_key+secret_key+region
-  access_key: "ak"
-  secret_key: "sk"
+  credentials: ~/.aws/credentials               # aws credentials 文件位置，不配置默认 ~/.aws/credentials
+  config: ~/.aws/config                         # aws config文件位置，不配置默认 ~/.aws/config
+  access_key: "ak"                              # 或者直接使用 access_key + secret_key + region
+  secret_key: "sk"                              
   region: "us-east-2"
 
-###### Application configuration
+# -------- Application configuration --------
 config:
-  home_url: http://127.0.0.1:5000/oidc/callback
-  auth:
+  home_url: http://127.0.0.1:5000/oidc/callback 
+  auth:                                   
     oidc:
       enabled: false
       issuer: https://your-oidc-idp.com
@@ -74,18 +79,13 @@ config:
       scope: "email openid profile"
       groups_sync: groups
       auto_login: false
-  node:
-    role: worker   # Node role: controller, worker
-    controller_url: https://example.com  # Controller node url
-    secret: 1235673213123 # secret
-    name: worker-1
-  # config-ops 使用的数据库，用来存储nacos、elasticsearch changelog执行记录。默认是本地sqlite，仅做测试使用，生产使用请切换到独立的数据库，如mysql
-  database-uri: sqlite:///configops.db
-  # 手动指定java-home目录，java版本必须在11及以上
-  java-home-dir:
-  # Liquibase 运行配置文件
-  liquibase:
-    # 配置文件
-    defaults-file:
-    # 用户提供的 jdbc 驱动目录
-    jdbc-drivers-dir: jdbc-drivers
+  node:                                   # Node info
+    role: worker                            # Node role: controller, worker
+    controller_url: https://example.com     # Controller node url
+    secret: 1235673213123 # secret          # Connection secret
+    name: worker-1                          # Node name
+  database-uri: sqlite:///configops.db    # config-ops 使用的数据库，用来存储nacos、elasticsearch changelog执行记录。默认是本地sqlite，仅做测试使用，生产使用请切换到独立的数据库，如mysql
+  java-home-dir:                          # 手动指定java-home目录，java版本必须在11及以上
+  liquibase:                              # Liquibase 运行配置
+    defaults-file:                          # 配置文件
+    jdbc-drivers-dir: jdbc-drivers          # 用户提供的 jdbc 驱动目录

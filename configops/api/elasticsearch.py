@@ -3,7 +3,7 @@
 import logging, os
 from marshmallow import Schema, fields, EXCLUDE
 from configops.changelog.elasticsearch_change import ElasticsearchChangelog
-from configops.utils.exception import ConfigOpsException, ChangeLogException
+from configops.utils.exception import ChangeLogException
 from configops.config import get_elasticsearch_cfg
 from flask import Blueprint, make_response, request, current_app
 

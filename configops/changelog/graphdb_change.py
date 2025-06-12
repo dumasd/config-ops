@@ -1,19 +1,28 @@
-import logging, os, string, base64, requests, urllib
-import urllib.parse
+# -*- coding: utf-8 -*-
+# @Author  : Bruce Wu
+# @Time    : 2025/06/10 10:00
+import logging, os
 from ruamel import yaml as ryaml
 from jsonschema import Draft7Validator, ValidationError
-from configops.changelog import changelog_utils
-from configops.utils import config_validator, secret_util
-from configops.utils.constants import ChangelogExeType, SystemType, extract_version
+from configops.changelog import changelog_utils, graphdb_executor
+from configops.utils.constants import (
+    ChangelogExeType,
+    SystemType,
+    extract_version,
+    GREMLIN,
+    SPARQL,
+    OPEN_CYPHER,
+)
 from configops.database.db import db, ConfigOpsChangeLog, ConfigOpsChangeLogChanges
 from configops.utils.exception import ChangeLogException, ConfigOpsException
 from configops.config import get_config
 
 logger = logging.getLogger(__name__)
+
 schema = {
     "type": "object",
     "properties": {
-        "elasticsearchChangeLog": {
+        "graphdbChangeLog": {
             "type": ["array", "null"],
             "items": [
                 {
@@ -55,16 +64,19 @@ schema = {
                                         {
                                             "type": "object",
                                             "properties": {
-                                                "method": {
+                                                "type": {
                                                     "type": "string",
-                                                    "pattern": "^(GET|PUT|POST|DELETE|HEAD|PATCH|OPTIONS)$",
+                                                    "pattern": "^(sparql|gremlin|openCypher)$",
                                                 },
-                                                "path": {"type": "string"},
-                                                "body": {"type": "string"},
+                                                "dataset": {
+                                                    "type": "string",
+                                                    "description": "Dataset for query execution",
+                                                },
+                                                "query": {"type": "string"},
                                             },
                                             "required": [
-                                                "method",
-                                                "path",
+                                                "type",
+                                                "query",
                                             ],
                                         }
                                     ],
@@ -90,11 +102,11 @@ schema = {
             ],
         }
     },
-    "required": ["elasticsearchChangeLog"],
+    "required": ["graphdbChangeLog"],
 }
 
 
-class ElasticsearchChangelog:
+class GraphdbChangelog:
     def __init__(self, changelog_file=None, app=None):
         self.changelog_file = changelog_file
         self.app = app
@@ -114,11 +126,11 @@ class ElasticsearchChangelog:
                     validator.validate(changeLogData)
                 except ValidationError as e:
                     raise ChangeLogException(
-                        f"Elasticsearch changelog validation error: {self.changelog_file} \n{e}"
+                        f"Graphdb changelog validation error: {self.changelog_file} \n{e}"
                     )
 
             changelog_file_name = os.path.basename(self.changelog_file)
-            items = changeLogData.get("elasticsearchChangeLog", None)
+            items = changeLogData.get("graphdbChangeLog", None)
 
             if items:
                 include_files = []
@@ -135,17 +147,6 @@ class ElasticsearchChangelog:
                             )
                         changeSetObj["filename"] = changelog_file_name
                         changeSetDict[change_set_id] = changeSetObj
-                        changes = changeSetObj["changes"]
-                        for change in changes:
-                            method = change.get("method")
-                            path = change.get("path")
-                            body = change.get("body")
-                            if body:
-                                suc, _ = config_validator.validate_json(body)
-                                if not suc:
-                                    raise ChangeLogException(
-                                        f"Body is not json. changeSetId:{change_set_id}, method:{method}, path:{path}, body:{body}"
-                                    )
                         if not ignore:
                             changeSets.append(changeSetObj)
 
@@ -156,9 +157,7 @@ class ElasticsearchChangelog:
                                 f"Repeat include file!!! changeLogFile: {self.changelog_file}, file: {file}"
                             )
                         include_files.append(file)
-                        childLog = ElasticsearchChangelog(
-                            changelog_file=file, app=self.app
-                        )
+                        childLog = GraphdbChangelog(changelog_file=file, app=self.app)
                         for change_set_id in childLog.change_set_dict:
                             if change_set_id in changeSetDict:
                                 raise ChangeLogException(
@@ -179,7 +178,7 @@ class ElasticsearchChangelog:
             # 根据文件名排序
             sorted_changelogfiles = sorted(changelogfiles, key=extract_version)
             for file in sorted_changelogfiles:
-                childLog = ElasticsearchChangelog(changelog_file=file, app=self.app)
+                childLog = GraphdbChangelog(changelog_file=file, app=self.app)
                 for change_set_id in childLog.change_set_dict:
                     if change_set_id in changeSetDict:
                         raise ChangeLogException(
@@ -199,11 +198,11 @@ class ElasticsearchChangelog:
         self.change_set_dict = changeSetDict
 
     def __check_change_log__(
-        self, change_set_obj, elasticsearch_id: str, contexts: str, variables: dict
+        self, change_set_obj, system_id: str, contexts: str, variables: dict
     ) -> bool:
         change_set_id = str(change_set_obj["id"])
-        checksum = changelog_utils.get_change_set_checksum(
-            {"changes": change_set_obj["changes"]}
+        checksum = changelog_utils.get_change_set_checksum_new(
+            change_set_obj["changes"]
         )
         current_filename = change_set_obj["filename"]
         is_execute = True
@@ -211,8 +210,8 @@ class ElasticsearchChangelog:
             db.session.query(ConfigOpsChangeLog)
             .filter_by(
                 change_set_id=change_set_id,
-                system_id=elasticsearch_id,
-                system_type=SystemType.ELASTICSEARCH.value,
+                system_id=system_id,
+                system_type=SystemType.GRAPHDB.value,
             )
             .first()
         )
@@ -239,8 +238,8 @@ class ElasticsearchChangelog:
         else:
             log = ConfigOpsChangeLog()
             log.change_set_id = change_set_id
-            log.system_type = SystemType.ELASTICSEARCH.value
-            log.system_id = elasticsearch_id
+            log.system_type = SystemType.GRAPHDB.value
+            log.system_id = system_id
             log.exectype = ChangelogExeType.INIT.value
             log.author = change_set_obj.get("author", "")
             log.comment = change_set_obj.get("comment", "")
@@ -253,41 +252,36 @@ class ElasticsearchChangelog:
             _secret = get_config(self.app, "config.node.secret")
 
         if _secret:
-            elasicsearch_changes = []
+            _changes = []
             for change in change_set_obj["changes"]:
-                elasicsearch_change = change.copy()
-                elasicsearch_change["path"] = string.Template(
-                    change["path"]
-                ).substitute(variables)
-                elasicsearch_changes.append(elasicsearch_change)
+                _change = change.copy()
+                _changes.append(_change)
             log_changes = (
                 db.session.query(ConfigOpsChangeLogChanges)
                 .filter_by(
                     change_set_id=change_set_id,
-                    system_id=elasticsearch_id,
-                    system_type=SystemType.ELASTICSEARCH.value,
+                    system_id=system_id,
+                    system_type=SystemType.GRAPHDB.value,
                 )
                 .first()
             )
             if log_changes is None:
                 log_changes = ConfigOpsChangeLogChanges(
                     change_set_id=change_set_id,
-                    system_type=SystemType.ELASTICSEARCH.value,
-                    system_id=elasticsearch_id,
-                    changes=changelog_utils.pack_encrypt_changes(
-                        elasicsearch_changes, _secret
-                    ),
+                    system_type=SystemType.GRAPHDB.value,
+                    system_id=system_id,
+                    changes=changelog_utils.pack_encrypt_changes(_changes, _secret),
                 )
                 db.session.add(log_changes)
             else:
                 log_changes.changes = changelog_utils.pack_encrypt_changes(
-                    elasicsearch_changes, _secret
+                    _changes, _secret
                 )
         return is_execute
 
     def fetch_multi(
         self,
-        elasticsearch_id: str,
+        system_id: str,
         count: int = 0,
         contexts: str = None,
         vars: dict = {},
@@ -306,14 +300,12 @@ class ElasticsearchChangelog:
 
             if check_log:
                 is_execute = self.__check_change_log__(
-                    change_set_obj, elasticsearch_id, contexts, vars
+                    change_set_obj, system_id, contexts, vars
                 )
 
             if is_execute:
                 logger.info(f"Found change set log: {change_set_id}")
                 final_change_set = change_set_obj.copy()
-                for change in final_change_set["changes"]:
-                    change["path"] = string.Template(change["path"]).substitute(vars)
                 final_change_sets.append(final_change_set)
 
             idx += 1
@@ -325,112 +317,65 @@ class ElasticsearchChangelog:
 
         return final_change_sets
 
-    def __request__(self, cfg, method, path, data):
-        url = cfg.get("url")
-        hosts = url.split(",")
-
-        username = cfg.get("username")
-        password = cfg.get("password")
-        api_id = cfg.get("api_id")
-        api_key = cfg.get("api_key")
-
-        credentials_type = None
-        if api_id:
-            credentials_type = 1
-            secretData = secret_util.get_secret_data(cfg, "app_key")
-            api_key = secretData.password
-        elif username:
-            credentials_type = 2
-            secretData = secret_util.get_secret_data(cfg, "password")
-            password = secretData.password
-
-        errorResponse = None
-        for host in hosts:
-            headers = {"Content-Type": "application/json"}
-            if credentials_type == 1:
-                encoded_key = base64.b64encode(
-                    f"{api_id}:{api_key}".encode("utf-8")
-                ).decode("utf-8")
-                headers["Authorization"] = f"ApiKey {encoded_key}"
-            elif credentials_type == 2:
-                encoded_key = base64.b64encode(
-                    f"{username}:{password}".encode("utf-8")
-                ).decode("utf-8")
-                headers["Authorization"] = f"Basic {encoded_key}"
-
-            response = requests.request(
-                method=method,
-                data=data,
-                url=urllib.parse.urljoin(host, path),
-                headers=headers,
-                verify=False,
-            )
-            if response.status_code >= 200 and response.status_code < 300:
-                # 处理成功
-                return response
-            else:
-                errorResponse = response
-
-        raise ConfigOpsException(
-            f"status_code: {errorResponse.status_code} , text: {errorResponse.text}"
-        )
-
     def apply(
         self,
-        es_cfg,
-        elasticsearch_id: str,
+        system_cfg,
+        system_id: str,
         count: int = 0,
         contexts: str = None,
         vars: dict = {},
         check_log: bool = True,
     ):
-        changeSets = self.fetch_multi(
-            elasticsearch_id, count, contexts, vars, check_log
-        )
-        if len(changeSets) == 0:
+        change_sets = self.fetch_multi(system_id, count, contexts, vars, check_log)
+        if len(change_sets) == 0:
             return []
-
-        for changeSet in changeSets:
+        for change_set in change_sets:
+            change_set_id = str(change_set["id"])
+            changelog_filename = change_set["filename"]
             try:
-                change_set_id = str(changeSet["id"])
-                changes = changeSet["changes"]
+                changes = change_set["changes"]
                 log = None
                 if check_log:
                     log = (
                         db.session.query(ConfigOpsChangeLog)
                         .filter_by(
                             change_set_id=change_set_id,
-                            system_id=elasticsearch_id,
-                            system_type=SystemType.ELASTICSEARCH.value,
+                            system_id=system_id,
+                            system_type=SystemType.GRAPHDB.value,
                         )
                         .first()
                     )
+                executor = graphdb_executor.get_executor(system_cfg["dialect"])
                 for change in changes:
-                    path = change["path"]
-                    method = change["method"]
-                    body = change.get("body")
+                    _type = change["type"]
+                    _querys = [change["query"]]
+                    _dataset = change.get("dataset", None)
                     try:
-                        data = None
-                        if body:
-                            data = body.encode("utf-8")
-                        resp = self.__request__(
-                            es_cfg, method=method, path=path, data=data
-                        )
-                        change["success"] = True
-                        change["message"] = f"{resp.text}"
+                        if _type == SPARQL:
+                            executor.execute_sparql(
+                                system_cfg, _querys, dataset=_dataset
+                            )
+                        elif _type == GREMLIN:
+                            executor.execute_gremlin(
+                                system_cfg, _querys, dataset=_dataset
+                            )
+                        elif _type == OPEN_CYPHER:
+                            executor.execute_opencypher(
+                                system_cfg, _querys, dataset=_dataset
+                            )
                     except Exception as e:
                         logger.error(
-                            f"Execute elastic request error. changeSetId: {change_set_id}, path: {path}, method: {method}. {e}",
+                            f"Run graphdb script error. changeSetId: {change_set_id}, type: {_type}. {e}",
                             exc_info=True,
                         )
-                        change["success"] = False
-                        change["message"] = str(e)
-                        raise ConfigOpsException(str(e))
+                        raise ConfigOpsException(
+                            f"Run graphdb script error. changelogFile:{changelog_filename}, changeSetId: {change_set_id}, type: {_type}, message: {e}"
+                        )
                 if log:
                     log.exectype = ChangelogExeType.EXECUTED.value
-            except ConfigOpsException as e:
+            except Exception as e:
                 if log:
                     log.exectype = ChangelogExeType.FAILED.value
+                raise
             finally:
                 db.session.commit()
-        return changeSets

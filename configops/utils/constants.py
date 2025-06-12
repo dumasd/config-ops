@@ -15,6 +15,10 @@ MYSQL = "mysql"
 POSTGRESQL = "postgresql"
 ORACLE = "oracle"
 
+GREMLIN = "gremlin"
+OPEN_CYPHER = "openCypher"
+SPARQL = "sparql"
+
 X_WORKSPACE = "X-Workspace"
 X_WORKER = "X-Worker"
 
@@ -22,6 +26,13 @@ CONTROLLER_SOCKETIO = "CONFIG_OPS_CONTROLLER_SOCKETIO"
 CONTROLLER_NAMESPACE = "CONFIG_OPS_CONTROLLER_NAMESPACE"
 WORKER_NAMESPACE = "CONFIG_OPS_WORKER_NAMESPACE"
 CLUSTER_REQUEST_ID = "CLUSTER_REQUEST_ID"
+
+
+class GraphdbDialect(Enum):
+    NEPTUNE = "neptune"
+    NEO4J = "neo4j"
+    JENAFUSEKI = "jenafuseki"
+    JANUSGRAPH = "janusgraph"
 
 
 class ChangelogExeType(Enum):
@@ -39,6 +50,7 @@ class SystemType(Enum):
     ELASTICSEARCH = "ELASTICSEARCH"
     DATABASE = "DATABASE"
     REDIS = "REDIS"
+    GRAPHDB = "GRAPHDB"
 
 
 class NodeRole(Enum):
