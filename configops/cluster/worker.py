@@ -75,11 +75,13 @@ class WorkerNamespace(socketio.ClientNamespace):
         graphdb_cfg_map = get_config(self.app, "graphdb")
         if graphdb_cfg_map and len(graphdb_cfg_map) > 0:
             for key, item in graphdb_cfg_map.items():
+                host = item.get("host")
+                port = item.get("port")
                 managed_objects.append(
                     {
                         "id": key,
                         "system_type": SystemType.GRAPHDB.name,
-                        "url": f"{item.get("host")}:{item.get("port")}",
+                        "url": f"{host}:{port}",
                         "dialect": "",
                     }
                 )
