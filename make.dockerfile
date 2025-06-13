@@ -62,6 +62,7 @@ RUN mkdir -p configops/static configops-frontend \
 
 COPY --chown=configops:configops configops-frontend/package.json configops-frontend/
 COPY --chown=configops:configops requirements.txt .
+COPY --chown=configops:configops migrations/ migrations/
 RUN pip install --upgrade setuptools pip && \
     pip install -r requirements.txt
 
