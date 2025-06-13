@@ -6,6 +6,7 @@ from configops.utils.constants import (
     WORKER_NAMESPACE,
     SystemType,
 )
+import configops
 from configops.config import get_config
 from configops.cluster.messages import Message, MessageType
 from configops.cluster.worker_handler import MESSAGE_HANDLER_MAP
@@ -35,11 +36,11 @@ class WorkerNamespace(socketio.ClientNamespace):
 
     def on_connect(self):
         logger.info("Connected to the controller")
-        data = []
+        managed_objects = []
         nacos_cfg_map = get_config(self.app, "nacos")
         if nacos_cfg_map and len(nacos_cfg_map) > 0:
             for key, item in nacos_cfg_map.items():
-                data.append(
+                managed_objects.append(
                     {
                         "id": key,
                         "system_type": SystemType.NACOS.name,
@@ -52,7 +53,7 @@ class WorkerNamespace(socketio.ClientNamespace):
             for key, item in database_cfg_map.items():
                 host = item.get("url")
                 port = item.get("port", 3306)
-                data.append(
+                managed_objects.append(
                     {
                         "id": key,
                         "system_type": SystemType.DATABASE.name,
@@ -63,7 +64,7 @@ class WorkerNamespace(socketio.ClientNamespace):
         elasticsearch_cfg_map = get_config(self.app, "elasticsearch")
         if elasticsearch_cfg_map and len(elasticsearch_cfg_map) > 0:
             for key, item in elasticsearch_cfg_map.items():
-                data.append(
+                managed_objects.append(
                     {
                         "id": key,
                         "system_type": SystemType.ELASTICSEARCH.name,
@@ -71,7 +72,19 @@ class WorkerNamespace(socketio.ClientNamespace):
                         "dialect": "",
                     }
                 )
-        message = Message(type=MessageType.MANAGED_OBJECTS, data=data)
+        graphdb_cfg_map = get_config(self.app, "graphdb")
+        if graphdb_cfg_map and len(graphdb_cfg_map) > 0:
+            for key, item in graphdb_cfg_map.items():
+                managed_objects.append(
+                    {
+                        "id": key,
+                        "system_type": SystemType.GRAPHDB.name,
+                        "url": f"{item.get("host")}:{item.get("port")}",
+                        "dialect": "",
+                    }
+                )
+        data = {"version": configops.__version__, "managed_objects": managed_objects}
+        message = Message(type=MessageType.WORKER_INFO, data=data)
         self.send(message.to_dict())
 
     def on_disconnect(self):

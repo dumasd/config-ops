@@ -146,7 +146,7 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
       proxy: {
         // 选项写法
         '/configops/api': {
-          target: 'http://127.0.0.1:5000',
+          target: 'http://127.0.0.1:5005',
           changeOrigin: true,
           //rewrite: (path) => path.replace(/^\/api/, '')
         }

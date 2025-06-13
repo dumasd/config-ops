@@ -1,6 +1,12 @@
 <script setup lang="tsx">
 import { reactive, ref, unref, watch } from 'vue'
-import { getWorkerApi, createWorkerApi, editWorkerApi, delteWorkerApi } from '@/api/admin'
+import {
+  getWorkerApi,
+  createWorkerApi,
+  editWorkerApi,
+  delteWorkerApi,
+  upgradeWorkerApi
+} from '@/api/admin'
 import { useUserStoreWithOut } from '@/store/modules/user'
 import { useTable } from '@/hooks/web/useTable'
 import { useI18n } from '@/hooks/web/useI18n'
@@ -10,9 +16,10 @@ import { FormSchema } from '@/components/Form'
 import { ContentWrap } from '@/components/ContentWrap'
 import Write from './components/Write.vue'
 import Detail from './components/Detail.vue'
+import Upgrade from './components/Upgrade.vue'
 import { Dialog } from '@/components/Dialog'
 import { BaseButton } from '@/components/Button'
-import { WorkspaceItem } from '@/api/admin/types'
+import { WorkerItem } from '@/api/admin/types'
 import { ElTag } from 'element-plus'
 
 const { t } = useI18n()
@@ -63,6 +70,10 @@ const tableColumns = reactive<TableColumn[]>([
     label: t('userDemo.remark')
   },
   {
+    field: 'version',
+    label: t('worker.version')
+  },
+  {
     field: 'online',
     label: t('userDemo.status'),
     width: 100,
@@ -88,14 +99,20 @@ const tableColumns = reactive<TableColumn[]>([
         const row = data.row
         return (
           <>
-            <BaseButton type="primary" onClick={() => action(row, 'edit')}>
+            <BaseButton type="primary" onClick={() => action(row, 'edit', t('exampleDemo.edit'))}>
               {t('exampleDemo.edit')}
             </BaseButton>
-            <BaseButton type="success" onClick={() => action(row, 'detail')}>
+            <BaseButton
+              type="success"
+              onClick={() => action(row, 'detail', t('exampleDemo.detail'))}
+            >
               {t('exampleDemo.detail')}
             </BaseButton>
             <BaseButton type="danger" onClick={() => delData(row)}>
               {t('exampleDemo.del')}
+            </BaseButton>
+            <BaseButton type="danger" onClick={() => action(row, 'upgrade', t('common.upgrade'))}>
+              {t('common.upgrade')}
             </BaseButton>
           </>
         )
@@ -129,8 +146,8 @@ const writeRef = ref<ComponentRef<typeof Write>>()
 const saveLoading = ref(false)
 const delLoading = ref(false)
 
-const action = (row: any, type: string) => {
-  dialogTitle.value = t(type === 'edit' ? 'exampleDemo.edit' : 'exampleDemo.detail')
+const action = (row: any, type: string, title: string) => {
+  dialogTitle.value = title
   actionType.value = type
   currentRow.value = row
   dialogVisible.value = true
@@ -157,6 +174,15 @@ const save = async () => {
         .finally(() => {
           saveLoading.value = false
         })
+    } else if (actionType.value == 'upgrade') {
+      upgradeWorkerApi(currentRow.value.id, formData)
+        .then(() => {
+          dialogVisible.value = false
+          getList()
+        })
+        .finally(() => {
+          dialogVisible.value = false
+        })
     } else {
       createWorkerApi(formData)
         .then(() => {
@@ -170,7 +196,7 @@ const save = async () => {
   }
 }
 
-const delData = async (row: WorkspaceItem) => {
+const delData = async (row: WorkerItem) => {
   id.value = row.id
   delLoading.value = true
 
@@ -208,8 +234,9 @@ if (userStore.getWorkspace) refresh()
   </ContentWrap>
 
   <Dialog v-model="dialogVisible" :title="dialogTitle" width="70%">
-    <Write v-if="actionType !== 'detail'" ref="writeRef" :current-row="currentRow" />
-    <Detail v-else :current-row="currentRow" />
+    <Upgrade v-if="actionType === 'upgrade'" ref="writeRef" :current-row="currentRow" />
+    <Detail v-else-if="actionType === 'detail'" :current-row="currentRow" />
+    <Write v-else ref="writeRef" :current-row="currentRow" />
 
     <template #footer>
       <BaseButton

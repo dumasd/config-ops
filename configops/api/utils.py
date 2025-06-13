@@ -1,4 +1,5 @@
 from flask import redirect, request, session, make_response, jsonify
+import asyncio
 from http import HTTPStatus
 from functools import wraps
 from configops.utils.constants import (
@@ -85,6 +86,21 @@ def auth_required(
 
     return decorate
 
+
+class CallbackFuture(asyncio.Future):
+    def __init__(self, event=None, loop=None):
+        super().__init__(loop=loop)
+        self.event = event
+
+    def set_result(self, result):
+        super().set_result(result)
+        if self.event:
+            self.event.set()
+
+    def set_exception(self, ex):
+        super().set_exception(ex)
+        if self.event:
+            self.event.set()   
 
 class BaseResult:
     """A class to represent a JSON response."""

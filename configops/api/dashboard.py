@@ -10,7 +10,7 @@ import logging, asyncio, threading, os
 from marshmallow import Schema, fields, EXCLUDE
 from configops.utils.constants import PermissionModule
 from configops.database.db import db, ManagedObjects, Worker, GroupPermission
-from configops.api.utils import BaseResult, auth_required, do_check_auth
+from configops.api.utils import BaseResult, CallbackFuture, auth_required, do_check_auth
 from marshmallow import Schema, fields, EXCLUDE
 from configops.utils.constants import CONTROLLER_NAMESPACE, X_WORKSPACE
 from configops.cluster.messages import Message, MessageType
@@ -30,22 +30,6 @@ class ApiDeleteChangelogSchema(Schema):
 
     class Meta:
         unknown = EXCLUDE
-
-
-class CallbackFuture(asyncio.Future):
-    def __init__(self, event=None, loop=None):
-        super().__init__(loop=loop)
-        self.event = event
-
-    def set_result(self, result):
-        super().set_result(result)
-        if self.event:
-            self.event.set()
-
-    def set_exception(self, ex):
-        super().set_exception(ex)
-        if self.event:
-            self.event.set()
 
 
 @bp.route("/api/dashboard/managed_objects/v1", methods=["GET"])

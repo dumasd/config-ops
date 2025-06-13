@@ -1,7 +1,14 @@
+import tarfile
+import zipfile
+import logging
+import os
+import requests
+import datetime
+import sqlalchemy
+from io import BytesIO
 from configops.cluster.messages import Message, MessageType
 from configops.utils.constants import SystemType
 from configops.config import get_database_cfg, get_node_cfg
-import sqlalchemy, datetime
 from configops.database.db import (
     db,
     ConfigOpsChangeLog,
@@ -11,6 +18,9 @@ from configops.database.db import (
 from configops.database.utils import create_database_engine
 from configops.api.utils import BaseResult
 from configops.changelog import changelog_utils
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseMessageHandler:
@@ -223,10 +233,37 @@ class QueryChangesetMessageHandler(BaseMessageHandler):
             return BaseResult.ok(data=changes)
 
 
+class UpgradeWorkerMessageHandler(BaseMessageHandler):
+    def handle(self, message: Message, namespace) -> BaseResult:
+        data = message.data
+        url = data["url"]
+        username = data.get("username")
+        password = data.get("password")
+        auth = None
+        home_dir = os.path.abspath(".")
+        if os.getenv("CONFIGOPS_HOME_DIR"):
+            home_dir = os.getenv("CONFIGOPS_HOME_DIR")
+
+        if username and password:
+            auth = requests.auth.HTTPBasicAuth(username=username, password=password)
+        response = requests.get(url, stream=True, auth=auth)
+        response.raise_for_status()
+        if url.endswith(".tar.gz"):
+            with tarfile.open(fileobj=BytesIO(response.content), mode="r:gz") as file:
+                file.extractall(path=home_dir)
+                logger.info(f"Download and untar upgrade package success: {home_dir}")
+        elif url.endswith(".zip"):
+            with zipfile.ZipFile(BytesIO(response.content)) as file:
+                file.extractall(path=home_dir)
+                logger.info(f"Download and untar upgrade package success: {home_dir}")
+        return BaseResult.ok()
+
+
 # =====================================================================================================================================
 
 MESSAGE_HANDLER_MAP = {
     MessageType.QUERY_CHANGE_LOG.name: QueryChangelogMessageHandler(),
     MessageType.DELETE_CHANGE_LOG.name: DeleteChangelogMessageHandler(),
     MessageType.QUERY_CHANGE_SET.name: QueryChangesetMessageHandler(),
+    MessageType.UPGRADE_WORKER.name: UpgradeWorkerMessageHandler(),
 }

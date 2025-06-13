@@ -11,7 +11,7 @@ databaseChangeLog:
             sql: |-
               DELETE FROM company WHERE id > 100;
   - changeSet:
-      id: maven-example-1.2.1-release-9
+      id: maven-example-1.2.1-release-12
       author: henry.hua
       labels: before
       context: gradle-example

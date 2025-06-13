@@ -25,6 +25,10 @@ const detailSchema = ref<DescriptionsSchema[]>([
   {
     field: 'description',
     label: t('userDemo.remark')
+  },
+  {
+    field: 'version',
+    label: t('worker.version')
   }
 ])
 </script>

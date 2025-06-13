@@ -3,6 +3,7 @@ import { Form, FormSchema } from '@/components/Form'
 import { useForm } from '@/hooks/web/useForm'
 import { PropType, reactive, watch, ref } from 'vue'
 import { WorkerItem } from '@/api/admin/types'
+import { Descriptions, DescriptionsSchema } from '@/components/Descriptions'
 import { useValidator } from '@/hooks/web/useValidator'
 import { useI18n } from '@/hooks/web/useI18n'
 
@@ -15,31 +16,41 @@ const props = defineProps({
   }
 })
 
-const formSchema = ref<FormSchema[]>([
+const detailSchema = ref<DescriptionsSchema[]>([
   {
     field: 'name',
-    label: t('common.name'),
-    component: 'Input'
+    label: t('common.name')
   },
   {
     field: 'description',
-    label: t('userDemo.remark'),
-    component: 'Input',
-    componentProps: {
-      type: 'textarea',
-      rows: 3
-    }
+    label: t('userDemo.remark')
   },
   {
-    field: 'id',
-    label: t('common.id'),
-    component: 'Input',
-    hidden: true
+    field: 'version',
+    label: t('worker.version')
+  }
+])
+
+const formSchema = ref<FormSchema[]>([
+  {
+    field: 'url',
+    label: t('worker.packageUrl'),
+    component: 'Input'
+  },
+  {
+    field: 'username',
+    label: t('login.username'),
+    component: 'Input'
+  },
+  {
+    field: 'password',
+    label: t('login.password'),
+    component: 'InputPassword'
   }
 ])
 
 const rules = reactive({
-  name: [required()]
+  url: [required()]
 })
 
 const { formRegister, formMethods } = useForm()
@@ -74,5 +85,6 @@ defineExpose({
 </script>
 
 <template>
+  <Descriptions :schema="detailSchema" :data="currentRow || {}" />
   <Form :rules="rules" @register="formRegister" :schema="formSchema" />
 </template>

@@ -3,11 +3,13 @@ import uuid
 
 
 class MessageType(Enum):
+    WORKER_INFO = "WORKER_INFO"  # worker 信息
     MANAGED_OBJECTS = "MANAGED_OBJECTS"  # worker->controller worker主动发送管理对象
     QUERY_CHANGE_LOG = "QUERY_CHANGE_LOG"  # 查询变更日志
     DELETE_CHANGE_LOG = "DELETE_CHANGE_LOG"  # 删除changelog
     EDIT_CHNAGE_LOG = "EDIT_CHANGE_LOG"  # 修改changelog
     QUERY_CHANGE_SET = "QUERY_CHANGE_SET"  # 查询变更集
+    UPGRADE_WORKER = "UPGRADE_WORKER"  # 升级worker
 
 
 class Message:

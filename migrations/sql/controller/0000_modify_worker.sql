@@ -1,0 +1,1 @@
+ALTER TABLE configops_worker ADD COLUMN `version` VARCHAR(30) DEFAULT NULL AFTER  `description`;

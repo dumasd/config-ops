@@ -97,12 +97,6 @@ class PermissionModule(Enum):
         return module == PermissionModule.MANAGED_OBJECT_CHANGELOG_MANAGE.name
 
 
-DIALECT_DRIVER_MAP = {
-    "mysql": "mysqlconnector",
-    "postgresql": "psycopg2",
-}
-
-
 def extract_version(name):
     match = re.search(r"(\d+\.\d+(?:\.\d+){0,2})(?:-([a-zA-Z0-9]+))?", name)
     if match:

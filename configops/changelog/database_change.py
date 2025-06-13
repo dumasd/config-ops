@@ -252,12 +252,13 @@ class DatabaseChangeLog:
                 filename = match.group(1)
                 change_set_id = match.group(2)
             elif start_change_set and not line.startswith("--"):
-                changes = change_sets.get(change_set_id, "")
+                change_set = change_sets.get(
+                    change_set_id, {"filename": filename, "changes": ""}
+                )
+                changes = change_set["changes"]
                 changes = f"{changes}\n{line}"
-                change_sets[change_set_id] = {
-                    "filename": filename,
-                    "changes": changes,
-                }
+                change_set["changes"] = changes
+                change_sets[change_set_id] = change_set
         return change_sets
 
     def __check_changelog__(self, change_sets, stdout):

@@ -26,6 +26,8 @@ if [ -s "$PID_FILE" ]; then
     rm -rf $PID_FILE
 fi
 
+export CONFIGOPS_HOME_DIR="${DIR}"
+
 nohup $DIR/config-ops $RUN_ARGS >$DIR/config-ops.log 2>&1 &
 
 echo $! >$PID_FILE

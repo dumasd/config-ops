@@ -1,5 +1,9 @@
 from flask import Blueprint, jsonify, make_response, request, current_app
-import logging, sys, secrets, base64
+import logging, asyncio, threading
+import os
+import secrets
+import base64
+import sqlalchemy
 from marshmallow import Schema, fields, EXCLUDE
 from configops.utils import constants
 from configops.utils.constants import PermissionModule, PermissionType
@@ -12,11 +16,11 @@ from configops.database.db import (
     Group,
     paginate,
 )
-from configops.api.utils import BaseResult, auth_required
+from configops.api.utils import BaseResult, CallbackFuture, auth_required, do_check_auth
 from marshmallow import Schema, fields, EXCLUDE, validate
 from configops.utils.constants import CONTROLLER_NAMESPACE
-import sqlalchemy
-import os
+from configops.cluster.messages import Message, MessageType
+
 
 bp = Blueprint("admin", __name__, url_prefix=os.getenv("FLASK_APPLICATION_ROOT", "/"))
 
@@ -433,6 +437,36 @@ def get_worker_detail():
     if workspace_id != worker.workspace_id:
         return make_response("Workerspace error", 401)
     return BaseResult(data=worker.to_dict()).response()
+
+
+@bp.route(rule="/api/admin/worker/upgrade/v1", methods=["PUT"])
+async def upgrade_worker():
+    worker_id = request.args["id"]
+    workspace_id = request.headers[constants.X_WORKSPACE]
+
+    check_auth_resp = do_check_auth(
+        module=PermissionModule.WORKSPACE_WORKER_MANAGE, actions=["EDIT"]
+    )
+    if check_auth_resp:
+        return check_auth_resp
+
+    worker = db.session.query(Worker).filter_by(id=worker_id).first()
+    if not worker:
+        return make_response("Worker does't exists", 401)
+    if workspace_id != worker.workspace_id:
+        return make_response("Workerspace error", 401)
+
+    data = request.get_json()
+    message = Message(
+        type=MessageType.UPGRADE_WORKER,
+        data=data,
+    )
+    event = threading.Event()
+    future = CallbackFuture(event)
+    controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
+    controller_ns.send_message(worker_id, message, future)
+
+    return BaseResult().response(0)
 
 
 @bp.route(rule="/api/admin/managed_object/v1", methods=["GET"])

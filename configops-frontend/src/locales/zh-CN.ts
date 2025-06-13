@@ -56,7 +56,8 @@ export default {
     worker: '代理',
     secret: '密钥',
     online: '在线',
-    offline: '未在线'
+    offline: '未在线',
+    upgrade: '升级'
   },
   lock: {
     lockScreen: '锁定屏幕',
@@ -581,8 +582,9 @@ export default {
     title: '密码输入框',
     inputPasswordDes: '基于 ElementPlus 的 Input 组件二次封装'
   },
-  avatarsDemo: {
-    title: '头像列表组件，基于element-plus的Avatar组件二次封装'
+  worker: {
+    packageUrl: '包地址',
+    version: '版本'
   },
   managedObject: {
     systemId: '系统ID',

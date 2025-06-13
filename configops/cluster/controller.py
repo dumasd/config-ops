@@ -51,7 +51,6 @@ class ControllerNamespace(Namespace):
             future.set_exception(ConfigOpsException("Worker is offline"))
 
     def on_connect(self, auth):
-        # logger.info(f"Client connected. sid:{request.sid}, auth:{auth}")
         worker_name = auth["name"]
         worker_secret = auth["secret"]
         worker = db.session.query(Worker).filter(Worker.name == worker_name).first()
@@ -96,12 +95,10 @@ class BaseMessageHandler:
 
 class ManagedObjectsMessageHandler(BaseMessageHandler):
 
-    def handle(self, sid, message: Message, namespace: ControllerNamespace):
-        logger.info("Handle managed objects")
-        worker_info = namespace.worker_map[sid]
+    def handle_managed_objects(self, worker_info, items):
         add_objects = []
         remain_ids = []
-        for item in message.data:
+        for item in items:
             managed_object = (
                 db.session.query(ManagedObjects)
                 .filter(
@@ -148,6 +145,21 @@ class ManagedObjectsMessageHandler(BaseMessageHandler):
 
         db.session.commit()
 
+    def handle(self, sid, message: Message, namespace: ControllerNamespace):
+        logger.info("Handle managed objects")
+        worker_info = namespace.worker_map[sid]
+        self.handle_managed_objects(worker_info, message.data)
+
+
+class WorkerInfoMessageHandler(ManagedObjectsMessageHandler):
+    def handle(self, sid, message: Message, namespace: ControllerNamespace):
+        logger.info("Handle worker info")
+        worker_info = namespace.worker_map[sid]
+        self.handle_managed_objects(worker_info, message.data["managed_objects"])
+        worker = db.session.query(Worker).filter(Worker.id == worker_info.id).first()
+        worker.version = message.data["version"]
+        db.session.commit()
+
 
 class CommonFuturedMessageHandler(BaseMessageHandler):
 
@@ -167,6 +179,7 @@ def register(socketio, app) -> ControllerNamespace:
     MESSAGE_HANDLER_MAP[MessageType.MANAGED_OBJECTS.name] = (
         ManagedObjectsMessageHandler()
     )
+    MESSAGE_HANDLER_MAP[MessageType.WORKER_INFO.name] = WorkerInfoMessageHandler()
     MESSAGE_HANDLER_MAP[MessageType.QUERY_CHANGE_LOG.name] = (
         CommonFuturedMessageHandler()
     )
@@ -176,6 +189,7 @@ def register(socketio, app) -> ControllerNamespace:
     MESSAGE_HANDLER_MAP[MessageType.QUERY_CHANGE_SET.name] = (
         CommonFuturedMessageHandler()
     )
+    MESSAGE_HANDLER_MAP[MessageType.UPGRADE_WORKER.name] = CommonFuturedMessageHandler()
 
     controller = ControllerNamespace("/controller", app)
     socketio.on_namespace(controller)

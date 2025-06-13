@@ -17,6 +17,8 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
+_BASE_SQL_DIR = "migrations/sql"
+
 
 class Base(DeclarativeBase):
     created_at = mapped_column(
@@ -50,7 +52,7 @@ class ConfigOpsChangeLog(Base):
     checksum = mapped_column(String(128), nullable=True, comment="checksum")
     author = mapped_column(String(128), comment="作者")
     filename = mapped_column(String(1024))
-    #contexts = mapped_column(String(1024), comment="执行上下文")
+    # contexts = mapped_column(String(1024), comment="执行上下文")
     comment = mapped_column(String(2048))
     __table_args__ = (
         UniqueConstraint(
@@ -76,6 +78,11 @@ class ConfigOpsChangeLogChanges(Base):
 table_name_prefix = "configops_"
 
 
+class MigrationHistory(Base):
+    __tablename__ = f"{table_name_prefix}migration_history"
+    fname = mapped_column(String(255), primary_key=True)
+
+
 class Workspace(Base):
     __tablename__ = f"{table_name_prefix}workspace"
     id = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -90,6 +97,10 @@ class Worker(Base):
     name = mapped_column(String(50), nullable=False)
     secret = mapped_column(String(255), nullable=False)
     description = mapped_column(String(255), nullable=True)
+    version = mapped_column(
+        String(20), nullable=True
+    )
+
     __table_args__ = (UniqueConstraint("name", name="uniq_name"),)
 
 
@@ -149,7 +160,7 @@ def paginate(stmt, page: int = 1, size: int = 10):
     return items, total
 
 
-def init(app):
+def init(app, node_config):
     if app.config.get("SQLALCHEMY_DATABASE_URI") is None:
         db_uri = None
         cfg = app.config.get("config")
@@ -163,3 +174,18 @@ def init(app):
     db.init_app(app)
     with app.app_context():
         db.create_all()
+
+        result = db.session.query(MigrationHistory).all()
+        executed = {row.fname for row in result}
+        sql_dir = _BASE_SQL_DIR + "/" + node_config["role"]
+        if os.path.exists(sql_dir):
+            for fname in sorted(os.listdir(sql_dir)):
+                if fname.endswith(".sql") and fname not in executed:
+                    path = os.path.join(sql_dir, fname)
+                    with open(path, "r") as f:
+                        sql_list = f.read().split(";")
+                        for sql in sql_list:
+                            if sql.strip():
+                                db.session.execute(sqlalchemy.text(sql.strip()))
+                        db.session.add(MigrationHistory(fname=fname))
+                        db.session.commit()

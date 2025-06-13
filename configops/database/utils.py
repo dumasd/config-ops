@@ -1,4 +1,3 @@
-from configops.utils.constants import DIALECT_DRIVER_MAP
 from configops.utils.exception import ConfigOpsException
 import sqlalchemy
 import logging
@@ -6,6 +5,10 @@ from urllib.parse import quote_plus
 
 logger = logging.getLogger(__name__)
 
+_DIALECT_DRIVER_MAP = {
+    "mysql": "mysqlconnector",
+    "postgresql": "psycopg2",
+}
 
 def create_database_engine(db_config, schema: str = None):
     url = db_config.get("url")
@@ -13,7 +16,7 @@ def create_database_engine(db_config, schema: str = None):
     password = db_config.get("password")
     port = db_config.get("port")
     dialect = db_config.get("dialect")
-    driver = DIALECT_DRIVER_MAP.get(dialect)
+    driver = _DIALECT_DRIVER_MAP.get(dialect)
     if schema is None:
         schema = db_config.get("changelogschema", "liquibase")
     if driver is None:

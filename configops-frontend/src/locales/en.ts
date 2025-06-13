@@ -57,7 +57,8 @@ export default {
     worker: 'Agent',
     secret: 'Secret',
     online: 'Online',
-    offline: 'Offline'
+    offline: 'Offline',
+    upgrade: 'Upgrade'
   },
   lock: {
     lockScreen: 'Lock screen',
@@ -591,9 +592,9 @@ export default {
     title: 'InputPassword',
     inputPasswordDes: 'Secondary packaging of Input components based on ElementPlus'
   },
-  avatarsDemo: {
-    title:
-      'Avatar component for avatar list, secondary packaging based on element plus Avatar component'
+  worker: {
+    packageUrl: 'Package URL',
+    version: 'Version'
   },
   managedObject: {
     systemId: 'System ID',

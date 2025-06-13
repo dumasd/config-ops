@@ -6,6 +6,15 @@ export interface WorkspaceItem {
   updated_at: string
 }
 
+export interface WorkerItem {
+  id: string
+  name: string
+  description: string
+  version: string
+  created_at: string
+  updated_at: string
+}
+
 export interface GroupPermissionsItem {
   group_id: string
   permissions: string[]

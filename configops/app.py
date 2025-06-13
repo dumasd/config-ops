@@ -83,7 +83,7 @@ def create_app(config_file=None):
         app.register_blueprint(elasticsearch_bp)
         app.register_blueprint(graphdb_bp)
 
-    db.init(app)
+    db.init(app, node_config)
     auth_init_app(app)
 
     if constants.NodeRole.CONTROLLER.matches(node_config["role"]):

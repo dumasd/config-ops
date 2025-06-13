@@ -57,6 +57,10 @@ export const delteWorkerApi = (id) => {
   return request.delete({ url: '/api/admin/worker/v1', params: { id: id } })
 }
 
+export const upgradeWorkerApi = (id, data) => {
+  return request.put({ url: '/api/admin/worker/upgrade/v1', params: { id: id }, data: data })
+}
+
 export const getManagedObjectApi = (searchParams): Promise<IResponse<ManagedObjectItem[]>> => {
   return request.get({ url: '/api/admin/managed_object/v1', params: searchParams })
 }
