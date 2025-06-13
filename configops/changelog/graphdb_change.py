@@ -82,7 +82,7 @@ schema = {
                                     ],
                                 },
                             },
-                            "required": ["id", "changes"],
+                            "required": ["changes"],
                         }
                     },
                 },

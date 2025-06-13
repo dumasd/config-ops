@@ -77,7 +77,7 @@ schema = {
                                     ],
                                 },
                             },
-                            "required": ["id", "changes"],
+                            "required": ["changes"],
                         }
                     },
                 },
@@ -128,7 +128,7 @@ class NacosChangeLog:
             changelog_file_name = os.path.basename(self.changelog_file)
             changelog_file_id = os.path.splitext(changelog_file_name)[0]
             items = changelog_data.get("nacosChangeLog", None)
-            
+
             if items:
                 include_files = []
                 for item in items:
