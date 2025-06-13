@@ -129,7 +129,9 @@ class GraphdbChangelog:
                         f"Graphdb changelog validation error: {self.changelog_file} \n{e}"
                     )
 
+            base_dir = os.path.dirname(self.changelog_file)
             changelog_file_name = os.path.basename(self.changelog_file)
+            changelog_file_id = os.path.splitext(changelog_file_name)[0]
             items = changeLogData.get("graphdbChangeLog", None)
 
             if items:
@@ -138,12 +140,13 @@ class GraphdbChangelog:
                     changeSetObj = item.get("changeSet")
                     includeObj = item.get("include")
                     if changeSetObj:
-                        change_set_id = str(changeSetObj["id"])
+                        change_set_id = str(changeSetObj.get("id", changelog_file_id))
+                        changeSetObj["id"] = change_set_id
                         ignore = changeSetObj.get("ignore", False)
                         changeSetObj["ignore"] = ignore
                         if changeSetDict.get(change_set_id):
                             raise ChangeLogException(
-                                f"Repeat change set id {change_set_id}"
+                                f"Repeat change set id. changeLogFile: {self.changelog_file}, changeSetId:{change_set_id}"
                             )
                         changeSetObj["filename"] = changelog_file_name
                         changeSetDict[change_set_id] = changeSetObj
@@ -157,7 +160,9 @@ class GraphdbChangelog:
                                 f"Repeat include file!!! changeLogFile: {self.changelog_file}, file: {file}"
                             )
                         include_files.append(file)
-                        childLog = GraphdbChangelog(changelog_file=file, app=self.app)
+                        childLog = GraphdbChangelog(
+                            changelog_file=f"{base_dir}/{file}", app=self.app
+                        )
                         for change_set_id in childLog.change_set_dict:
                             if change_set_id in changeSetDict:
                                 raise ChangeLogException(

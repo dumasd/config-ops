@@ -33,7 +33,9 @@ class TestString:
     def test_file(self):
         f = "/Users/wukai/IdeaProjects/Opensource/config-ops/tests/changelog/changelog-root.yaml"
         logger.info(os.path.isfile(f))
-        logger.info(f"filename: {os.path.basename(f)}")
+        
+        changelog_filename = os.path.splitext("changelog-root.yaml")[0]
+        logger.info(f"filename: {os.path.basename(f)}, changelog_filename: {changelog_filename}")
 
     def test_shlex(self):
         def split_with_quotes(input_string):

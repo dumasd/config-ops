@@ -117,7 +117,9 @@ class ElasticsearchChangelog:
                         f"Elasticsearch changelog validation error: {self.changelog_file} \n{e}"
                     )
 
+            base_dir = os.path.dirname(self.changelog_file)
             changelog_file_name = os.path.basename(self.changelog_file)
+            changelog_file_id = os.path.splitext(changelog_file_name)[0]
             items = changeLogData.get("elasticsearchChangeLog", None)
 
             if items:
@@ -126,12 +128,13 @@ class ElasticsearchChangelog:
                     changeSetObj = item.get("changeSet")
                     includeObj = item.get("include")
                     if changeSetObj:
-                        change_set_id = str(changeSetObj["id"])
+                        change_set_id = str(changeSetObj.get("id", changelog_file_id))
+                        changeSetObj["id"] = change_set_id
                         ignore = changeSetObj.get("ignore", False)
                         changeSetObj["ignore"] = ignore
                         if changeSetDict.get(change_set_id):
                             raise ChangeLogException(
-                                f"Repeat change set id {change_set_id}"
+                                f"Repeat change set id. changeLogFile: {self.changelog_file}, changeSetId:{change_set_id}"
                             )
                         changeSetObj["filename"] = changelog_file_name
                         changeSetDict[change_set_id] = changeSetObj
@@ -144,7 +147,7 @@ class ElasticsearchChangelog:
                                 suc, _ = config_validator.validate_json(body)
                                 if not suc:
                                     raise ChangeLogException(
-                                        f"Body is not json. changeSetId:{change_set_id}, method:{method}, path:{path}, body:{body}"
+                                        f"Body is not json. changeLogFile: {self.changelog_file}, changeSetId:{change_set_id}, method:{method}, path:{path}, body:{body}"
                                     )
                         if not ignore:
                             changeSets.append(changeSetObj)
@@ -157,7 +160,7 @@ class ElasticsearchChangelog:
                             )
                         include_files.append(file)
                         childLog = ElasticsearchChangelog(
-                            changelog_file=file, app=self.app
+                            changelog_file=f"{base_dir}/{file}", app=self.app
                         )
                         for change_set_id in childLog.change_set_dict:
                             if change_set_id in changeSetDict:

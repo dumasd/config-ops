@@ -1,8 +1,10 @@
 # empty
 
 import logging, os, string, platform, random, shlex, subprocess, re
+from ruamel import yaml as ryaml
 from configops.changelog import changelog_utils
 from configops.utils import secret_util
+from configops.utils import config_handler
 from configops.utils.constants import SystemType, extract_version
 from configops.database.db import db, ConfigOpsChangeLogChanges
 from configops.utils.exception import ChangeLogException
@@ -12,6 +14,7 @@ from configops.config import (
     get_liquibase_cfg,
     get_java_home_dir,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -35,29 +38,62 @@ class DatabaseChangeLog:
             raise ChangeLogException(
                 f"Changelog file or folder does not exists: {changelog_file}"
             )
+        self.__handle_changelog_file__()
         if not os.path.isdir(changelog_file):
             return
 
         # 文件夹下面的changelog文件，聚合成一个change-root.yaml
         changelogfiles = []
-        for _, _, filenames in os.walk(changelog_file):
+        for dirpath, _, filenames in os.walk(changelog_file):
             for filename in filenames:
-                if filename.endswith((".yaml", ".yml", ".xml")):
+                if filename.endswith((".yaml", ".yml")):
                     changelogfiles.append(filename)
+
+        if len(changelogfiles) == 0:
+            return
+
         changelogfiles = sorted(changelogfiles, key=extract_version)
-        if len(changelogfiles) > 0:
-            suffix = "".join(random.sample(string.ascii_lowercase + string.digits, 10))
-            root_file_name = f"changelog_root_{suffix}.yaml"
-            root_file_content = "databaseChangeLog:"
-            for file in changelogfiles:
-                root_file_content = (
-                    root_file_content + f"\n  - include:\n      file: {file}"
-                )
-            tmp_change_log_root_file = os.path.join(changelog_file, root_file_name)
-            with open(tmp_change_log_root_file, "w", encoding="utf-8") as file:
-                file.write(root_file_content)
-            self.changelog_file = tmp_change_log_root_file
-            self.is_temp_changelog_file = True
+        suffix = "".join(random.sample(string.ascii_lowercase + string.digits, 10))
+        root_file_name = f"changelog_root_{suffix}.yaml"
+        root_file_content = "databaseChangeLog:"
+        for file in changelogfiles:
+            root_file_content = (
+                root_file_content + f"\n  - include:\n      file: {file}"
+            )
+        tmp_change_log_root_file = os.path.join(changelog_file, root_file_name)
+        with open(tmp_change_log_root_file, "w", encoding="utf-8") as file:
+            file.write(root_file_content)
+        self.changelog_file = tmp_change_log_root_file
+        self.is_temp_changelog_file = True
+
+    def __handle_changelog_file__(self):
+        changelog_file = self.changelog_file
+        base_dir = changelog_file
+        if os.path.isfile(changelog_file):
+            base_dir = os.path.dirname(changelog_file)
+        fullpath_changelogfiles = []
+        for dirpath, _, filenames in os.walk(base_dir):
+            for filename in filenames:
+                if filename.endswith((".yaml", ".yml")):
+                    fullpath_changelogfiles.append(os.path.join(dirpath, filename))
+        if len(fullpath_changelogfiles) == 0:
+            return
+        for changelog_file in fullpath_changelogfiles:
+            changelog_file_id = os.path.splitext(os.path.basename(changelog_file))[0]
+            with open(changelog_file, "r", encoding="utf-8") as file:
+                yaml = ryaml.YAML()
+                yaml.preserve_quotes = True
+                changelog_data = yaml.load(file)
+            if not changelog_data.get("databaseChangeLog"):
+                continue
+            for change_set in changelog_data["databaseChangeLog"]:
+                if "include" in change_set or "changeSet" not in change_set:
+                    continue
+                change_set_detail = change_set["changeSet"]
+                if "id" not in change_set_detail:
+                    change_set_detail["id"] = changelog_file_id
+            with open(changelog_file, "w", encoding="utf-8") as file:
+                file.write(config_handler.yaml_to_string(changelog_data, yaml))
 
     def run_liquibase_cmd(self, command: str, cwd=None, args=None, db_id=None):
         command = command.strip()

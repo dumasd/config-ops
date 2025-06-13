@@ -126,15 +126,17 @@ class NacosChangeLog:
 
             base_dir = os.path.dirname(self.changelog_file)
             changelog_file_name = os.path.basename(self.changelog_file)
-
+            changelog_file_id = os.path.splitext(changelog_file_name)[0]
             items = changelog_data.get("nacosChangeLog", None)
+            
             if items:
                 include_files = []
                 for item in items:
                     change_set_obj = item.get("changeSet")
                     include_obj = item.get("include")
                     if change_set_obj:
-                        change_set_id = str(change_set_obj["id"])
+                        change_set_id = str(change_set_obj.get("id", changelog_file_id))
+                        change_set_obj["id"] = change_set_id
                         ignore = change_set_obj.get("ignore", False)
                         change_set_obj["ignore"] = ignore
                         if change_set_dict.get(change_set_id) is not None:
