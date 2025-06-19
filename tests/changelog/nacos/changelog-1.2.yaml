@@ -1,32 +1,38 @@
 nacosChangeLog:
   - changeSet:
-      id: configops-1.2-01 # 所有changeSet的ID不可重复
+      id: configops-nacos-1.2-01
       author: bruce.wu
       comment: 注释
-      ignore: false # 是否忽略此changeSet
       context: dev,prod
       runOnChange: true
       changes:
-        # namespace+group+dataId的组合在changes中不能重复
         - namespace: blue
           group: group
           dataId: config.yaml
-          format: yaml # 目前只支持yaml和properties
-          # 追加内容
+          format: yaml
           patchContent: |-
             server:
               port: 8007  
               servlet:
-                context-path: /blue
+                context-path: /bluea
             gtt:
               path:
                 - /blue/**
                 - /blue2/**
-            spring:
-              cloud:
-                gateway:
-                  routes:
-                    - id: blue
-                      uri: lb://blue-service
-                      predicates:
-                        - Path=/blue/**                      
+            sms:
+              host: example.com                      
+  - changeSet:
+      id: configops-nacos-1.2-02
+      author: bruce.wu
+      comment: 注释
+      context: dev,prod
+      runOnChange: true
+      changes:
+        - namespace: blue
+          group: group
+          dataId: config.properties
+          format: properties
+          patchContent: |-
+            blue.server.port = 8091
+            blue.database.host = localhost
+            blue.database.port = 3306
