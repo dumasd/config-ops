@@ -439,13 +439,14 @@ class NacosChangeLog:
 
                     # 所有patch和delete也聚合在一起
                     if previous_config:
-
+                        delete_content = nacos_config.get("deleteContent", "")
+                        patch_content = nacos_config.get("patchContent", "")
                         # Delete and Patch pathContent
                         res = config_handler.delete_patch_by_str(
                             previous_config.get("patchContent", ""),
                             _format,
-                            nacos_config.get("deleteContent", ""),
-                            nacos_config.get("patchContent", ""),
+                            delete_content,
+                            patch_content,
                         )
                         nacos_config["patchContent"] = res["nextContent"]
 
@@ -453,8 +454,8 @@ class NacosChangeLog:
                         res = config_handler.delete_patch_by_str(
                             previous_config.get("deleteContent", ""),
                             _format,
-                            nacos_config.get("patchContent", ""),
-                            nacos_config.get("deleteContent", ""),
+                            patch_content,
+                            delete_content,
                         )
                         nacos_config["deleteContent"] = res["nextContent"]
 
