@@ -1,0 +1,1157 @@
+databaseChangeLog:
+- changeSet:
+    author: chris.zeng
+    changes:
+    - sql: {endDelimiter: ;, sql: '
+
+
+          -- ----------------------------
+
+          -- Table structure for certification
+
+          -- ----------------------------
+
+          DROP TABLE IF EXISTS `gtt_certification`;
+
+          CREATE TABLE `gtt_certification`  (
+
+          `id` bigint NOT NULL,
+
+          `country_name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+          NULL DEFAULT NULL COMMENT ''国家名称'',
+
+          `country_code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+          NULL DEFAULT NULL COMMENT ''国家编码'',
+
+          `certificate` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+          NULL DEFAULT NULL COMMENT ''评级'',
+
+          PRIMARY KEY (`id`) USING BTREE
+
+          ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT
+          = Dynamic;
+
+
+          -- ----------------------------
+
+          -- Records of certification
+
+          -- ----------------------------
+
+          INSERT INTO `gtt_certification` VALUES (1, ''Argentina'', ''ar'', ''M'');
+
+          INSERT INTO `gtt_certification` VALUES (2, ''Argentina'', ''ar'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (3, ''Argentina'', ''ar'', ''13'');
+
+          INSERT INTO `gtt_certification` VALUES (4, ''Argentina'', ''ar'', ''X'');
+
+          INSERT INTO `gtt_certification` VALUES (5, ''Argentina'', ''ar'', ''Unrated'');
+
+          INSERT INTO `gtt_certification` VALUES (6, ''Argentina'', ''ar'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (7, ''Argentina'', ''ar'', ''T'');
+
+          INSERT INTO `gtt_certification` VALUES (8, ''Argentina'', ''ar'', ''Atp'');
+
+          INSERT INTO `gtt_certification` VALUES (9, ''Argentina'', ''ar'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (10, ''Australia'', ''au'', ''X'');
+
+          INSERT INTO `gtt_certification` VALUES (11, ''Australia'', ''au'', ''X18+'');
+
+          INSERT INTO `gtt_certification` VALUES (12, ''Australia'', ''au'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (13, ''Australia'', ''au'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (14, ''Australia'', ''au'', ''MA'');
+
+          INSERT INTO `gtt_certification` VALUES (15, ''Australia'', ''au'', ''E'');
+
+          INSERT INTO `gtt_certification` VALUES (16, ''Australia'', ''au'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (17, ''Australia'', ''au'', ''R18+'');
+
+          INSERT INTO `gtt_certification` VALUES (18, ''Australia'', ''au'', ''R'');
+
+          INSERT INTO `gtt_certification` VALUES (19, ''Australia'', ''au'', ''MA15+'');
+
+          INSERT INTO `gtt_certification` VALUES (20, ''Australia'', ''au'', ''SOA'');
+
+          INSERT INTO `gtt_certification` VALUES (21, ''Australia'', ''au'', ''RC'');
+
+          INSERT INTO `gtt_certification` VALUES (22, ''Australia'', ''au'', ''M'');
+
+          INSERT INTO `gtt_certification` VALUES (23, ''Australia'', ''au'', ''NRC'');
+
+          INSERT INTO `gtt_certification` VALUES (24, ''Austria'', ''at'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (25, ''Austria'', ''at'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (26, ''Austria'', ''at'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (27, ''Austria'', ''at'', ''10'');
+
+          INSERT INTO `gtt_certification` VALUES (28, ''Austria'', ''at'', ''8'');
+
+          INSERT INTO `gtt_certification` VALUES (29, ''Austria'', ''at'', ''6'');
+
+          INSERT INTO `gtt_certification` VALUES (30, ''Austria'', ''at'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (31, ''Austria'', ''at'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (32, ''Austria'', ''at'', ''0'');
+
+          INSERT INTO `gtt_certification` VALUES (33, ''Belgium'', ''be'', ''KNT/ENA'');
+
+          INSERT INTO `gtt_certification` VALUES (34, ''Belgium'', ''be'', ''KT/EA'');
+
+          INSERT INTO `gtt_certification` VALUES (35, ''Brazil'', ''br'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (36, ''Brazil'', ''br'', ''Livre'');
+
+          INSERT INTO `gtt_certification` VALUES (37, ''Brazil'', ''br'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (38, ''Brazil'', ''br'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (39, ''Brazil'', ''br'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (40, ''Brazil'', ''br'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (41, ''Brazil'', ''br'', ''10'');
+
+          INSERT INTO `gtt_certification` VALUES (42, ''Bulgaria'', ''bg'', ''X'');
+
+          INSERT INTO `gtt_certification` VALUES (43, ''Bulgaria'', ''bg'', ''D'');
+
+          INSERT INTO `gtt_certification` VALUES (44, ''Bulgaria'', ''bg'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (45, ''Bulgaria'', ''bg'', ''C'');
+
+          INSERT INTO `gtt_certification` VALUES (46, ''Bulgaria'', ''bg'', ''B'');
+
+          INSERT INTO `gtt_certification` VALUES (47, ''Canada'', ''ca'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (48, ''Canada'', ''ca'', ''F'');
+
+          INSERT INTO `gtt_certification` VALUES (49, ''Canada'', ''ca'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (50, ''Canada'', ''ca'', ''R'');
+
+          INSERT INTO `gtt_certification` VALUES (51, ''Canada'', ''ca'', ''PA'');
+
+          INSERT INTO `gtt_certification` VALUES (52, ''Canada'', ''ca'', ''XXX'');
+
+          INSERT INTO `gtt_certification` VALUES (53, ''Canada'', ''ca'', ''C8'');
+
+          INSERT INTO `gtt_certification` VALUES (54, ''Canada'', ''ca'', ''AA'');
+
+          INSERT INTO `gtt_certification` VALUES (55, ''Canada'', ''ca'', ''18+'');
+
+          INSERT INTO `gtt_certification` VALUES (56, ''Canada'', ''ca'', ''C'');
+
+          INSERT INTO `gtt_certification` VALUES (57, ''Canada'', ''ca'', ''14+'');
+
+          INSERT INTO `gtt_certification` VALUES (58, ''Canada'', ''ca'', ''14A'');
+
+          INSERT INTO `gtt_certification` VALUES (59, ''Canada'', ''ca'', ''18A'');
+
+          INSERT INTO `gtt_certification` VALUES (60, ''Canada'', ''ca'', ''RX'');
+
+          INSERT INTO `gtt_certification` VALUES (61, ''Canada'', ''ca'', ''E'');
+
+          INSERT INTO `gtt_certification` VALUES (62, ''Canada'', ''ca'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (63, ''Canada'', ''ca'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (64, ''Canada'', ''ca'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (65, ''Canada'', ''ca'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (66, ''Canada'', ''ca'', ''13+'');
+
+          INSERT INTO `gtt_certification` VALUES (67, ''Canada'', ''ca'', ''16+'');
+
+          INSERT INTO `gtt_certification` VALUES (68, ''Chile'', ''cl'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (69, ''Chile'', ''cl'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (70, ''Chile'', ''cl'', ''TE+7'');
+
+          INSERT INTO `gtt_certification` VALUES (71, ''Chile'', ''cl'', ''TE'');
+
+          INSERT INTO `gtt_certification` VALUES (72, ''Chile'', ''cl'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (73, ''Chile'', ''cl'', ''F'');
+
+          INSERT INTO `gtt_certification` VALUES (74, ''Chile'', ''cl'', ''I7'');
+
+          INSERT INTO `gtt_certification` VALUES (75, ''Chile'', ''cl'', ''R'');
+
+          INSERT INTO `gtt_certification` VALUES (76, ''Chile'', ''cl'', ''I12'');
+
+          INSERT INTO `gtt_certification` VALUES (77, ''Chile'', ''cl'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (78, ''Chile'', ''cl'', ''I'');
+
+          INSERT INTO `gtt_certification` VALUES (79, ''China'', ''cn'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (80, ''China'', ''cn'', ''13'');
+
+          INSERT INTO `gtt_certification` VALUES (81, ''China'', ''cn'', ''17'');
+
+          INSERT INTO `gtt_certification` VALUES (82, ''Colombia'', ''co'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (83, ''Colombia'', ''co'', ''X'');
+
+          INSERT INTO `gtt_certification` VALUES (84, ''Colombia'', ''co'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (85, ''Colombia'', ''co'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (86, ''Colombia'', ''co'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (87, ''Colombia'', ''co'', ''T'');
+
+          INSERT INTO `gtt_certification` VALUES (88, ''Cyprus'', ''cy'', ''Cat. 3'');
+
+          INSERT INTO `gtt_certification` VALUES (89, ''Czech Republic'', ''cz'',
+          ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (90, ''Czech Republic'', ''cz'',
+          ''8+'');
+
+          INSERT INTO `gtt_certification` VALUES (91, ''Czech Republic'', ''cz'',
+          ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (92, ''Czech Republic'', ''cz'',
+          ''U'');
+
+          INSERT INTO `gtt_certification` VALUES (93, ''Czech Republic'', ''cz'',
+          ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (94, ''Czechoslovakia'', ''cshh'',
+          ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (95, ''Denmark'', ''dk'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (96, ''Denmark'', ''dk'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (97, ''Denmark'', ''dk'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (98, ''Denmark'', ''dk'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (99, ''Denmark'', ''dk'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (100, ''Denmark'', ''dk'', ''11'');
+
+          INSERT INTO `gtt_certification` VALUES (101, ''Denmark'', ''dk'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (102, ''East Germany'', ''ddde'',
+          ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (103, ''Ecuador'', ''ec'', ''TP'');
+
+          INSERT INTO `gtt_certification` VALUES (104, ''Ecuador'', ''ec'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (105, ''Ecuador'', ''ec'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (106, ''Ecuador'', ''ec'', ''C'');
+
+          INSERT INTO `gtt_certification` VALUES (107, ''Ecuador'', ''ec'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (108, ''Ecuador'', ''ec'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (109, ''Egypt'', ''eg'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (110, ''Finland'', ''fi'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (111, ''Finland'', ''fi'', ''K-7'');
+
+          INSERT INTO `gtt_certification` VALUES (112, ''Finland'', ''fi'', ''K-16/13'');
+
+          INSERT INTO `gtt_certification` VALUES (113, ''Finland'', ''fi'', ''S'');
+
+          INSERT INTO `gtt_certification` VALUES (114, ''Finland'', ''fi'', ''K-14'');
+
+          INSERT INTO `gtt_certification` VALUES (115, ''Finland'', ''fi'', ''K-6/3'');
+
+          INSERT INTO `gtt_certification` VALUES (116, ''Finland'', ''fi'', ''K-15/13'');
+
+          INSERT INTO `gtt_certification` VALUES (117, ''Finland'', ''fi'', ''K-12'');
+
+          INSERT INTO `gtt_certification` VALUES (118, ''Finland'', ''fi'', ''K-11'');
+
+          INSERT INTO `gtt_certification` VALUES (119, ''Finland'', ''fi'', ''K-10/8'');
+
+          INSERT INTO `gtt_certification` VALUES (120, ''Finland'', ''fi'', ''K-10'');
+
+          INSERT INTO `gtt_certification` VALUES (121, ''Finland'', ''fi'', ''K-8'');
+
+          INSERT INTO `gtt_certification` VALUES (122, ''Finland'', ''fi'', ''K-12/9'');
+
+          INSERT INTO `gtt_certification` VALUES (123, ''Finland'', ''fi'', ''K-7/5'');
+
+          INSERT INTO `gtt_certification` VALUES (124, ''Finland'', ''fi'', ''K-8/6'');
+
+          INSERT INTO `gtt_certification` VALUES (125, ''Finland'', ''fi'', ''K-10/7'');
+
+          INSERT INTO `gtt_certification` VALUES (126, ''Finland'', ''fi'', ''K-3'');
+
+          INSERT INTO `gtt_certification` VALUES (127, ''Finland'', ''fi'', ''K-6/4'');
+
+          INSERT INTO `gtt_certification` VALUES (128, ''Finland'', ''fi'', ''K-15'');
+
+          INSERT INTO `gtt_certification` VALUES (129, ''Finland'', ''fi'', ''K-13'');
+
+          INSERT INTO `gtt_certification` VALUES (130, ''Finland'', ''fi'', ''K-16'');
+
+          INSERT INTO `gtt_certification` VALUES (131, ''Finland'', ''fi'', ''K-8/5'');
+
+          INSERT INTO `gtt_certification` VALUES (132, ''Finland'', ''fi'', ''K-18'');
+
+          INSERT INTO `gtt_certification` VALUES (133, ''Finland'', ''fi'', ''K-11/9'');
+
+          INSERT INTO `gtt_certification` VALUES (134, ''Finland'', ''fi'', ''K-7/4'');
+
+          INSERT INTO `gtt_certification` VALUES (135, ''Finland'', ''fi'', ''K-6'');
+
+          INSERT INTO `gtt_certification` VALUES (136, ''France'', ''fr'', ''Tous
+          publics avec avertissement'');
+
+          INSERT INTO `gtt_certification` VALUES (137, ''France'', ''fr'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (138, ''France'', ''fr'', ''Tous
+          publics'');
+
+          INSERT INTO `gtt_certification` VALUES (139, ''France'', ''fr'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (140, ''France'', ''fr'', ''10'');
+
+          INSERT INTO `gtt_certification` VALUES (141, ''France'', ''fr'', ''Unrated'');
+
+          INSERT INTO `gtt_certification` VALUES (142, ''France'', ''fr'', ''X'');
+
+          INSERT INTO `gtt_certification` VALUES (143, ''France'', ''fr'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (144, ''France'', ''fr'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (145, ''France'', ''fr'', ''13'');
+
+          INSERT INTO `gtt_certification` VALUES (146, ''France'', ''fr'', ''12 avec
+          avertissement'');
+
+          INSERT INTO `gtt_certification` VALUES (147, ''France'', ''fr'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (148, ''Germany'', ''de'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (149, ''Germany'', ''de'', ''0'');
+
+          INSERT INTO `gtt_certification` VALUES (150, ''Germany'', ''de'', ''6'');
+
+          INSERT INTO `gtt_certification` VALUES (151, ''Germany'', ''de'', ''Unrated'');
+
+          INSERT INTO `gtt_certification` VALUES (152, ''Germany'', ''de'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (153, ''Germany'', ''de'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (154, ''Germany'', ''de'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (155, ''Greece'', ''gr'', ''K-10'');
+
+          INSERT INTO `gtt_certification` VALUES (156, ''Greece'', ''gr'', ''A-18'');
+
+          INSERT INTO `gtt_certification` VALUES (157, ''Greece'', ''gr'', ''K-12'');
+
+          INSERT INTO `gtt_certification` VALUES (158, ''Greece'', ''gr'', ''K-15'');
+
+          INSERT INTO `gtt_certification` VALUES (159, ''Greece'', ''gr'', ''K'');
+
+          INSERT INTO `gtt_certification` VALUES (160, ''Greece'', ''gr'', ''K-17'');
+
+          INSERT INTO `gtt_certification` VALUES (161, ''Greece'', ''gr'', ''K-13'');
+
+          INSERT INTO `gtt_certification` VALUES (162, ''Hong Kong'', ''hk'', ''III'');
+
+          INSERT INTO `gtt_certification` VALUES (163, ''Hong Kong'', ''hk'', ''I'');
+
+          INSERT INTO `gtt_certification` VALUES (164, ''Hong Kong'', ''hk'', ''IIA'');
+
+          INSERT INTO `gtt_certification` VALUES (165, ''Hong Kong'', ''hk'', ''II'');
+
+          INSERT INTO `gtt_certification` VALUES (166, ''Hong Kong'', ''hk'', ''IIB'');
+
+          INSERT INTO `gtt_certification` VALUES (167, ''Hungary'', ''hu'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (168, ''Hungary'', ''hu'', ''6'');
+
+          INSERT INTO `gtt_certification` VALUES (169, ''Hungary'', ''hu'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (170, ''Hungary'', ''hu'', ''KN'');
+
+          INSERT INTO `gtt_certification` VALUES (171, ''Hungary'', ''hu'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (172, ''Hungary'', ''hu'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (173, ''Iceland'', ''is'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (174, ''Iceland'', ''is'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (175, ''Iceland'', ''is'', ''LH'');
+
+          INSERT INTO `gtt_certification` VALUES (176, ''Iceland'', ''is'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (177, ''Iceland'', ''is'', ''Unrated'');
+
+          INSERT INTO `gtt_certification` VALUES (178, ''Iceland'', ''is'', ''10'');
+
+          INSERT INTO `gtt_certification` VALUES (179, ''Iceland'', ''is'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (180, ''Iceland'', ''is'', ''L'');
+
+          INSERT INTO `gtt_certification` VALUES (181, ''Iceland'', ''is'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (182, ''Iceland'', ''is'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (183, ''India'', ''in'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (184, ''India'', ''in'', ''13'');
+
+          INSERT INTO `gtt_certification` VALUES (185, ''India'', ''in'', ''UA'');
+
+          INSERT INTO `gtt_certification` VALUES (186, ''India'', ''in'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (187, ''India'', ''in'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (188, ''India'', ''in'', ''U'');
+
+          INSERT INTO `gtt_certification` VALUES (189, ''India'', ''in'', ''Unrated'');
+
+          INSERT INTO `gtt_certification` VALUES (190, ''India'', ''in'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (191, ''India'', ''in'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (192, ''Indonesia'', ''id'', ''D'');
+
+          INSERT INTO `gtt_certification` VALUES (193, ''Indonesia'', ''id'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (194, ''Indonesia'', ''id'', ''SU'');
+
+          INSERT INTO `gtt_certification` VALUES (195, ''Indonesia'', ''id'', ''R'');
+
+          INSERT INTO `gtt_certification` VALUES (196, ''Indonesia'', ''id'', ''P'');
+
+          INSERT INTO `gtt_certification` VALUES (197, ''Indonesia'', ''id'', ''21+'');
+
+          INSERT INTO `gtt_certification` VALUES (198, ''Indonesia'', ''id'', ''13+'');
+
+          INSERT INTO `gtt_certification` VALUES (199, ''Indonesia'', ''id'', ''17+'');
+
+          INSERT INTO `gtt_certification` VALUES (200, ''Iran'', ''ir'', ''18+'');
+
+          INSERT INTO `gtt_certification` VALUES (201, ''Iran'', ''ir'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (202, ''Iraq'', ''iq'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (203, ''Ireland'', ''ie'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (204, ''Ireland'', ''ie'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (205, ''Ireland'', ''ie'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (206, ''Ireland'', ''ie'', ''12A'');
+
+          INSERT INTO `gtt_certification` VALUES (207, ''Ireland'', ''ie'', ''12PG'');
+
+          INSERT INTO `gtt_certification` VALUES (208, ''Ireland'', ''ie'', ''15A'');
+
+          INSERT INTO `gtt_certification` VALUES (209, ''Ireland'', ''ie'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (210, ''Ireland'', ''ie'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (211, ''Ireland'', ''ie'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (212, ''Ireland'', ''ie'', ''15PG'');
+
+          INSERT INTO `gtt_certification` VALUES (213, ''Ireland'', ''ie'', ''12RA'');
+
+          INSERT INTO `gtt_certification` VALUES (214, ''Ireland'', ''ie'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (215, ''Israel'', ''il'', ''X'');
+
+          INSERT INTO `gtt_certification` VALUES (216, ''Israel'', ''il'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (217, ''Israel'', ''il'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (218, ''Israel'', ''il'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (219, ''Italy'', ''it'', ''Unrated'');
+
+          INSERT INTO `gtt_certification` VALUES (220, ''Italy'', ''it'', ''VM18'');
+
+          INSERT INTO `gtt_certification` VALUES (221, ''Italy'', ''it'', ''BA'');
+
+          INSERT INTO `gtt_certification` VALUES (222, ''Italy'', ''it'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (223, ''Italy'', ''it'', ''VM14'');
+
+          INSERT INTO `gtt_certification` VALUES (224, ''Italy'', ''it'', ''VM16'');
+
+          INSERT INTO `gtt_certification` VALUES (225, ''Italy'', ''it'', ''VM12'');
+
+          INSERT INTO `gtt_certification` VALUES (226, ''Italy'', ''it'', ''T'');
+
+          INSERT INTO `gtt_certification` VALUES (227, ''Japan'', ''jp'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (228, ''Japan'', ''jp'', ''B'');
+
+          INSERT INTO `gtt_certification` VALUES (229, ''Japan'', ''jp'', ''All Ages'');
+
+          INSERT INTO `gtt_certification` VALUES (230, ''Japan'', ''jp'', ''R'');
+
+          INSERT INTO `gtt_certification` VALUES (231, ''Japan'', ''jp'', ''Adult
+          Movie'');
+
+          INSERT INTO `gtt_certification` VALUES (232, ''Japan'', ''jp'', ''C'');
+
+          INSERT INTO `gtt_certification` VALUES (233, ''Japan'', ''jp'', ''R15+'');
+
+          INSERT INTO `gtt_certification` VALUES (234, ''Japan'', ''jp'', ''R18+'');
+
+          INSERT INTO `gtt_certification` VALUES (235, ''Japan'', ''jp'', ''R-15'');
+
+          INSERT INTO `gtt_certification` VALUES (236, ''Japan'', ''jp'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (237, ''Japan'', ''jp'', ''Unrated'');
+
+          INSERT INTO `gtt_certification` VALUES (238, ''Japan'', ''jp'', ''R-18'');
+
+          INSERT INTO `gtt_certification` VALUES (239, ''Japan'', ''jp'', ''Z'');
+
+          INSERT INTO `gtt_certification` VALUES (240, ''Japan'', ''jp'', ''PG-12'');
+
+          INSERT INTO `gtt_certification` VALUES (241, ''Japan'', ''jp'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (242, ''Japan'', ''jp'', ''PG12'');
+
+          INSERT INTO `gtt_certification` VALUES (243, ''Japan'', ''jp'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (244, ''Japan'', ''jp'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (245, ''Japan'', ''jp'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (246, ''Kuwait'', ''kw'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (247, ''Lebanon'', ''lb'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (248, ''Lithuania'', ''lt'', ''N-18'');
+
+          INSERT INTO `gtt_certification` VALUES (249, ''Lithuania'', ''lt'', ''V'');
+
+          INSERT INTO `gtt_certification` VALUES (250, ''Lithuania'', ''lt'', ''N-7'');
+
+          INSERT INTO `gtt_certification` VALUES (251, ''Lithuania'', ''lt'', ''N-13'');
+
+          INSERT INTO `gtt_certification` VALUES (252, ''Lithuania'', ''lt'', ''N-16'');
+
+          INSERT INTO `gtt_certification` VALUES (253, ''Luxembourg'', ''lu'', ''6'');
+
+          INSERT INTO `gtt_certification` VALUES (254, ''Luxembourg'', ''lu'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (255, ''Luxembourg'', ''lu'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (256, ''Luxembourg'', ''lu'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (257, ''Luxembourg'', ''lu'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (258, ''Luxembourg'', ''lu'', ''17'');
+
+          INSERT INTO `gtt_certification` VALUES (259, ''Malaysia'', ''my'', ''U'');
+
+          INSERT INTO `gtt_certification` VALUES (260, ''Malaysia'', ''my'', ''18SG'');
+
+          INSERT INTO `gtt_certification` VALUES (261, ''Malaysia'', ''my'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (262, ''Malaysia'', ''my'', ''18SX'');
+
+          INSERT INTO `gtt_certification` VALUES (263, ''Malaysia'', ''my'', ''18PL'');
+
+          INSERT INTO `gtt_certification` VALUES (264, ''Malaysia'', ''my'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (265, ''Malaysia'', ''my'', ''P13'');
+
+          INSERT INTO `gtt_certification` VALUES (266, ''Maldives'', ''mv'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (267, ''Maldives'', ''mv'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (268, ''Maldives'', ''mv'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (269, ''Maldives'', ''mv'', ''PU'');
+
+          INSERT INTO `gtt_certification` VALUES (270, ''Maldives'', ''mv'', ''18+R'');
+
+          INSERT INTO `gtt_certification` VALUES (271, ''Malta'', ''mt'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (272, ''Malta'', ''mt'', ''U'');
+
+          INSERT INTO `gtt_certification` VALUES (273, ''Malta'', ''mt'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (274, ''Malta'', ''mt'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (275, ''Malta'', ''mt'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (276, ''Malta'', ''mt'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (277, ''Malta'', ''mt'', ''12A'');
+
+          INSERT INTO `gtt_certification` VALUES (278, ''Mexico'', ''mx'', ''TV-PG'');
+
+          INSERT INTO `gtt_certification` VALUES (279, ''Mexico'', ''mx'', ''B15'');
+
+          INSERT INTO `gtt_certification` VALUES (280, ''Mexico'', ''mx'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (281, ''Mexico'', ''mx'', ''TV-14'');
+
+          INSERT INTO `gtt_certification` VALUES (282, ''Mexico'', ''mx'', ''TV-G'');
+
+          INSERT INTO `gtt_certification` VALUES (283, ''Mexico'', ''mx'', ''TV-Y'');
+
+          INSERT INTO `gtt_certification` VALUES (284, ''Mexico'', ''mx'', ''NC-17'');
+
+          INSERT INTO `gtt_certification` VALUES (285, ''Mexico'', ''mx'', ''PG-13'');
+
+          INSERT INTO `gtt_certification` VALUES (286, ''Mexico'', ''mx'', ''TV-Y7'');
+
+          INSERT INTO `gtt_certification` VALUES (287, ''Mexico'', ''mx'', ''AA'');
+
+          INSERT INTO `gtt_certification` VALUES (288, ''Mexico'', ''mx'', ''B'');
+
+          INSERT INTO `gtt_certification` VALUES (289, ''Mexico'', ''mx'', ''TV-Y7-FV'');
+
+          INSERT INTO `gtt_certification` VALUES (290, ''Mexico'', ''mx'', ''C'');
+
+          INSERT INTO `gtt_certification` VALUES (291, ''Mexico'', ''mx'', ''D'');
+
+          INSERT INTO `gtt_certification` VALUES (292, ''Mexico'', ''mx'', ''R'');
+
+          INSERT INTO `gtt_certification` VALUES (293, ''Mexico'', ''mx'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (294, ''Mexico'', ''mx'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (295, ''Mexico'', ''mx'', ''TV-MA'');
+
+          INSERT INTO `gtt_certification` VALUES (296, ''Mongolia'', ''mn'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (297, ''Netherlands'', ''nl'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (298, ''Netherlands'', ''nl'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (299, ''Netherlands'', ''nl'', ''6'');
+
+          INSERT INTO `gtt_certification` VALUES (300, ''Netherlands'', ''nl'', ''AL'');
+
+          INSERT INTO `gtt_certification` VALUES (301, ''Netherlands'', ''nl'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (302, ''Netherlands'', ''nl'', ''MG6'');
+
+          INSERT INTO `gtt_certification` VALUES (303, ''Netherlands'', ''nl'', ''9'');
+
+          INSERT INTO `gtt_certification` VALUES (304, ''Netherlands'', ''nl'', ''Unrated'');
+
+          INSERT INTO `gtt_certification` VALUES (305, ''Netherlands'', ''nl'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (306, ''New Zealand'', ''nz'', ''M'');
+
+          INSERT INTO `gtt_certification` VALUES (307, ''New Zealand'', ''nz'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (308, ''New Zealand'', ''nz'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (309, ''New Zealand'', ''nz'', ''R15'');
+
+          INSERT INTO `gtt_certification` VALUES (310, ''New Zealand'', ''nz'', ''Objectionable'');
+
+          INSERT INTO `gtt_certification` VALUES (311, ''New Zealand'', ''nz'', ''R13'');
+
+          INSERT INTO `gtt_certification` VALUES (312, ''New Zealand'', ''nz'', ''R'');
+
+          INSERT INTO `gtt_certification` VALUES (313, ''New Zealand'', ''nz'', ''R16'');
+
+          INSERT INTO `gtt_certification` VALUES (314, ''New Zealand'', ''nz'', ''RP16'');
+
+          INSERT INTO `gtt_certification` VALUES (315, ''New Zealand'', ''nz'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (316, ''New Zealand'', ''nz'', ''RP13'');
+
+          INSERT INTO `gtt_certification` VALUES (317, ''New Zealand'', ''nz'', ''R18'');
+
+          INSERT INTO `gtt_certification` VALUES (318, ''Nigeria'', ''ng'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (319, ''Nigeria'', ''ng'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (320, ''Nigeria'', ''ng'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (321, ''Nigeria'', ''ng'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (322, ''Nigeria'', ''ng'', ''12A'');
+
+          INSERT INTO `gtt_certification` VALUES (323, ''Nigeria'', ''ng'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (324, ''Norway'', ''no'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (325, ''Norway'', ''no'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (326, ''Norway'', ''no'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (327, ''Norway'', ''no'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (328, ''Norway'', ''no'', ''11'');
+
+          INSERT INTO `gtt_certification` VALUES (329, ''Norway'', ''no'', ''5'');
+
+          INSERT INTO `gtt_certification` VALUES (330, ''Norway'', ''no'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (331, ''Norway'', ''no'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (332, ''Norway'', ''no'', ''Banned'');
+
+          INSERT INTO `gtt_certification` VALUES (333, ''Norway'', ''no'', ''9'');
+
+          INSERT INTO `gtt_certification` VALUES (334, ''Norway'', ''no'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (335, ''Norway'', ''no'', ''10'');
+
+          INSERT INTO `gtt_certification` VALUES (336, ''Peru'', ''pe'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (337, ''Peru'', ''pe'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (338, ''Peru'', ''pe'', ''Apt'');
+
+          INSERT INTO `gtt_certification` VALUES (339, ''Philippines'', ''ph'', ''PG-13'');
+
+          INSERT INTO `gtt_certification` VALUES (340, ''Philippines'', ''ph'', ''U'');
+
+          INSERT INTO `gtt_certification` VALUES (341, ''Philippines'', ''ph'', ''SPG'');
+
+          INSERT INTO `gtt_certification` VALUES (342, ''Philippines'', ''ph'', ''R-18'');
+
+          INSERT INTO `gtt_certification` VALUES (343, ''Philippines'', ''ph'', ''R-13'');
+
+          INSERT INTO `gtt_certification` VALUES (344, ''Philippines'', ''ph'', ''X'');
+
+          INSERT INTO `gtt_certification` VALUES (345, ''Philippines'', ''ph'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (346, ''Philippines'', ''ph'', ''R-16'');
+
+          INSERT INTO `gtt_certification` VALUES (347, ''Philippines'', ''ph'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (348, ''Poland'', ''pl'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (349, ''Poland'', ''pl'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (350, ''Poland'', ''pl'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (351, ''Poland'', ''pl'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (352, ''Poland'', ''pl'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (353, ''Poland'', ''pl'', ''b.o.'');
+
+          INSERT INTO `gtt_certification` VALUES (354, ''Poland'', ''pl'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (355, ''Portugal'', ''pt'', ''17'');
+
+          INSERT INTO `gtt_certification` VALUES (356, ''Portugal'', ''pt'', ''10AP'');
+
+          INSERT INTO `gtt_certification` VALUES (357, ''Portugal'', ''pt'', ''M/12'');
+
+          INSERT INTO `gtt_certification` VALUES (358, ''Portugal'', ''pt'', ''M/3'');
+
+          INSERT INTO `gtt_certification` VALUES (359, ''Portugal'', ''pt'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (360, ''Portugal'', ''pt'', ''M/16'');
+
+          INSERT INTO `gtt_certification` VALUES (361, ''Portugal'', ''pt'', ''M/18'');
+
+          INSERT INTO `gtt_certification` VALUES (362, ''Portugal'', ''pt'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (363, ''Portugal'', ''pt'', ''T'');
+
+          INSERT INTO `gtt_certification` VALUES (364, ''Portugal'', ''pt'', ''M/6'');
+
+          INSERT INTO `gtt_certification` VALUES (365, ''Portugal'', ''pt'', ''12AP'');
+
+          INSERT INTO `gtt_certification` VALUES (366, ''Portugal'', ''pt'', ''M/4'');
+
+          INSERT INTO `gtt_certification` VALUES (367, ''Portugal'', ''pt'', ''M/14'');
+
+          INSERT INTO `gtt_certification` VALUES (368, ''Puerto Rico'', ''pr'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (369, ''Puerto Rico'', ''pr'', ''PG-13'');
+
+          INSERT INTO `gtt_certification` VALUES (370, ''Romania'', ''ro'', ''I.C.-14'');
+
+          INSERT INTO `gtt_certification` VALUES (371, ''Romania'', ''ro'', ''A.G.'');
+
+          INSERT INTO `gtt_certification` VALUES (372, ''Romania'', ''ro'', ''I.M.-18'');
+
+          INSERT INTO `gtt_certification` VALUES (373, ''Russia'', ''ru'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (374, ''Russia'', ''ru'', ''14+'');
+
+          INSERT INTO `gtt_certification` VALUES (375, ''Russia'', ''ru'', ''18+'');
+
+          INSERT INTO `gtt_certification` VALUES (376, ''Russia'', ''ru'', ''12+'');
+
+          INSERT INTO `gtt_certification` VALUES (377, ''Russia'', ''ru'', ''6+'');
+
+          INSERT INTO `gtt_certification` VALUES (378, ''Russia'', ''ru'', ''0+'');
+
+          INSERT INTO `gtt_certification` VALUES (379, ''Russia'', ''ru'', ''16+'');
+
+          INSERT INTO `gtt_certification` VALUES (380, ''Serbia'', ''rs'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (381, ''Singapore'', ''sg'', ''R21'');
+
+          INSERT INTO `gtt_certification` VALUES (382, ''Singapore'', ''sg'', ''NC-16'');
+
+          INSERT INTO `gtt_certification` VALUES (383, ''Singapore'', ''sg'', ''NC16'');
+
+          INSERT INTO `gtt_certification` VALUES (384, ''Singapore'', ''sg'', ''R(A)'');
+
+          INSERT INTO `gtt_certification` VALUES (385, ''Singapore'', ''sg'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (386, ''Singapore'', ''sg'', ''M18'');
+
+          INSERT INTO `gtt_certification` VALUES (387, ''Singapore'', ''sg'', ''PG13'');
+
+          INSERT INTO `gtt_certification` VALUES (388, ''Singapore'', ''sg'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (389, ''Singapore'', ''sg'', ''Unrated'');
+
+          INSERT INTO `gtt_certification` VALUES (390, ''Singapore'', ''sg'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (391, ''Slovakia'', ''sk'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (392, ''Slovenia'', ''si'', ''15+'');
+
+          INSERT INTO `gtt_certification` VALUES (393, ''South Africa'', ''za'', ''2023/7/9'');
+
+          INSERT INTO `gtt_certification` VALUES (394, ''South Africa'', ''za'', ''(Seized)'');
+
+          INSERT INTO `gtt_certification` VALUES (395, ''South Africa'', ''za'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (396, ''South Africa'', ''za'', ''13'');
+
+          INSERT INTO `gtt_certification` VALUES (397, ''South Africa'', ''za'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (398, ''South Africa'', ''za'', ''2023/10/12'');
+
+          INSERT INTO `gtt_certification` VALUES (399, ''South Africa'', ''za'', ''10'');
+
+          INSERT INTO `gtt_certification` VALUES (400, ''South Africa'', ''za'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (401, ''South Africa'', ''za'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (402, ''South Africa'', ''za'', ''X18'');
+
+          INSERT INTO `gtt_certification` VALUES (403, ''South Africa'', ''za'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (404, ''South Africa'', ''za'', ''XX'');
+
+          INSERT INTO `gtt_certification` VALUES (405, ''South Korea'', ''kr'', ''Limited'');
+
+          INSERT INTO `gtt_certification` VALUES (406, ''South Korea'', ''kr'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (407, ''South Korea'', ''kr'', ''All'');
+
+          INSERT INTO `gtt_certification` VALUES (408, ''South Korea'', ''kr'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (409, ''South Korea'', ''kr'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (410, ''South Korea'', ''kr'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (411, ''South Korea'', ''kr'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (412, ''South Korea'', ''kr'', ''19'');
+
+          INSERT INTO `gtt_certification` VALUES (413, ''Soviet Union'', ''suhh'',
+          ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (414, ''Soviet Union'', ''suhh'',
+          ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (415, ''Spain'', ''es'', ''7/i'');
+
+          INSERT INTO `gtt_certification` VALUES (416, ''Spain'', ''es'', ''A/i/fig'');
+
+          INSERT INTO `gtt_certification` VALUES (417, ''Spain'', ''es'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (418, ''Spain'', ''es'', ''13'');
+
+          INSERT INTO `gtt_certification` VALUES (419, ''Spain'', ''es'', ''18/fig'');
+
+          INSERT INTO `gtt_certification` VALUES (420, ''Spain'', ''es'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (421, ''Spain'', ''es'', ''S'');
+
+          INSERT INTO `gtt_certification` VALUES (422, ''Spain'', ''es'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (423, ''Spain'', ''es'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (424, ''Spain'', ''es'', ''A/i'');
+
+          INSERT INTO `gtt_certification` VALUES (425, ''Spain'', ''es'', ''7/fig'');
+
+          INSERT INTO `gtt_certification` VALUES (426, ''Spain'', ''es'', ''16/fig'');
+
+          INSERT INTO `gtt_certification` VALUES (427, ''Spain'', ''es'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (428, ''Spain'', ''es'', ''12/fig'');
+
+          INSERT INTO `gtt_certification` VALUES (429, ''Spain'', ''es'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (430, ''Spain'', ''es'', ''A/fig'');
+
+          INSERT INTO `gtt_certification` VALUES (431, ''Spain'', ''es'', ''TP'');
+
+          INSERT INTO `gtt_certification` VALUES (432, ''Spain'', ''es'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (433, ''Spain'', ''es'', ''X'');
+
+          INSERT INTO `gtt_certification` VALUES (434, ''Spain'', ''es'', ''10'');
+
+          INSERT INTO `gtt_certification` VALUES (435, ''Sweden'', ''se'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (436, ''Sweden'', ''se'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (437, ''Sweden'', ''se'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (438, ''Sweden'', ''se'', ''Btl'');
+
+          INSERT INTO `gtt_certification` VALUES (439, ''Sweden'', ''se'', ''11'');
+
+          INSERT INTO `gtt_certification` VALUES (440, ''Sweden'', ''se'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (441, ''Switzerland'', ''ch'', ''14'');
+
+          INSERT INTO `gtt_certification` VALUES (442, ''Switzerland'', ''ch'', ''6'');
+
+          INSERT INTO `gtt_certification` VALUES (443, ''Switzerland'', ''ch'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (444, ''Switzerland'', ''ch'', ''0'');
+
+          INSERT INTO `gtt_certification` VALUES (445, ''Switzerland'', ''ch'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (446, ''Switzerland'', ''ch'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (447, ''Switzerland'', ''ch'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (448, ''Switzerland'', ''ch'', ''10'');
+
+          INSERT INTO `gtt_certification` VALUES (449, ''Switzerland'', ''ch'', ''9'');
+
+          INSERT INTO `gtt_certification` VALUES (450, ''Switzerland'', ''ch'', ''8'');
+
+          INSERT INTO `gtt_certification` VALUES (451, ''Taiwan'', ''tw'', ''GP'');
+
+          INSERT INTO `gtt_certification` VALUES (452, ''Taiwan'', ''tw'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (453, ''Taiwan'', ''tw'', ''R-18'');
+
+          INSERT INTO `gtt_certification` VALUES (454, ''Taiwan'', ''tw'', ''PG-12'');
+
+          INSERT INTO `gtt_certification` VALUES (455, ''Taiwan'', ''tw'', ''R-15'');
+
+          INSERT INTO `gtt_certification` VALUES (456, ''Taiwan'', ''tw'', ''6+'');
+
+          INSERT INTO `gtt_certification` VALUES (457, ''Taiwan'', ''tw'', ''R-12'');
+
+          INSERT INTO `gtt_certification` VALUES (458, ''Thailand'', ''th'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (459, ''Thailand'', ''th'', ''13'');
+
+          INSERT INTO `gtt_certification` VALUES (460, ''Thailand'', ''th'', ''6+'');
+
+          INSERT INTO `gtt_certification` VALUES (461, ''Thailand'', ''th'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (462, ''Thailand'', ''th'', ''PD-14'');
+
+          INSERT INTO `gtt_certification` VALUES (463, ''Thailand'', ''th'', ''3+'');
+
+          INSERT INTO `gtt_certification` VALUES (464, ''Thailand'', ''th'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (465, ''Thailand'', ''th'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (466, ''Thailand'', ''th'', ''R-14'');
+
+          INSERT INTO `gtt_certification` VALUES (467, ''Thailand'', ''th'', ''13+'');
+
+          INSERT INTO `gtt_certification` VALUES (468, ''Thailand'', ''th'', ''20'');
+
+          INSERT INTO `gtt_certification` VALUES (469, ''Turkey'', ''tr'', ''7+'');
+
+          INSERT INTO `gtt_certification` VALUES (470, ''Turkey'', ''tr'', ''15A'');
+
+          INSERT INTO `gtt_certification` VALUES (471, ''Turkey'', ''tr'', ''15+'');
+
+          INSERT INTO `gtt_certification` VALUES (472, ''Turkey'', ''tr'', ''7A'');
+
+          INSERT INTO `gtt_certification` VALUES (473, ''Turkey'', ''tr'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (474, ''Turkey'', ''tr'', ''18+'');
+
+          INSERT INTO `gtt_certification` VALUES (475, ''Turkey'', ''tr'', ''13A'');
+
+          INSERT INTO `gtt_certification` VALUES (476, ''Turkey'', ''tr'', ''13+'');
+
+          INSERT INTO `gtt_certification` VALUES (477, ''UK'', ''gb'', ''15'');
+
+          INSERT INTO `gtt_certification` VALUES (478, ''UK'', ''gb'', ''AA'');
+
+          INSERT INTO `gtt_certification` VALUES (479, ''UK'', ''gb'', ''3+'');
+
+          INSERT INTO `gtt_certification` VALUES (480, ''UK'', ''gb'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (481, ''UK'', ''gb'', ''U'');
+
+          INSERT INTO `gtt_certification` VALUES (482, ''UK'', ''gb'', ''PG-13'');
+
+          INSERT INTO `gtt_certification` VALUES (483, ''UK'', ''gb'', ''R18'');
+
+          INSERT INTO `gtt_certification` VALUES (484, ''UK'', ''gb'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (485, ''UK'', ''gb'', ''Uc'');
+
+          INSERT INTO `gtt_certification` VALUES (486, ''UK'', ''gb'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (487, ''UK'', ''gb'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (488, ''UK'', ''gb'', ''E'');
+
+          INSERT INTO `gtt_certification` VALUES (489, ''UK'', ''gb'', ''A'');
+
+          INSERT INTO `gtt_certification` VALUES (490, ''UK'', ''gb'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (491, ''UK'', ''gb'', ''NR'');
+
+          INSERT INTO `gtt_certification` VALUES (492, ''UK'', ''gb'', ''X'');
+
+          INSERT INTO `gtt_certification` VALUES (493, ''UK'', ''gb'', ''7'');
+
+          INSERT INTO `gtt_certification` VALUES (494, ''UK'', ''gb'', ''Not Rated'');
+
+          INSERT INTO `gtt_certification` VALUES (495, ''UK'', ''gb'', ''11+'');
+
+          INSERT INTO `gtt_certification` VALUES (496, ''UK'', ''gb'', ''H'');
+
+          INSERT INTO `gtt_certification` VALUES (497, ''UK'', ''gb'', ''Rejected'');
+
+          INSERT INTO `gtt_certification` VALUES (498, ''UK'', ''gb'', ''12A'');
+
+          INSERT INTO `gtt_certification` VALUES (499, ''Ukraine'', ''ua'', ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (500, ''Ukraine'', ''ua'', ''ZA'');
+
+          INSERT INTO `gtt_certification` VALUES (501, ''Ukraine'', ''ua'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (502, ''Ukraine'', ''ua'', ''DA'');
+
+          INSERT INTO `gtt_certification` VALUES (503, ''Ukraine'', ''ua'', ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (504, ''Ukraine'', ''ua'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (505, ''USA'', ''us'', ''GP'');
+
+          INSERT INTO `gtt_certification` VALUES (506, ''USA'', ''us'', ''TV-MA'');
+
+          INSERT INTO `gtt_certification` VALUES (507, ''USA'', ''us'', ''TV-13'');
+
+          INSERT INTO `gtt_certification` VALUES (508, ''USA'', ''us'', ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (509, ''USA'', ''us'', ''TV-Y7-FV'');
+
+          INSERT INTO `gtt_certification` VALUES (510, ''USA'', ''us'', ''NC-17'');
+
+          INSERT INTO `gtt_certification` VALUES (511, ''USA'', ''us'', ''MA-17'');
+
+          INSERT INTO `gtt_certification` VALUES (512, ''USA'', ''us'', ''R'');
+
+          INSERT INTO `gtt_certification` VALUES (513, ''USA'', ''us'', ''TV-PG'');
+
+          INSERT INTO `gtt_certification` VALUES (514, ''USA'', ''us'', ''Unrated'');
+
+          INSERT INTO `gtt_certification` VALUES (515, ''USA'', ''us'', ''C'');
+
+          INSERT INTO `gtt_certification` VALUES (516, ''USA'', ''us'', ''TV-G'');
+
+          INSERT INTO `gtt_certification` VALUES (517, ''USA'', ''us'', ''X'');
+
+          INSERT INTO `gtt_certification` VALUES (518, ''USA'', ''us'', ''MA-13'');
+
+          INSERT INTO `gtt_certification` VALUES (519, ''USA'', ''us'', ''TV-Y'');
+
+          INSERT INTO `gtt_certification` VALUES (520, ''USA'', ''us'', ''Not Rated'');
+
+          INSERT INTO `gtt_certification` VALUES (521, ''USA'', ''us'', ''E'');
+
+          INSERT INTO `gtt_certification` VALUES (522, ''USA'', ''us'', ''Passed'');
+
+          INSERT INTO `gtt_certification` VALUES (523, ''USA'', ''us'', ''E10+'');
+
+          INSERT INTO `gtt_certification` VALUES (524, ''USA'', ''us'', ''G'');
+
+          INSERT INTO `gtt_certification` VALUES (525, ''USA'', ''us'', ''M/PG'');
+
+          INSERT INTO `gtt_certification` VALUES (526, ''USA'', ''us'', ''GA'');
+
+          INSERT INTO `gtt_certification` VALUES (527, ''USA'', ''us'', ''Approved'');
+
+          INSERT INTO `gtt_certification` VALUES (528, ''USA'', ''us'', ''TV-Y7'');
+
+          INSERT INTO `gtt_certification` VALUES (529, ''USA'', ''us'', ''TV-14'');
+
+          INSERT INTO `gtt_certification` VALUES (530, ''USA'', ''us'', ''PG'');
+
+          INSERT INTO `gtt_certification` VALUES (531, ''USA'', ''us'', ''AO'');
+
+          INSERT INTO `gtt_certification` VALUES (532, ''USA'', ''us'', ''M'');
+
+          INSERT INTO `gtt_certification` VALUES (533, ''USA'', ''us'', ''PG-13'');
+
+          INSERT INTO `gtt_certification` VALUES (534, ''USA'', ''us'', ''Open'');
+
+          INSERT INTO `gtt_certification` VALUES (535, ''USA'', ''us'', ''T'');
+
+          INSERT INTO `gtt_certification` VALUES (536, ''Venezuela'', ''ve'', ''PG-13'');
+
+          INSERT INTO `gtt_certification` VALUES (537, ''Vietnam'', ''vn'', ''C18'');
+
+          INSERT INTO `gtt_certification` VALUES (538, ''Vietnam'', ''vn'', ''C13'');
+
+          INSERT INTO `gtt_certification` VALUES (539, ''Vietnam'', ''vn'', ''P'');
+
+          INSERT INTO `gtt_certification` VALUES (540, ''Vietnam'', ''vn'', ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (541, ''Vietnam'', ''vn'', ''C16'');
+
+          INSERT INTO `gtt_certification` VALUES (542, ''West Germany'', ''xwg'',
+          ''16'');
+
+          INSERT INTO `gtt_certification` VALUES (543, ''West Germany'', ''xwg'',
+          ''(Banned)'');
+
+          INSERT INTO `gtt_certification` VALUES (544, ''West Germany'', ''xwg'',
+          ''0'');
+
+          INSERT INTO `gtt_certification` VALUES (545, ''West Germany'', ''xwg'',
+          ''6'');
+
+          INSERT INTO `gtt_certification` VALUES (546, ''West Germany'', ''xwg'',
+          ''12'');
+
+          INSERT INTO `gtt_certification` VALUES (547, ''West Germany'', ''xwg'',
+          ''18'');
+
+          INSERT INTO `gtt_certification` VALUES (548, ''West Germany'', ''xwg'',
+          ''Not Rated'');'}
+    comment: init sql v6.0.1.0-03
+    id: operation-layout-changelog-db-v6.0.1.0-03

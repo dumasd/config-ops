@@ -81,7 +81,7 @@ class DatabaseChangeLog:
         for changelog_file in fullpath_changelogfiles:
             changelog_file_id = os.path.splitext(os.path.basename(changelog_file))[0]
             with open(changelog_file, "r", encoding="utf-8") as file:
-                yaml = ryaml.YAML()
+                yaml = ryaml.YAML(typ="unsafe")
                 yaml.preserve_quotes = True
                 changelog_data = yaml.load(file)
             if not changelog_data.get("databaseChangeLog"):

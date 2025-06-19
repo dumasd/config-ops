@@ -1,20 +1,14 @@
 databaseChangeLog:
 - changeSet:
     author: bruce.wu
-    labels: gradle-example
-    context: gradle-example
+    changes:
+    - sql: {endDelimiter: ;, sql: "CREATE TABLE IF NOT EXISTS `company` (\n  `id`
+          int NOT NULL AUTO_INCREMENT,\n  `name` varchar(50) COLLATE utf8mb4_bin NOT
+          NULL,\n  `address1` varchar(50) COLLATE utf8mb4_bin DEFAULT NULL,\n  `address2`
+          varchar(50) COLLATE utf8mb4_bin DEFAULT NULL,\n  `city` varchar(30) COLLATE
+          utf8mb4_bin DEFAULT NULL,\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB;"}
     comment: example-comment
-    runInTransaction: true   # 是否事务执行sql变更，默认为true
-    changes:   # 同一个changes下面的sql变更是运行在事务中
-    - sql:     # 也支持直接执行SQL脚本。https://docs.liquibase.com/change-types/sql.html#yaml_example
-        endDelimiter: ;
-        sql: |-
-          CREATE TABLE IF NOT EXISTS `company` (
-            `id` int NOT NULL AUTO_INCREMENT,
-            `name` varchar(50) COLLATE utf8mb4_bin NOT NULL,
-            `address1` varchar(50) COLLATE utf8mb4_bin DEFAULT NULL,
-            `address2` varchar(50) COLLATE utf8mb4_bin DEFAULT NULL,
-            `city` varchar(30) COLLATE utf8mb4_bin DEFAULT NULL,
-            PRIMARY KEY (`id`)
-          ) ENGINE=InnoDB;
+    context: gradle-example
     id: database-changelog-1.0
+    labels: gradle-example
+    runInTransaction: true
