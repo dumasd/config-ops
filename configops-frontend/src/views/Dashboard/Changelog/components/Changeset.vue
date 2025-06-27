@@ -115,7 +115,7 @@ const codeEditorOption = ref({
             :data="change"
             :schema="schema"
         />
-        <ElRow :gutter="10" justify="space-between" class="px-5">
+        <ElRow v-if="!change['delete']" :gutter="10" justify="space-between" class="px-5">
             <ElCol :xl="12" :lg="12" :md="24" :sm="24" :xs="24">
                 <CodeEditor :model-value="getProperty(change, 'patchContent', '')" :language="getProperty(change, 'format', '')" height="220px" width="98%" :language-selector="false" :theme-selector="false" :editor-option="codeEditorOption"/>
             </ElCol>
