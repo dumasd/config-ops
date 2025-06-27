@@ -1,6 +1,6 @@
 nacosChangeLog:
   - changeSet:
-      id: configops-1.1-01 # 所有changeSet的ID不可重复
+      id: configops-1.1-11 # 所有changeSet的ID不可重复
       author: bruce.wu
       comment: 注释
       ignore: false # 是否忽略此changeSet

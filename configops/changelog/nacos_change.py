@@ -2,7 +2,7 @@ import logging, os, string
 from configops.changelog import changelog_utils
 from configops.utils import config_handler, config_validator
 from configops.utils.constants import ChangelogExeType, SystemType, extract_version
-from configops.utils.exception import ChangeLogException
+from configops.utils.exception import ChangeLogException, ConfigOpsException
 from configops.config import get_config
 from ruamel import yaml as ryaml
 from jsonschema import Draft7Validator, ValidationError
@@ -60,6 +60,11 @@ schema = {
                                                 "namespace": {"type": "string"},
                                                 "group": {"type": "string"},
                                                 "dataId": {"type": "string"},
+                                                "delete": {
+                                                    "type": "boolean",
+                                                    "default": "false",
+                                                    "description": "Whether to delete the configuration",
+                                                },
                                                 "format": {
                                                     "type": "string",
                                                     "pattern": "^(yaml|properties|json|text)$",
@@ -71,7 +76,6 @@ schema = {
                                                 "namespace",
                                                 "group",
                                                 "dataId",
-                                                "format",
                                             ],
                                         }
                                     ],
@@ -153,33 +157,44 @@ class NacosChangeLog:
                             namespace = change.get("namespace", "")
                             group = change["group"]
                             dataId = change["dataId"]
-                            _format = change["format"]
-                            patchContent = change.get("patchContent", "")
-                            deleteContent = change.get("deleteContent", "")
+
+                            _format = change.get("format")
+                            delete = change.get("delete", False)
+
                             config_key = f"{namespace}/{group}/{dataId}"
 
                             if changeSetChangeDict.get(config_key) is not None:
                                 raise ChangeLogException(
-                                    f"Repeated nacos change. changeSetId:{change_set_id}, namespace:{namespace}, group:{group}, dataId:{dataId}"
+                                    f"Nacos repeated change. changelogFile: {self.changelog_file}, changeSetId:{change_set_id}, namespace:{namespace}, group:{group}, dataId:{dataId}"
                                 )
                             changeSetChangeDict[config_key] = change
 
-                            if len(patchContent.strip()) > 0:
+                            if delete:
+                                continue
+
+                            if not _format:
+                                raise ChangeLogException(
+                                    f"Nacos change format is required. changelogFile: {self.changelog_file}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}"
+                                )
+
+                            patch_content = change.get("patchContent", "").strip()
+                            delete_content = change.get("deleteContent", "").strip()
+                            if len(patch_content) > 0:
                                 suc, msg = config_validator.validate_content(
-                                    patchContent, _format
+                                    patch_content, _format
                                 )
                                 if not suc:
                                     raise ChangeLogException(
-                                        f"PatchContent Invalid!!! changelogFile: {self.changelog_file}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
+                                        f"Nacos patchContent Invalid!!! changelogFile: {self.changelog_file}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
                                     )
 
-                            if len(deleteContent.strip()) > 0:
+                            if len(delete_content) > 0:
                                 suc, msg = config_validator.validate_content(
-                                    deleteContent, _format
+                                    delete_content, _format
                                 )
                                 if not suc:
                                     raise ChangeLogException(
-                                        f"DeleteContent Invalid!!! changelogFile: {self.changelog_file}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
+                                        f"Nacos deleteContent Invalid!!! changelogFile: {self.changelog_file}, changeSetId: {change_set_id}, namespace: {namespace}, group: {group}, dataId: {dataId}, format: {_format}. errorMsg: {msg}"
                                     )
 
                         if not ignore:
@@ -348,7 +363,8 @@ class NacosChangeLog:
         """
         idx = 0
         remote_configs_cache = {}
-        result_change_configs = {}
+        alter_change_configs = {}
+        delete_change_configs = {}
         change_set_ids = []
         for change_set_obj in self.change_set_list:
             change_set_id = str(change_set_obj["id"])
@@ -380,6 +396,7 @@ class NacosChangeLog:
                     namespace = string.Template(change["namespace"]).substitute(vars)
                     group = string.Template(change["group"]).substitute(vars)
                     dataId = string.Template(change["dataId"]).substitute(vars)
+                    delete = change.get("delete", False)
                     _format = change["format"]
 
                     if (
@@ -394,8 +411,18 @@ class NacosChangeLog:
                     nacos_config["namespace"] = namespace
                     nacos_config["group"] = group
                     nacos_config["dataId"] = dataId
+                    nacos_config["delete"] = delete
                     nacos_config["content"] = ""
                     nacos_config["id"] = ""
+
+                    config_key = f"{namespace}/{group}/{dataId}"
+
+                    if delete:
+                        alter_change_configs.pop(config_key, None)
+                        delete_change_configs[config_key] = nacos_config
+                        continue
+
+                    delete_change_configs.pop(config_key, None)
 
                     remote_config, _ = self._get_remote_config(
                         remote_configs_cache, namespace, group, dataId, client
@@ -421,10 +448,8 @@ class NacosChangeLog:
                         nacos_config["content"] = remote_config_content
                         nacos_config["id"] = remote_config["id"]
 
-                    config_key = f"{namespace}/{group}/{dataId}"
-
                     next_content = nacos_config.get("content")
-                    previous_config = result_change_configs.get(config_key)
+                    previous_config = alter_change_configs.get(config_key)
                     if previous_config:
                         next_content = previous_config["nextContent"]
 
@@ -459,7 +484,7 @@ class NacosChangeLog:
                         )
                         nacos_config["deleteContent"] = res["nextContent"]
 
-                    result_change_configs[config_key] = nacos_config
+                    alter_change_configs[config_key] = nacos_config
 
             idx += 1
             if count > 0 and idx >= count:
@@ -467,7 +492,11 @@ class NacosChangeLog:
 
         if check_log:
             db.session.commit()
-        return change_set_ids, list(result_change_configs.values())
+        return (
+            change_set_ids,
+            list(alter_change_configs.values()),
+            list(delete_change_configs.values()),
+        )
 
     def _get_remote_config(
         self,
@@ -490,7 +519,13 @@ class NacosChangeLog:
         return None, namespace_group_configs
 
     @staticmethod
-    def apply_changes(change_set_ids, nacos_id: str, func):
+    def apply_changes(
+        change_set_ids,
+        nacos_id: str,
+        client: ConfigOpsNacosClient,
+        changes: list,
+        delete_changes: list,
+    ):
         logs = (
             db.session.query(ConfigOpsChangeLog)
             .filter(
@@ -507,7 +542,7 @@ class NacosChangeLog:
             )
 
         try:
-            func()
+            NacosChangeLog.push_remote(client, changes, delete_changes)
             for log in logs:
                 log.exectype = ChangelogExeType.EXECUTED.value
         except Exception as e:
@@ -515,3 +550,51 @@ class NacosChangeLog:
             raise e
         finally:
             db.session.commit()
+
+    @staticmethod
+    def push_remote(client: ConfigOpsNacosClient, changes: list, delete_changes: list):
+        if delete_changes and len(delete_changes) > 0:
+            for change in delete_changes:
+                namespace = change.get("namespace")
+                group = change.get("group")
+                data_id = change.get("dataId")
+                client.namespace = namespace
+                res = client.remove_config(data_id=data_id, group=group)
+                if not res:
+                    raise ConfigOpsException(
+                        f"Delete config fail. namespace:{namespace}, group:{group}, data_id:{data_id}"
+                    )
+
+        if changes and len(changes) > 0:
+            for change in changes:
+                namespace = change.get("namespace")
+                group = change.get("group")
+                data_id = change.get("dataId")
+                content = change.get("content")
+                _format = change.get("format")
+                if content is None or len(content.strip()) == 0:
+                    raise ConfigOpsException(
+                        f"Push content is empty. namespace:{namespace}, group:{group}, data_id:{data_id}"
+                    )
+                validation_bool, validation_msg = config_validator.validate_content(
+                    content, _format
+                )
+                if not validation_bool:
+                    raise ConfigOpsException(
+                        f"Push content format invalid. namespace:{namespace}, group:{group}, data_id:{data_id}, format:{_format}. {validation_msg}"
+                    )
+
+            for change in changes:
+                namespace = change.get("namespace")
+                group = change.get("group")
+                data_id = change.get("dataId")
+                content = change.get("content")
+                _format = change.get("format")
+                client.namespace = namespace
+                res = client.publish_config_post(
+                    data_id=data_id, group=group, content=content, config_type=_format
+                )
+                if not res:
+                    raise ConfigOpsException(
+                        f"Push config fail. namespace:{namespace}, group:{group}, data_id:{data_id}"
+                    )

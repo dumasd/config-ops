@@ -1,9 +1,8 @@
 import logging, os
 from flask import Blueprint, make_response, request, current_app
-from configops.utils import config_validator
 from marshmallow import Schema, fields, EXCLUDE
 from configops.utils import nacos_client
-from configops.utils.exception import ConfigOpsException, ChangeLogException
+from configops.utils.exception import ChangeLogException
 from configops.changelog.nacos_change import NacosChangeLog
 from configops.config import get_nacos_cfg
 
@@ -37,8 +36,8 @@ class NacosConfigSchema(Schema):
     namespace = fields.Str(required=True)
     group = fields.Str(required=True)
     dataId = fields.Str(required=True)
-    content = fields.Str(required=True)
-    format = fields.Str(required=True)
+    content = fields.Str(required=False)
+    format = fields.Str(required=False)
     deleteContent = fields.Str(required=False)
     nextContent = fields.Str(required=False)
     patchContent = fields.Str(required=False)
@@ -76,6 +75,7 @@ class ApplyChangeSetSchema(Schema):
     changeSetId = fields.Str(required=False)
     changeSetIds = fields.List(fields.Str(), required=True)
     changes = fields.List(fields.Nested(NacosConfigSchema), required=True)
+    deleteChanges = fields.List(fields.Nested(NacosConfigSchema), required=False)
 
     class Meta:
         unknown = EXCLUDE
@@ -110,7 +110,7 @@ def get_change_set():
             vars=variables,
             allowed_data_ids=allowed_data_ids,
         )
-        keys = ["ids", "changes"]
+        keys = ["ids", "changes", "deleteChanges"]
         return dict(zip(keys, result))
     except ChangeLogException as err:
         logger.error("Nacos changelog invalid.", exc_info=True)
@@ -126,52 +126,20 @@ def apply_change_set():
     nacos_id = data.get("nacosId")
     change_set_ids = data.get("changeSetIds")
     changes = data.get("changes")
+    delete_changes = data.get("deleteChanges", [])
 
-    nacosCfg = get_nacos_cfg(nacos_id)
-    if nacosCfg == None:
+    nacos_cfg = get_nacos_cfg(nacos_id)
+    if nacos_cfg == None:
         return make_response(f"Nacos ID not found in config file: {nacos_id}", 404)
     client = nacos_client.ConfigOpsNacosClient(
-        server_addresses=nacosCfg.get("url"),
-        username=nacosCfg.get("username"),
-        password=nacosCfg.get("password"),
+        server_addresses=nacos_cfg.get("url"),
+        username=nacos_cfg.get("username"),
+        password=nacos_cfg.get("password"),
     )
-
-    def push_changes():
-        for change in changes:
-            namespace = change.get("namespace")
-            group = change.get("group")
-            data_id = change.get("dataId")
-            content = change.get("content")
-            _format = change.get("format")
-            if content is None or len(content.strip()) == 0:
-                raise ConfigOpsException(
-                    f"Push content is empty. namespace:{namespace}, group:{group}, data_id:{data_id}"
-                )
-            validation_bool, validation_msg = config_validator.validate_content(
-                content, _format
-            )
-            if not validation_bool:
-                raise ConfigOpsException(
-                    f"Push content format invalid. namespace:{namespace}, group:{group}, data_id:{data_id}, format:{_format}. {validation_msg}"
-                )
-
-        for change in changes:
-            namespace = change.get("namespace")
-            group = change.get("group")
-            data_id = change.get("dataId")
-            content = change.get("content")
-            _format = change.get("format")
-            client.namespace = namespace
-            res = client.publish_config_post(
-                data_id=data_id, group=group, content=content, config_type=_format
-            )
-            if not res:
-                raise ConfigOpsException(
-                    f"Push config fail. namespace:{namespace}, group:{group}, data_id:{data_id}"
-                )
-
     try:
-        NacosChangeLog.apply_changes(change_set_ids, nacos_id, push_changes)
+        NacosChangeLog.apply_changes(
+            change_set_ids, nacos_id, client, changes, delete_changes
+        )
     except Exception as ex:
         logger.error(f"Apply config error. {ex}", stack_info=True)
         return make_response(f"Apply config error:{str(ex)}", 500)

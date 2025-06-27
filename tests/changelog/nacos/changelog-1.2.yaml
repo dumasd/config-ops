@@ -1,6 +1,6 @@
 nacosChangeLog:
   - changeSet:
-      id: configops-nacos-1.2-01
+      id: configops-nacos-1.2-11
       author: bruce.wu
       comment: 注释
       context: dev,prod
@@ -9,20 +9,10 @@ nacosChangeLog:
         - namespace: blue
           group: group
           dataId: config.yaml
-          format: yaml
-          patchContent: |-
-            server:
-              port: 8007  
-              servlet:
-                context-path: /bluea
-            gtt:
-              path:
-                - /blue/**
-                - /blue2/**
-            sms:
-              host: example.com                      
+          delete: true
+          format: yaml                    
   - changeSet:
-      id: configops-nacos-1.2-02
+      id: configops-nacos-1.2-12
       author: bruce.wu
       comment: 注释
       context: dev,prod

@@ -1,12 +1,11 @@
-# empty
-
-import logging, os, string, platform, random, shlex, subprocess, re
+import logging, os, string, platform, random, shlex, subprocess, re, sqlalchemy
 from ruamel import yaml as ryaml
 from configops.changelog import changelog_utils
 from configops.utils import secret_util
 from configops.utils import config_handler
 from configops.utils.constants import SystemType, extract_version
 from configops.database.db import db, ConfigOpsChangeLogChanges
+from configops.database.utils import create_database_engine
 from configops.utils.exception import ChangeLogException
 from configops.config import (
     get_config,
@@ -98,10 +97,11 @@ class DatabaseChangeLog:
     def run_liquibase_cmd(self, command: str, cwd=None, args=None, db_id=None):
         command = command.strip()
         command_args_str = ""
-        history_command_args_str = ""
+
+        db_config = {}
         if db_id:
             db_config = get_database_cfg(self.app, db_id)
-            if db_config == None:
+            if db_config is None:
                 raise ChangeLogException(f"Database not found. databaseId:{db_id}")
 
             dialect = db_config.get("dialect", "mysql")
@@ -119,10 +119,6 @@ class DatabaseChangeLog:
                 command_args_str
                 + command_database_args_str
                 + f" --liquibase-schema-name {changelog_schema}"
-            )
-            history_command_args_str = (
-                command_database_args_str
-                + f" --default-schema-name {changelog_schema} --format TEXT"
             )
 
         # 设置classpath 和 defaultsFile
@@ -169,7 +165,6 @@ class DatabaseChangeLog:
                 custom_env["JAVA_HOME"] = java_home
 
             if command == LIQUIBASE_CMD_UPDATE:
-                # 先跑一遍update-sql找出执行的sql，并保存起来
                 logger.info(
                     f"Liquibase command: liquibase update-sql {command_args_str}"
                 )
@@ -186,24 +181,8 @@ class DatabaseChangeLog:
                 ) as update_sql_proc:
                     change_sets = self.__get_change_sets__(update_sql_proc.stdout)
 
-                # 跑一遍history找到已经执行记录，校验changesetId和filename
                 if len(change_sets) > 0:
-                    logger.info(
-                        f"Liquibase command: liquibase history {history_command_args_str}"
-                    )
-                    liquibase_history_sh = shlex.split(
-                        f"liquibase {LIQUIBASE_CMD_HISTORY} {history_command_args_str.strip()}"
-                    )
-                    with subprocess.Popen(
-                        liquibase_history_sh,
-                        cwd=working_dir,
-                        env=custom_env,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                    ) as history_proc:
-                        self.__check_changelog__(change_sets, history_proc.stdout)
-
+                    self.__check_changelog_by_db__(change_sets, db_config)
                     self.__save_changelog_changes__(db_id, change_sets)
 
             logger.info(f"Liquibase command: liquibase {command} {command_args_str}")
@@ -225,8 +204,6 @@ class DatabaseChangeLog:
                     stderr = stderr + line
                 for line in cmd_proc.stdout:
                     stdout = stdout + line
-                logger.info(f"Liqubase run stderr::: \n{stderr}")
-                logger.info(f"Liqubase run stdout::: \n{stdout}")
                 return {
                     "stdout": stdout,
                     "stderr": stderr,
@@ -297,17 +274,29 @@ class DatabaseChangeLog:
                 change_sets[change_set_id] = change_set
         return change_sets
 
-    def __check_changelog__(self, change_sets, stdout):
-        for line in stdout:
-            line = line.strip()
-            match = re.search(r"^\s+(\S+)::(\S+)::(\S+)", line)
-            if match:
-                filename = match.group(1)
-                change_set_id = match.group(2)
-                if (
-                    change_set_id in change_sets
-                    and change_sets[change_set_id]["filename"] != filename
-                ):
-                    raise ChangeLogException(
-                        f"ChangeSetId is already defined in an earlier changelog. ChangeSetId:{change_set_id}, Current file:{change_sets[change_set_id]['filename']}, previous file:{filename}"
-                    )
+    def __check_changelog_by_db__(self, change_sets, db_config):
+        try:
+            engine = create_database_engine(db_config)
+            changelog = sqlalchemy.Table(
+                "DATABASECHANGELOG", sqlalchemy.MetaData(), autoload_with=engine
+            )
+            conditions = [changelog.c.ID.in_(change_sets.keys())]
+            stmt = sqlalchemy.select(
+                changelog.c.ID.label("change_set_id"),
+                changelog.c.FILENAME.label("filename"),
+            ).where(*conditions)
+            with engine.connect() as conn:
+                items = conn.execute(stmt).all()
+                if not items or len(items) == 0:
+                    return
+                for row in items:
+                    change_set_id = row.change_set_id
+                    filename = row.filename
+                    if change_set_id in change_sets:
+                        new_filename = change_sets[change_set_id]["filename"]
+                        if new_filename != filename:
+                            raise ChangeLogException(
+                                f"ChangeSetId is already defined in an earlier changelog. ChangeSetId:{change_set_id}, Current file:{new_filename}, previous file:{filename}"
+                            )
+        except Exception as e:
+            logger.error(f"Error checking changelog in database: {e}")
