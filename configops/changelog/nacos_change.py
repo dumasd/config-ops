@@ -397,7 +397,7 @@ class NacosChangeLog:
                     group = string.Template(change["group"]).substitute(vars)
                     dataId = string.Template(change["dataId"]).substitute(vars)
                     delete = change.get("delete", False)
-                    _format = change["format"]
+                    _format = change.get("format")
 
                     if (
                         allowed_data_ids
@@ -421,6 +421,11 @@ class NacosChangeLog:
                         alter_change_configs.pop(config_key, None)
                         delete_change_configs[config_key] = nacos_config
                         continue
+
+                    if not _format:
+                        raise ChangeLogException(
+                            f"Config format missing. changelogFile:{changelog_filename}, changeSetId:{change_set_id}, namespace/group/dataId:{namespace}/{group}/{dataId}"
+                        )
 
                     delete_change_configs.pop(config_key, None)
 

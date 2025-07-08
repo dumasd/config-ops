@@ -55,6 +55,14 @@ class RunLiquibaseCmdSchema(Schema):
         unknown = EXCLUDE
 
 
+class CheckDbSchema(Schema):
+    dbId = fields.Str(required=True)
+    dbName = fields.Str(required=True)
+
+    class Meta:
+        unknown = EXCLUDE
+
+
 def __remove_comments__(sql_script):
     sql_script = re.sub(r"--.*?\n", "", sql_script)
     sql_script = re.sub(r"/\*.*?\*/", "", sql_script, flags=re.DOTALL)
@@ -134,6 +142,20 @@ def run_sql():
     resp_json = json.dumps(resp, cls=DatabaseJsonEncoder)
     jsonify()
     return Response(resp_json, mimetype="application/json")
+
+
+@bp.route("/database/v1/check-db", methods=["PUT"])
+def check_db():
+    data = CheckDbSchema().load(request.get_json())
+    db_id = data.get("dbId")
+    db_config = get_database_cfg(current_app, db_id)
+    if db_config == None:
+        return make_response("Database config not found", 404)
+    # Use ansible runner create database and database user
+    
+
+
+
 
 
 @bp.route("/database/v1/run-liquibase", methods=["POST"])

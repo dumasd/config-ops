@@ -33,6 +33,7 @@ cryptography>=44.0.2
 msgpack==1.1.0
 gremlinpython
 SPARQLWrapper
+ansible-runner==2.4.1
 pytest
 pytest-cov
 pytest-mock
