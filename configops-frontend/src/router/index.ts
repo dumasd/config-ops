@@ -156,7 +156,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
   {
     path: '/authorization',
     component: Layout,
-    redirect: '/authorization/user',
+    redirect: '/authorization/workspace',
     name: 'Authorization',
     fullPath: '/authorization',
     meta: {
@@ -165,15 +165,6 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
       alwaysShow: true
     },
     children: [
-      {
-        path: 'user',
-        component: () => import('@/views/Authorization/User/User.vue'),
-        name: 'User',
-        fullPath: '/authorization/user',
-        meta: {
-          title: t('router.user')
-        }
-      },
       {
         path: 'role',
         component: () => import('@/views/Authorization/Role/Role.vue'),

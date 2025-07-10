@@ -1,5 +1,5 @@
 # flask-backend/app.py
-from flask import Blueprint, send_from_directory, current_app, abort
+from flask import Blueprint, send_from_directory, current_app
 import logging, os
 
 logger = logging.getLogger(__name__)

@@ -77,7 +77,7 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
         svgoOptions: true
       }),
       PurgeIcons(),
-      env.VITE_USE_MOCK === 'true'
+      /*env.VITE_USE_MOCK === 'true'
         ? viteMockServe({
             ignore: /^\_/,
             mockPath: 'mock',
@@ -89,7 +89,7 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
           setupProdMockServer()
           `
           })
-        : undefined,
+        : undefined,*/
       ViteEjsPlugin({
         title: env.VITE_APP_TITLE
       }),

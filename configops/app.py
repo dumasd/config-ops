@@ -1,5 +1,7 @@
 from flask import Flask, jsonify
 from flask.json.provider import DefaultJSONProvider
+from flask_compress import Compress
+from flask_caching import Cache
 import argparse
 import logging
 import os
@@ -69,6 +71,40 @@ def create_app(config_file=None):
 
     app.json_provider_class = CustomJSONProvider
     app.json = app.json_provider_class(app)
+
+    # 静态资源压缩缓存
+    if constants.NodeRole.CONTROLLER.matches(node_config["role"]):
+        app.config["COMPRESS_MIMETYPES"] = [
+            "text/html",
+            "text/css",
+            "text/xml",
+            "text/javascript",
+            "application/javascript",
+            "application/xml",
+            "application/x-font-ttf",
+            "application/x-font-opentype",
+            "application/x-font-truetype",
+            "image/svg+xml",
+            "image/x-icon",
+            "font/ttf",
+            "font/eot",
+            "font/otf",
+            "font/opentype",
+        ]
+        app.config["COMPRESS_ALGORITHM"] = "gzip"
+        app.config["COMPRESS_LEVEL"] = 6
+        app.config["COMPRESS_MIN_SIZE"] = 512
+        cache = Cache(
+            config={
+                "CACHE_TYPE": "SimpleCache",
+                "CACHE_DEFAULT_TIMEOUT": 30 * 24 * 60 * 60,
+            }
+        )
+        cache.init_app(app)
+        compress = Compress()
+        compress.init_app(app)
+        compress.cache = cache
+        compress.cache_key = lambda request: request.url
 
     app.register_blueprint(common_bp)
 
