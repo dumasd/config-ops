@@ -200,7 +200,8 @@ export default {
     workerManagement: '代理管理',
     systemManagement: '系统管理',
     objectManagement: '对象管理',
-    changelog: 'Changelog'
+    changelog: 'Changelog',
+    secretManagement: '密钥管理'
   },
   permission: {
     hasPermission: '请设置操作权限值',
@@ -441,9 +442,6 @@ export default {
     loading: '加载中',
     reset: '重置'
   },
-  stickyDemo: {
-    sticky: '黏性'
-  },
   tableDemo: {
     table: '表格',
     tableDes: '基于 ElementPlus 的 Table 组件二次封装',
@@ -480,14 +478,6 @@ export default {
     showOrHiddenSortable: '显示/隐藏排序',
     videoPreview: '视频预览',
     cardTable: '卡片表格'
-  },
-  richText: {
-    richText: '富文本',
-    richTextDes: '基于 wangeditor 二次封装',
-    jsonEditor: 'JSON编辑器',
-    jsonEditorDes: '基于 vue-json-pretty 二次封装',
-    codeEditor: '代码编辑器',
-    codeEditorDes: '基于 monaco-editor 二次封装'
   },
   dialogDemo: {
     dialog: '弹窗',
@@ -544,6 +534,7 @@ export default {
     account: '账号',
     email: '邮箱',
     createTime: '创建时间',
+    updateTime: '更新时间',
     // 所属部门
     department: '所属部门',
     departmentName: '部门名称',
@@ -590,7 +581,8 @@ export default {
     systemId: '系统ID',
     systemType: '系统类型',
     workerName: '代理',
-    url: 'URL'
+    url: 'URL',
+    secretObj: 'Database'
   },
   changelog: {
     changeSetId: 'ChangeSet ID',

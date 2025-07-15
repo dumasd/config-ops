@@ -1,4 +1,6 @@
 import threading, logging, json, os
+import string
+import secrets
 import botocore
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -155,3 +157,28 @@ def decrypt_data(encrypted_data: bytes, secret_key: bytes) -> bytes:
     unpadder = padding.PKCS7(128).unpadder()
     unpadded_data = unpadder.update(decrypted_data) + unpadder.finalize()
     return unpadded_data
+
+
+def generate_password(length=12, contain_special=False):
+    if length < 8:
+        raise ValueError("Minimum password length is 8 characters.")
+    password = [
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.digits),
+    ]
+
+    password += [secrets.choice(string.ascii_lowercase) for _ in range(2)]
+    password += [secrets.choice(string.ascii_uppercase) for _ in range(2)]
+    password += [secrets.choice(string.digits) for _ in range(2)]
+
+    all_chars = string.ascii_lowercase + string.ascii_uppercase + string.digits
+    remain_length = length - 6
+    if contain_special:
+        special_num = secrets.SystemRandom().randint(1, 2)
+        password += [secrets.choice("!@#$%&*-_=+?") for _ in range(special_num)]
+        remain_length = remain_length - special_num
+
+    password += [secrets.choice(all_chars) for _ in range(remain_length)]
+    secrets.SystemRandom().shuffle(password)
+    return "".join(password)

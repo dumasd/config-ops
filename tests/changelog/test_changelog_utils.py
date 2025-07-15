@@ -3,8 +3,8 @@ import unittest
 import secrets
 import base64
 from configops.changelog.changelog_utils import (
-    pack_encrypt_changes,
-    unpack_encrypt_changes,
+    pack_changes,
+    unpack_changes,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class TestChangelogUtils(unittest.TestCase):
         secret = base64.b64encode(secrets.token_bytes(32)).decode("utf-8")
         
         logger.info(f"secret: {secret}")
-        changes_bytes = pack_encrypt_changes(changes, secret)
+        changes_bytes = pack_changes(changes, secret)
 
-        _changes = unpack_encrypt_changes(changes_bytes, secret)
+        _changes = unpack_changes(changes_bytes, secret)
         logger.info(f"changes: {_changes}")

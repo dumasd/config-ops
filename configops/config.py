@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import current_app
 from ruamel.yaml import YAML
-from configops.utils.constants import CONFIG_ENV_NAME, CONFIG_FILE_ENV_NAME
+from configops.utils.constants import CONFIG_ENV_NAME, CONFIG_FILE_ENV_NAME, SystemType
 from marshmallow import Schema, fields, validate, ValidationError, EXCLUDE
 import os
 import logging
@@ -27,6 +27,11 @@ class SecretManager(Schema):
     aws = fields.Nested(AwsSecretManager, required=False)
 
 
+class ProvisionConfig(Schema):
+    ipsource = fields.Str(required=False)
+    permissions = fields.Str(required=True)
+
+
 class DbConfig(Schema):
     url = fields.Str(required=True, dump_default="localhost")
     host = fields.Str(required=False, dump_default="localhost")
@@ -36,6 +41,7 @@ class DbConfig(Schema):
     username = fields.Str(required=True)
     password = fields.Str(required=False)
     secretmanager = fields.Nested(SecretManager, required=False)
+    provision = fields.Nested(ProvisionConfig, required=False)
 
 
 class NacosConfig(Schema):
@@ -52,6 +58,7 @@ class EsConfig(Schema):
     api_id = fields.Str(required=False)
     api_key = fields.Str(required=False)
     secretmanager = fields.Nested(SecretManager, required=False)
+
 
 class GraphdbConfig(Schema):
     dialect = fields.Str(required=True)
@@ -90,7 +97,7 @@ class OidcConfig(Schema):
     scope = fields.Str(required=False, dump_default="openid profile email")
     groups_sync = fields.Str(required=False)
     auto_login = fields.Bool(required=False, dump_default=False)
-    login_txt = fields.Str(required=False, default="Sign in with OIDC")
+    login_txt = fields.Str(required=False, load_default="Sign in with OIDC")
 
 
 class AuthConfig(Schema):
@@ -164,12 +171,11 @@ def get_nacos_cfg(nacos_id):
     :rtype: map
     :return: nacos info
     """
-    nacos_cfgs = current_app.config["nacos"]
-    nacos_cfg = nacos_cfgs[nacos_id]
-    if nacos_cfg is None:
+    cfg = get_config(current_app, f"nacos.{nacos_id}")
+    if cfg is None:
         return None
     schmea = NacosConfig()
-    return schmea.load(nacos_cfg)
+    return schmea.load(cfg)
 
 
 def get_database_cfg(app, db_id):
@@ -199,29 +205,29 @@ def get_elasticsearch_cfg(es_id):
     :rtype: map
     :return: database info
     """
-    es_cfgs = current_app.config["elasticsearch"]
-    cfg = es_cfgs.get(es_id, None)
+    cfg = get_config(current_app, f"elasticsearch.{es_id}")
     if cfg == None:
         return None
     data = EsConfig().load(cfg)
     return data
 
+
 def get_graphdb_cfg(system_id):
     """
     Get graphdb configuration
 
-    :type db_id: str
-    :param db_id: database id
+    :type system_id: str
+    :param system_id: system_id
 
     :rtype: map
     :return: database info
     """
-    cfgs = current_app.config["graphdb"]
-    cfg = cfgs.get(system_id, None)
+    cfg = get_config(current_app, f"graphdb.{system_id}")
     if cfg == None:
         return None
     data = GraphdbConfig().load(cfg)
     return data
+
 
 def get_java_home_dir(app):
     """
@@ -257,3 +263,22 @@ def get_auth_config(app):
     if auth_cfg:
         schema = AuthConfig()
         return schema.load(auth_cfg)
+
+
+def get_object_url(app, system_id, system_type: SystemType) -> str | None:
+    key = system_type.name.lower()
+    cfg = get_config(app, f"{key}.{system_id}")
+    if cfg is None:
+        return ""
+    if system_type == SystemType.NACOS or system_type == SystemType.ELASTICSEARCH:
+        return cfg.get("url")
+    elif system_type == SystemType.DATABASE:
+        host = cfg.get("url")
+        port = cfg.get("port")
+        return f"{host}:{port}"
+    elif system_type == SystemType.GRAPHDB:
+        host = cfg.get("host")
+        port = cfg.get("port")
+        return f"{host}:{port}"
+    else:
+        return ""

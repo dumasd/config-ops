@@ -277,13 +277,13 @@ class ElasticsearchChangelog:
                     change_set_id=change_set_id,
                     system_type=SystemType.ELASTICSEARCH.value,
                     system_id=elasticsearch_id,
-                    changes=changelog_utils.pack_encrypt_changes(
+                    changes=changelog_utils.pack_changes(
                         elasicsearch_changes, _secret
                     ),
                 )
                 db.session.add(log_changes)
             else:
-                log_changes.changes = changelog_utils.pack_encrypt_changes(
+                log_changes.changes = changelog_utils.pack_changes(
                     elasicsearch_changes, _secret
                 )
         return is_execute

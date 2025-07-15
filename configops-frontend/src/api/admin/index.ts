@@ -53,7 +53,7 @@ export const editWorkerApi = (item) => {
   return request.put({ url: '/api/admin/worker/v1', data: item })
 }
 
-export const delteWorkerApi = (id) => {
+export const deleteWorkerApi = (id) => {
   return request.delete({ url: '/api/admin/worker/v1', params: { id: id } })
 }
 

@@ -5,7 +5,7 @@ logging:
 
 # -------- Nacos Configurations --------
 nacos:
-  default: # Nacos ID
+  mycompany_nacos_dev: # Nacos ID
     url: http://localhost:8848 # 必须加端口
     username: nacos
     password: nacos
@@ -16,13 +16,16 @@ nacos:
 
 # -------- Relation Database Configurations --------
 database:
-  local: # Database ID
+  mycompany_mysql_dev: # Database ID
     url: localhost
     port: 3306
     username: root
     password: "1234"
     dialect: mysql
     changelogschema: liquibase  # liquibase的数据库变更日志表放入哪个schmea中，默认为liquibase
+    provision:                               # 数据库和账号制备配置
+      ipsource: "%"                              # 账号可使用的IP源
+      permissions: "SELECT,UPDATE,DELETE,INSERT" # 账号授予的权限    
     # secretmanager:           # 使用了三方平台管理密码
     #   aws:
     #     profile: "default"     # 使用哪个 aws profile访问aws-secretsmanager，不填默认default
@@ -30,7 +33,7 @@ database:
 
 # -------- ElasticSearch Configurations ---------
 elasticsearch:
-  local: # ES ID
+  mycompany_es_dev: # ES ID
     url: http://localhost:9200
     # username: admin               # Elasticsearch 用户名，没有注释掉
     # password: "1234"              # Elasticsearch 密码，没有注释掉

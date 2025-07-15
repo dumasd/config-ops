@@ -233,13 +233,13 @@ class DatabaseChangeLog:
                         change_set_id=change_set_id,
                         system_type=SystemType.DATABASE.value,
                         system_id=db_id,
-                        changes=changelog_utils.pack_encrypt_changes(
+                        changes=changelog_utils.pack_changes(
                             change_set["changes"], _secret
                         ),
                     )
                     db.session.add(log_changes)
                 else:
-                    log_changes.changes = changelog_utils.pack_encrypt_changes(
+                    log_changes.changes = changelog_utils.pack_changes(
                         change_set["changes"], _secret
                     )
             db.session.commit()
@@ -276,7 +276,9 @@ class DatabaseChangeLog:
 
     def __check_changelog_by_db__(self, change_sets, db_config):
         try:
-            engine = create_database_engine(db_config)
+            engine = create_database_engine(
+                db_config, db_config.get("changelogschema", "liquibase")
+            )
             changelog = sqlalchemy.Table(
                 "DATABASECHANGELOG", sqlalchemy.MetaData(), autoload_with=engine
             )

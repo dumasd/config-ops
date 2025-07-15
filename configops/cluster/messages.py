@@ -9,6 +9,7 @@ class MessageType(Enum):
     DELETE_CHANGE_LOG = "DELETE_CHANGE_LOG"  # 删除changelog
     EDIT_CHNAGE_LOG = "EDIT_CHANGE_LOG"  # 修改changelog
     QUERY_CHANGE_SET = "QUERY_CHANGE_SET"  # 查询变更集
+    QUERY_SECRET = "QUERY_SECRET"   # 查询密钥
     UPGRADE_WORKER = "UPGRADE_WORKER"  # 升级worker
 
 

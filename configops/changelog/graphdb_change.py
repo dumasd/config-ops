@@ -275,11 +275,11 @@ class GraphdbChangelog:
                     change_set_id=change_set_id,
                     system_type=SystemType.GRAPHDB.value,
                     system_id=system_id,
-                    changes=changelog_utils.pack_encrypt_changes(_changes, _secret),
+                    changes=changelog_utils.pack_changes(_changes, _secret),
                 )
                 db.session.add(log_changes)
             else:
-                log_changes.changes = changelog_utils.pack_encrypt_changes(
+                log_changes.changes = changelog_utils.pack_changes(
                     _changes, _secret
                 )
         return is_execute

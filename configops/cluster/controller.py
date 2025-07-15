@@ -189,6 +189,9 @@ def register(socketio, app) -> ControllerNamespace:
     MESSAGE_HANDLER_MAP[MessageType.QUERY_CHANGE_SET.name] = (
         CommonFuturedMessageHandler()
     )
+    MESSAGE_HANDLER_MAP[MessageType.QUERY_SECRET.name] = (
+        CommonFuturedMessageHandler()
+    )
     MESSAGE_HANDLER_MAP[MessageType.UPGRADE_WORKER.name] = CommonFuturedMessageHandler()
 
     controller = ControllerNamespace("/controller", app)

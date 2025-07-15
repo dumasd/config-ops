@@ -62,8 +62,7 @@ const tableColumns = reactive<TableColumn[]>([
   {
     field: 'selection',
     type: 'selection',
-    selectable: (args) => {
-      console.log(args)
+    selectable: () => {
       return true
     }
   },
@@ -192,7 +191,7 @@ const action = (row: any, type: string) => {
 
 const fetchManagedObjects = () => {
   if (userStore.getWorkspace) {
-    getManagedObjectsApi().then((res) => {
+    getManagedObjectsApi('changelog').then((res) => {
       managedObjects.value = res.data
     })
   }

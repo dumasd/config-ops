@@ -18,3 +18,14 @@ export type ChangelogItem = {
   comment: string
   labels: string
 }
+
+export interface ManagedObjectSecretItem {
+  system_id: string
+  system_type: string
+  object: string
+  username: string
+  password: string
+  url: string
+  created_at: string
+  updated_at: string
+}

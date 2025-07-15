@@ -335,13 +335,13 @@ class NacosChangeLog:
                     change_set_id=change_set_id,
                     system_type=SystemType.NACOS.value,
                     system_id=nacos_id,
-                    changes=changelog_utils.pack_encrypt_changes(
+                    changes=changelog_utils.pack_changes(
                         nacos_changes, _secret
                     ),
                 )
                 db.session.add(log_changes)
             else:
-                log_changes.changes = changelog_utils.pack_encrypt_changes(
+                log_changes.changes = changelog_utils.pack_changes(
                     nacos_changes, _secret
                 )
 

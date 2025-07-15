@@ -36,6 +36,13 @@ class ApiDeleteChangelogSchema(Schema):
 @auth_required()
 def list_managed_objects():
     workerspace_id = request.headers[X_WORKSPACE]
+    f = request.args.get("f")
+    permission_prefix = ""
+    if f == "secret":
+        permission_prefix = PermissionModule.MANAGED_OBJECT_SECRET_MANAGE.name
+    else:
+        permission_prefix = PermissionModule.MANAGED_OBJECT_CHANGELOG_MANAGE.name
+
     groups = session["groups"]
     stmt = (
         sqlalchemy.select(
@@ -49,7 +56,9 @@ def list_managed_objects():
         .join(GroupPermission, ManagedObjects.id == GroupPermission.source_id)
         .join(Worker, ManagedObjects.worker_id == Worker.id)
         .where(
-            Worker.workspace_id == workerspace_id, GroupPermission.group_id.in_(groups)
+            Worker.workspace_id == workerspace_id,
+            GroupPermission.group_id.in_(groups),
+            GroupPermission.permission.like(permission_prefix + ":%"),
         )
         .order_by(Worker.name, ManagedObjects.system_type)
     )
@@ -207,6 +216,54 @@ async def get_changeset():
     controller_ns.send_message(managed_object.worker_id, message, future)
 
     if event.wait(5):
+        result = future.result()
+        if result:
+            return result
+        else:
+            raise future.exception()
+    else:
+        return BaseResult.error(
+            "Deletion timed out. Please refresh the data or try again."
+        ).response()
+
+
+@bp.route("/api/dashboard/secrets/v1", methods=["GET"])
+async def get_secrets():
+    check_auth_resp = do_check_auth(
+        module=PermissionModule.MANAGED_OBJECT_SECRET_MANAGE, actions=["READ"]
+    )
+    if check_auth_resp:
+        return check_auth_resp
+    managed_object_id = request.args["managed_object_id"]
+
+    managed_object = (
+        db.session.query(ManagedObjects)
+        .filter(ManagedObjects.id == managed_object_id)
+        .first()
+    )
+
+    page = int(request.args.get("page", 1))
+    size = int(request.args.get("size", 10))
+    q = str(request.args.get("q", ""))
+
+    message = Message(
+        type=MessageType.QUERY_SECRET,
+        data={
+            "system_id": managed_object.system_id,
+            "system_type": managed_object.system_type,
+            "page": page,
+            "size": size,
+            "q": q,
+        },
+    )
+
+    event = threading.Event()
+    controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
+    future = CallbackFuture(event)
+
+    controller_ns.send_message(managed_object.worker_id, message, future)
+
+    if event.wait(20):
         result = future.result()
         if result:
             return result

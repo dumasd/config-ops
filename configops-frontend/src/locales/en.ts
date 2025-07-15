@@ -204,7 +204,8 @@ export default {
     workerManagement: 'Worker Management',
     systemManagement: 'System Management',
     objectManagement: 'Object Management',
-    changelog: 'Changelog'
+    changelog: 'Changelog',
+    secretManagement: 'Secret Management'
   },
   permission: {
     hasPermission: 'Please set the operation permission value',
@@ -451,9 +452,6 @@ export default {
     loading: 'Loading',
     reset: 'Reset'
   },
-  stickyDemo: {
-    sticky: 'Sticky'
-  },
   tableDemo: {
     table: 'Table',
     tableDes: 'Secondary packaging of Table components based on ElementPlus',
@@ -490,14 +488,6 @@ export default {
     showOrHiddenSortable: 'Show or hidden sortable',
     videoPreview: 'Video preview',
     cardTable: 'Card table'
-  },
-  richText: {
-    richText: 'Rich text',
-    richTextDes: 'Secondary packaging based on wangeditor',
-    jsonEditor: 'JSON Editor',
-    jsonEditorDes: 'Secondary packaging based on vue-json-pretty',
-    codeEditor: 'Code Editor',
-    codeEditorDes: 'Secondary packaging based on monaco-editor'
   },
   dialogDemo: {
     dialog: 'Dialog',
@@ -556,6 +546,7 @@ export default {
     account: 'Account',
     email: 'Email',
     createTime: 'Create time',
+    updateTime: 'Update time',
     // 所属部门
     department: 'Department',
     departmentName: 'Department name',
@@ -600,7 +591,8 @@ export default {
     systemId: 'System ID',
     systemType: 'System Type',
     workerName: 'Agent',
-    url: 'URL'
+    url: 'URL',
+    secretObj: 'Database'
   },
   changelog: {
     changeSetId: 'ChangeSet ID',

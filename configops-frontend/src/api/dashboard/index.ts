@@ -1,8 +1,8 @@
 import request from '@/axios'
-import type { ChangelogItem, ManagedObjectItem } from './types'
+import type { ChangelogItem, ManagedObjectItem, ManagedObjectSecretItem } from './types'
 
-export const getManagedObjectsApi = (): Promise<IResponse<ManagedObjectItem[]>> => {
-  return request.get({ url: '/api/dashboard/managed_objects/v1' })
+export const getManagedObjectsApi = (f: string): Promise<IResponse<ManagedObjectItem[]>> => {
+  return request.get({ url: '/api/dashboard/managed_objects/v1', params: { f: f } })
 }
 
 export const getChangelogsApi = (searchParams): Promise<IResponse<ChangelogItem[]>> => {
@@ -22,4 +22,8 @@ export const deleteChangelogsApi = (
 
 export const getChangesetApi = (searchParams): Promise<IResponse<ChangelogItem[]>> => {
   return request.get({ url: '/api/dashboard/changeset/v1', params: searchParams })
+}
+
+export const getSecretsApi = (searchParams): Promise<IResponse<ManagedObjectSecretItem[]>> => {
+  return request.get({ url: '/api/dashboard/secrets/v1', params: searchParams })
 }

@@ -4,7 +4,7 @@ import {
   getWorkerApi,
   createWorkerApi,
   editWorkerApi,
-  delteWorkerApi,
+  deleteWorkerApi,
   upgradeWorkerApi
 } from '@/api/admin'
 import { useUserStoreWithOut } from '@/store/modules/user'
@@ -43,7 +43,7 @@ const { tableRegister, tableState, tableMethods } = useTable({
     }
   },
   fetchDelApi: async () => {
-    const res = await delteWorkerApi(unref(id))
+    const res = await deleteWorkerApi(unref(id))
     return !!res
   }
 })
@@ -124,7 +124,6 @@ const tableColumns = reactive<TableColumn[]>([
 const searchSchema = reactive<FormSchema[]>([
   {
     field: 'q',
-    //label: t('role.roleName'),
     component: 'Input'
   }
 ])

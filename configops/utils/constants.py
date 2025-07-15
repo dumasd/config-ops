@@ -82,6 +82,7 @@ class PermissionModule(Enum):
 
     # object
     MANAGED_OBJECT_CHANGELOG_MANAGE = "MANAGED_OBJECT_CHANGELOG_MANAGE"
+    MANAGED_OBJECT_SECRET_MANAGE = "MANAGED_OBJECT_SECRET_MANAGE"
 
     @staticmethod
     def check_workspace(module) -> bool:
@@ -94,7 +95,10 @@ class PermissionModule(Enum):
 
     @staticmethod
     def check_object(module) -> bool:
-        return module == PermissionModule.MANAGED_OBJECT_CHANGELOG_MANAGE.name
+        return (
+            module == PermissionModule.MANAGED_OBJECT_CHANGELOG_MANAGE.name
+            or module == PermissionModule.MANAGED_OBJECT_SECRET_MANAGE.name
+        )
 
 
 def extract_version(name):

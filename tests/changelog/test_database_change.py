@@ -1,7 +1,7 @@
 import unittest, logging, secrets, secrets, re
 from configops.changelog.changelog_utils import (
-    pack_encrypt_changes,
-    unpack_encrypt_changes,
+    pack_changes,
+    unpack_changes,
 )
 
 logger = logging.getLogger(__name__)

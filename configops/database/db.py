@@ -67,12 +67,25 @@ class ConfigOpsChangeLogChanges(Base):
     change_set_id = mapped_column(String(100), nullable=False, comment="变更集ID")
     system_id = mapped_column(String(32), nullable=False, comment="系统ID")
     system_type = mapped_column(String(30), nullable=False, comment="系统类型")
-    changes: Mapped[bytes] = mapped_column(LargeBinary)
+    changes: Mapped[bytes] = mapped_column(
+        LargeBinary(length=(2**32) - 1), comment="变更数据"
+    )
     __table_args__ = (
         UniqueConstraint(
             "change_set_id", "system_type", "system_id", name="uix_change"
         ),
     )
+
+
+class ConfigOpsProvisionSecret(Base):
+    __tablename__ = "CONFIGOPS_PROVISION_SECRET"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    system_id = mapped_column(String(32), nullable=False, comment="系统ID")
+    system_type = mapped_column(String(30), nullable=False, comment="系统类型")
+    object = mapped_column(String(255), nullable=False, comment="密钥对象")
+    username = mapped_column(String(255), nullable=False, comment="账号")
+    password: Mapped[bytes] = mapped_column(LargeBinary, nullable=False, comment="密码")
+    extra = mapped_column(String(2014), nullable=True, comment="Extra")
 
 
 table_name_prefix = "configops_"
@@ -97,9 +110,7 @@ class Worker(Base):
     name = mapped_column(String(50), nullable=False)
     secret = mapped_column(String(255), nullable=False)
     description = mapped_column(String(255), nullable=True)
-    version = mapped_column(
-        String(20), nullable=True
-    )
+    version = mapped_column(String(20), nullable=True)
 
     __table_args__ = (UniqueConstraint("name", name="uniq_name"),)
 

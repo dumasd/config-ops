@@ -102,27 +102,6 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
     },
     fullPath: '/dashboard',
     children: [
-      /*{
-        path: 'analysis',
-        component: () => import('@/views/Dashboard/Analysis.vue'),
-        name: 'Analysis',
-        fullPath: '/dashboard/analysis',
-        meta: {
-          title: t('router.analysis'),
-          noCache: true,
-          affix: true
-        }
-      },
-      {
-        path: 'workplace',
-        component: () => import('@/views/Dashboard/Workplace.vue'),
-        name: 'Workplace',
-        fullPath: '/dashboard/workplace',
-        meta: {
-          title: t('router.workplace'),
-          noCache: true
-        }
-      },*/
       {
         path: 'changelog',
         component: () => import('@/views/Dashboard/Changelog/Changelog.vue'),
@@ -130,6 +109,16 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
         fullPath: '/dashboard/changelog',
         meta: {
           title: t('router.workplace'),
+          noCache: true
+        }
+      },
+      {
+        path: 'provisionsecret',
+        component: () => import('@/views/Dashboard/ProvisionSecret/ProvisionSecret.vue'),
+        name: 'ProvisionSecret',
+        fullPath: '/dashboard/provisionsecret',
+        meta: {
+          title: t('router.secretManagement'),
           noCache: true
         }
       },

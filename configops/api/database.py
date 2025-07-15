@@ -10,6 +10,8 @@ from marshmallow import Schema, fields, EXCLUDE
 from configops.config import get_database_cfg
 from configops.database.utils import create_database_engine
 from configops.changelog.database_change import DatabaseChangeLog
+from configops.database import creator as db_creator
+from configops.utils import secret_util
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +57,11 @@ class RunLiquibaseCmdSchema(Schema):
         unknown = EXCLUDE
 
 
-class CheckDbSchema(Schema):
+class ProvisionDbUserSchema(Schema):
     dbId = fields.Str(required=True)
     dbName = fields.Str(required=True)
+    user = fields.Str(required=True)
+    ipsource = fields.Str(required=False)
 
     class Meta:
         unknown = EXCLUDE
@@ -88,7 +92,7 @@ def execute_sql(database, sql_script, db_config):
                 if not sql.strip():
                     continue
                 sql_text = text(sql.strip())
-                logger.info(f"============ 执行SQL语句 =========\n {sql_text}")
+                logger.info(f"--- Executing SQL ---\n {sql_text}")
                 result = conn.execute(sql_text)
                 rows = []
                 if result.returns_rows:
@@ -144,18 +148,36 @@ def run_sql():
     return Response(resp_json, mimetype="application/json")
 
 
-@bp.route("/database/v1/check-db", methods=["PUT"])
-def check_db():
-    data = CheckDbSchema().load(request.get_json())
+@bp.route("/database/v1/provision", methods=["POST"])
+def provision():
+    data = ProvisionDbUserSchema().load(request.get_json())
     db_id = data.get("dbId")
+    user = data.get("user")
+    db_name = data.get("dbName")
+    ipsource = data.get("ipsource")
     db_config = get_database_cfg(current_app, db_id)
     if db_config == None:
-        return make_response("Database config not found", 404)
-    # Use ansible runner create database and database user
-    
+        return make_response("Database config not found", 400)
 
+    c = db_creator.get_creator(db_id, db_config)
+    provision_cfg = db_config.get("provision")
+    if provision_cfg is None:
+        return make_response("Database provision unsupported", 500)
 
+    ipsource = ipsource if ipsource else provision_cfg.get("ipsource", "%")
+    permissions = provision_cfg.get("permissions")
+    pwd = secret_util.generate_password(length=16, contain_special=True)
+    results = c.create(db_name, user, pwd, ipsource=ipsource, permissions=permissions)
 
+    resp = {"messages": []}
+    for idx, result in enumerate(results):
+        if result is None:
+            continue
+        if not result.is_ok():
+            return make_response(result.msg, 400)
+        resp["messages"].append(result.msg)
+
+    return resp
 
 
 @bp.route("/database/v1/run-liquibase", methods=["POST"])

@@ -21,6 +21,11 @@ const permissionTemplate = ref([
     module: 'MANAGED_OBJECT_CHANGELOG_MANAGE',
     checkList: [''],
     actions: ['READ', 'CREATE', 'EDIT', 'DELETE']
+  },
+  {
+    module: 'MANAGED_OBJECT_SECRET_MANAGE',
+    checkList: [''],
+    actions: ['READ']
   }
 ])
 

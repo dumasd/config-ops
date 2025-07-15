@@ -4,15 +4,18 @@ import logging
 import os
 import requests
 import datetime
+import base64
 import sqlalchemy
 from io import BytesIO
 from configops.cluster.messages import Message, MessageType
 from configops.utils.constants import SystemType
-from configops.config import get_database_cfg, get_node_cfg
+from configops.utils.secret_util import decrypt_data
+from configops.config import get_database_cfg, get_node_cfg, get_object_url
 from configops.database.db import (
     db,
     ConfigOpsChangeLog,
     ConfigOpsChangeLogChanges,
+    ConfigOpsProvisionSecret,
     paginate,
 )
 from configops.database.utils import create_database_engine
@@ -115,7 +118,9 @@ class QueryChangelogMessageHandler(BaseMessageHandler):
         start_time = data.get("start_time")
         end_time = data.get("end_time")
         q = data.get("q")
-        engine = create_database_engine(db_config)
+        engine = create_database_engine(
+            db_config, db_config.get("changelogschema", "liquibase")
+        )
         metadata = sqlalchemy.MetaData()
         changelog = sqlalchemy.Table(
             "DATABASECHANGELOG", metadata, autoload_with=engine
@@ -182,7 +187,9 @@ class DeleteChangelogMessageHandler(BaseMessageHandler):
         app = namespace.app
         if system_type == SystemType.DATABASE:
             db_config = get_database_cfg(app, system_id)
-            engine = create_database_engine(db_config)
+            engine = create_database_engine(
+                db_config, db_config.get("changelogschema", "liquibase")
+            )
             metadata = sqlalchemy.MetaData()
             changelog = sqlalchemy.Table(
                 "DATABASECHANGELOG", metadata, autoload_with=engine
@@ -227,9 +234,7 @@ class QueryChangesetMessageHandler(BaseMessageHandler):
                 return BaseResult.ok()
 
             _secret = get_node_cfg(app)["secret"]
-            changes = changelog_utils.unpack_encrypt_changes(
-                log_changes.changes, _secret
-            )
+            changes = changelog_utils.unpack_changes(log_changes.changes, _secret)
             return BaseResult.ok(data=changes)
 
 
@@ -259,11 +264,68 @@ class UpgradeWorkerMessageHandler(BaseMessageHandler):
         return BaseResult.ok()
 
 
+class QuerySecretMessageHandler(BaseMessageHandler):
+    def handle(self, message: Message, namespace) -> BaseResult:
+        data = message.data
+        system_id = data["system_id"]
+        system_type = SystemType[data["system_type"]]
+        page = int(data.get("page", 1))
+        size = int(data.get("size", 20))
+        q = data.get("q")
+        conditions = [
+            ConfigOpsProvisionSecret.system_id == system_id,
+            ConfigOpsProvisionSecret.system_type == system_type.name,
+        ]
+        if q:
+            conditions.append(
+                sqlalchemy.or_(
+                    ConfigOpsProvisionSecret.username.like(f"%{q}%"),
+                    ConfigOpsProvisionSecret.object.like(f"%{q}%"),
+                )
+            )
+
+        app = namespace.app
+        object_url = get_object_url(app, system_id, system_type)
+        with app.app_context():
+            stmt = (
+                sqlalchemy.select(
+                    ConfigOpsProvisionSecret.system_id,
+                    ConfigOpsProvisionSecret.system_type,
+                    ConfigOpsProvisionSecret.object,
+                    ConfigOpsProvisionSecret.username,
+                    ConfigOpsProvisionSecret.password,
+                    ConfigOpsProvisionSecret.created_at,
+                    ConfigOpsProvisionSecret.updated_at,
+                )
+                .where(*conditions)
+                .order_by(ConfigOpsProvisionSecret.updated_at.desc())
+            )
+            _secret = get_node_cfg(app)["secret"]
+            items, total = paginate(stmt, page, size)
+            final_items = [
+                {
+                    "system_id": item.system_id,
+                    "system_type": item.system_type,
+                    "object": item.object,
+                    "username": item.username,
+                    "password": decrypt_data(
+                        item.password, base64.b64decode(_secret)
+                    ).decode(),
+                    "url": object_url,
+                    "created_at": item.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    "updated_at": item.updated_at.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                for item in items
+            ]
+            return BaseResult.ok(data=final_items, total=total)
+
+
 # =====================================================================================================================================
 
 MESSAGE_HANDLER_MAP = {
     MessageType.QUERY_CHANGE_LOG.name: QueryChangelogMessageHandler(),
     MessageType.DELETE_CHANGE_LOG.name: DeleteChangelogMessageHandler(),
     MessageType.QUERY_CHANGE_SET.name: QueryChangesetMessageHandler(),
+    MessageType.QUERY_SECRET.name: QuerySecretMessageHandler(),
     MessageType.UPGRADE_WORKER.name: UpgradeWorkerMessageHandler(),
 }
