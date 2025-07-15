@@ -161,7 +161,7 @@ def provision():
 
     c = db_creator.get_creator(db_id, db_config)
     provision_cfg = db_config.get("provision")
-    if provision_cfg is None:
+    if provision_cfg is None or not provision_cfg.get("enabled"):
         return make_response("Database provision unsupported", 500)
 
     ipsource = ipsource if ipsource else provision_cfg.get("ipsource", "%")

@@ -43,6 +43,19 @@ class Creator:
         self.db_id = db_id
         self.db_config = db_config
 
+    def __get_default_ok_result__(
+        self, db_name: str, user: str, permissions: str
+    ) -> tuple[Result, Result, Result]:
+        create_db_result, create_user_result, grant_user_result = (
+            Result(Code.OK, f"Create database [{db_name}] ok"),
+            Result(
+                Code.OK,
+                f"Create user [{user}] ok, check the console for the key information.",
+            ),
+            Result(Code.OK, f"Grant user with [{permissions}] ok"),
+        )
+        return create_db_result, create_user_result, grant_user_result
+
     def create(
         self, db_name: str, user: str, pwd: str, **kwargs
     ) -> tuple[Result | None, Result | None, Result | None]: ...
@@ -59,11 +72,7 @@ class MysqlCreator(Creator):
         engine = create_database_engine(self.db_config)
 
         create_db_result, create_user_result, grant_user_result = (
-            Result(Code.OK, "Create database ok"),
-            Result(
-                Code.OK, "Create user ok, check the console for the key information."
-            ),
-            Result(Code.OK, "Grant user ok"),
+            self.__get_default_ok_result__(db_name, user, permissions)
         )
 
         with engine.connect() as conn:
@@ -74,8 +83,9 @@ class MysqlCreator(Creator):
                 err_message = str(ex.orig)
                 if err_message.find("1007") >= 0:
                     logger.warning(f"Mysql create database warning. {ex}")
-                    create_db_result = Result(Code.EXISTS, "Database already exists")
-
+                    create_db_result = Result(
+                        Code.EXISTS, f"Database [{db_name}] already exists"
+                    )
                 else:
                     logger.error(f"Mysql create database error. {ex}")
                     create_db_result = Result(Code.ERROR, err_message)
@@ -92,7 +102,9 @@ class MysqlCreator(Creator):
                 err_message = str(ex.orig)
                 if err_message.find("1396") >= 0:
                     logger.warning(f"Mysql create user warning. {ex}")
-                    create_user_result = Result(Code.EXISTS, "User already exists")
+                    create_user_result = Result(
+                        Code.EXISTS, f"User [{user}] already exists"
+                    )
                 else:
                     logger.error(f"Mysql create user error. {ex}")
                     create_user_result = Result(Code.ERROR, err_message)
@@ -121,9 +133,7 @@ class PostgreCreator(Creator):
         permissions = kwargs.get("permissions", "SELECT,UPDATE,DELETE,INSERT")
 
         create_db_result, create_user_result, grant_user_result = (
-            Result(Code.OK, "Create database ok"),
-            Result(Code.OK, "Create user ok"),
-            Result(Code.OK, "Grant user ok"),
+            self.__get_default_ok_result__(db_name, user, permissions)
         )
 
         engine = create_database_engine(self.db_config)
@@ -134,7 +144,9 @@ class PostgreCreator(Creator):
                 err_message = str(ex.orig)
                 if _ALREADY_EXISTS in err_message:
                     logger.warning(f"Postgre create database warning: {ex}")
-                    create_db_result = Result(Code.EXISTS, "Database already exists")
+                    create_db_result = Result(
+                        Code.EXISTS, f"Database [{db_name}] already exists"
+                    )
                 else:
                     create_db_result = Result(Code.ERROR, err_message)
                     return create_db_result, None, None
@@ -149,9 +161,11 @@ class PostgreCreator(Creator):
                 err_message = str(ex.orig)
                 if _ALREADY_EXISTS in err_message:
                     logger.warning(f"Postgre create user warning: {ex}")
-                    create_user_result = Result(Code.EXISTS, err_message)
+                    create_user_result = Result(
+                        Code.EXISTS, f"User [{user}] already exists"
+                    )
                 else:
-                    create_user_result = Result(Code.ERROR, "User already exists")
+                    create_user_result = Result(Code.ERROR, err_message)
                     return None, create_user_result, None
 
         # 切换到db，授权

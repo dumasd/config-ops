@@ -28,6 +28,7 @@ class SecretManager(Schema):
 
 
 class ProvisionConfig(Schema):
+    enabled = fields.Bool(required=True)
     ipsource = fields.Str(required=False)
     permissions = fields.Str(required=True)
 

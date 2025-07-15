@@ -1,6 +1,6 @@
 nacosChangeLog:
   - changeSet:
-      id: configops-nacos-1.2-11
+      id: configops-nacos-1.2-111
       author: bruce.wu
       comment: 注释
       context: dev,prod
@@ -12,7 +12,7 @@ nacosChangeLog:
           delete: true
           format: yaml                    
   - changeSet:
-      id: configops-nacos-1.2-12
+      id: configops-nacos-1.2-112
       author: bruce.wu
       comment: 注释
       context: dev,prod
