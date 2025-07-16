@@ -1,5 +1,6 @@
 import logging
 from enum import Enum
+from typing import Optional
 import sqlalchemy
 from flask import current_app
 from sqlalchemy.exc import DBAPIError
@@ -23,7 +24,7 @@ class Code(Enum):
 
 
 class Result:
-    def __init__(self, code: Code, msg: str | None = None):
+    def __init__(self, code: Code, msg: Optional[str] = None):
         self.code = code
         self.msg = msg if msg else ""
 
@@ -58,14 +59,14 @@ class Creator:
 
     def create(
         self, db_name: str, user: str, pwd: str, **kwargs
-    ) -> tuple[Result | None, Result | None, Result | None]: ...
+    ) -> tuple[Optional[Result], Optional[Result], Optional[Result]]: ...
 
 
 class MysqlCreator(Creator):
 
     def create(
         self, db_name: str, user: str, pwd: str, **kwargs
-    ) -> tuple[Result | None, Result | None, Result | None]:
+    ) -> tuple[Optional[Result], Optional[Result], Optional[Result]]:
         ip_range = kwargs.get("ipsource", "%")
         permissions = kwargs.get("permissions", "SELECT,UPDATE,DELETE,INSERT")
         mysql_user = f"'{user}'@'{ip_range}'"
@@ -129,7 +130,7 @@ class PostgreCreator(Creator):
 
     def create(
         self, db_name: str, user: str, pwd: str, **kwargs
-    ) -> tuple[Result | None, Result | None, Result | None]:
+    ) -> tuple[Optional[Result], Optional[Result], Optional[Result]]:
         permissions = kwargs.get("permissions", "SELECT,UPDATE,DELETE,INSERT")
 
         create_db_result, create_user_result, grant_user_result = (

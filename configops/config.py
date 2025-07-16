@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing import Optional
 from flask import current_app
 from ruamel.yaml import YAML
 from configops.utils.constants import CONFIG_ENV_NAME, CONFIG_FILE_ENV_NAME, SystemType
@@ -266,7 +267,7 @@ def get_auth_config(app):
         return schema.load(auth_cfg)
 
 
-def get_object_url(app, system_id, system_type: SystemType) -> str | None:
+def get_object_url(app, system_id, system_type: SystemType) -> Optional[str]:
     key = system_type.name.lower()
     cfg = get_config(app, f"{key}.{system_id}")
     if cfg is None:

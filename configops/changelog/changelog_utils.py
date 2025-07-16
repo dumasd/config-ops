@@ -1,3 +1,4 @@
+from typing import Optional
 import yaml
 import hashlib
 import msgpack
@@ -65,15 +66,15 @@ def is_ctx_included(contexts: str, changeSetCtx: str) -> bool:
         return True
 
 
-def pack_changes(changes, secret: str | None) -> bytes:
+def pack_changes(changes, secret: Optional[str]) -> bytes:
     packed_data = msgpack.packb(changes)
     if secret:
-        secret_key = base64.b64decode(secret)
+        secret_key = base64.b64decode(secret) 
         return encrypt_data(packed_data, secret_key)
     return packed_data
 
 
-def unpack_changes(changes_bytes: bytes, secret: str | None):
+def unpack_changes(changes_bytes: bytes, secret:Optional[str]):
     if secret:
         secret_key = base64.b64decode(secret)
         return msgpack.unpackb(decrypt_data(changes_bytes, secret_key))
