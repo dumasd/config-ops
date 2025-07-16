@@ -5,7 +5,7 @@ from flask_caching import Cache
 import argparse
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from marshmallow import ValidationError
 from configops.api.common import bp as common_bp
 from configops.api.nacos import bp as nacos_bp
@@ -73,6 +73,7 @@ def create_app(config_file=None):
     app.json = app.json_provider_class(app)
 
     # 静态资源压缩缓存
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = timedelta(days=90)
     if constants.NodeRole.CONTROLLER.matches(node_config["role"]):
         app.config["COMPRESS_MIMETYPES"] = [
             "text/html",
