@@ -2,18 +2,17 @@ databaseChangeLog:
 - changeSet:
     author: jack.hua
     changes:
-    - sql: {sql: DELETE FROM company WHERE id > 100;}
+    - sql: {sql: DELETE FROM company WHERE id > 100; DELETE FROM company WHERE id
+          < 12;}
     comment: example-comment
     context: gradle-example
-    id: database-changelog-1.1-11
+    id: database-changelog-1.1-1111
     labels: before
-    runOnChange: true
 - changeSet:
     author: jack.hua
     changes:
     - sql: {sql: DELETE FROM company WHERE id > 100;}
     comment: example-comment
     context: gradle-example
-    id: database-changelog-1.1-12
+    id: database-changelog-1.1-1112
     labels: before
-    runOnChange: true

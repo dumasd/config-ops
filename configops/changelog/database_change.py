@@ -179,7 +179,8 @@ class DatabaseChangeLog:
                     stderr=subprocess.STDOUT,
                     text=True,
                 ) as update_sql_proc:
-                    change_sets = self.__get_change_sets__(update_sql_proc.stdout)
+                    stdout, _ = update_sql_proc.communicate()
+                    change_sets = self.__get_change_sets__(stdout)
 
                 if len(change_sets) > 0:
                     self.__check_changelog_by_db__(change_sets, db_config)
@@ -198,12 +199,7 @@ class DatabaseChangeLog:
                 stderr=subprocess.PIPE,
                 text=True,
             ) as cmd_proc:
-                stderr = ""
-                stdout = ""
-                for line in cmd_proc.stderr:
-                    stderr = stderr + line
-                for line in cmd_proc.stdout:
-                    stdout = stdout + line
+                stdout, stderr = cmd_proc.communicate()
                 return {
                     "stdout": stdout,
                     "stderr": stderr,
