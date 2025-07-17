@@ -108,7 +108,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
         name: 'Changelog',
         fullPath: '/dashboard/changelog',
         meta: {
-          title: t('router.workplace'),
+          title: t('router.changelog'),
           noCache: true
         }
       },

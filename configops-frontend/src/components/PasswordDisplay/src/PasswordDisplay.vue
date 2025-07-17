@@ -88,7 +88,7 @@ const copyPassword = async () => {
     </span>
 
     <!-- 操作按钮组 -->
-    <div :class="`${prefixCls}__actions`" class="inline-flex gap-1">
+    <div :class="`${prefixCls}__actions`" class="inline-flex gap-0">
       <!-- 显示/隐藏切换按钮 -->
       <ElButton
         v-if="showToggle && value"

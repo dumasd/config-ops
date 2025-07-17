@@ -42,12 +42,12 @@ const tableColumns = reactive<TableColumn[]>([
   {
     field: 'object',
     label: t('managedObject.secretObj'),
-    width: 140
+    width: 250
   },
   {
     field: 'username',
     label: t('userDemo.account'),
-    width: 140
+    width: 250
   },
   {
     field: 'password',

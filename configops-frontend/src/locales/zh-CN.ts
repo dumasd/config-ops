@@ -200,7 +200,7 @@ export default {
     workerManagement: '代理管理',
     systemManagement: '系统管理',
     objectManagement: '对象管理',
-    changelog: 'Changelog',
+    changelog: '变更记录',
     secretManagement: '密钥管理'
   },
   permission: {
