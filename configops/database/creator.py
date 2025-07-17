@@ -77,7 +77,7 @@ class MysqlCreator(Creator):
         create_db_result, create_user_result, grant_user_result = (
             self.__get_default_ok_result__(db_name, user, permissions)
         )
-
+        permissions_text = ",".join(permissions)
         with engine.connect() as conn:
             # 创建数据库
             try:
@@ -117,7 +117,7 @@ class MysqlCreator(Creator):
             try:
                 conn.execute(
                     sqlalchemy.text(
-                        f"GRANT {",".join(permissions)} ON `{db_name}`.* TO {mysql_user};"
+                        f"GRANT {permissions_text} ON `{db_name}`.* TO {mysql_user};"
                     )
                 )
             except DBAPIError as ex:
@@ -140,7 +140,7 @@ class PostgreCreator(Creator):
         create_db_result, create_user_result, grant_user_result = (
             self.__get_default_ok_result__(db_name, user, permissions)
         )
-
+        permissions_text = ",".join(permissions)
         engine = create_database_engine(self.db_config)
         with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
             try:
@@ -186,12 +186,12 @@ class PostgreCreator(Creator):
                 conn.execute(sqlalchemy.text(f"GRANT USAGE ON SCHEMA public TO {user}"))
                 conn.execute(
                     sqlalchemy.text(
-                        f"GRANT {",".join(permissions)} ON ALL TABLES IN SCHEMA public TO {user}"
+                        f"GRANT {permissions_text} ON ALL TABLES IN SCHEMA public TO {user}"
                     )
                 )
                 conn.execute(
                     sqlalchemy.text(
-                        f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT {",".join(permissions)} ON TABLES TO {user}"
+                        f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT {permissions_text} ON TABLES TO {user}"
                     )
                 )
             except DBAPIError as ex:
