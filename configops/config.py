@@ -28,12 +28,6 @@ class SecretManager(Schema):
     aws = fields.Nested(AwsSecretManager, required=False)
 
 
-class ProvisionConfig(Schema):
-    enabled = fields.Bool(required=True)
-    ipsource = fields.Str(required=False)
-    permissions = fields.Str(required=True)
-
-
 class DbConfig(Schema):
     url = fields.Str(required=True, dump_default="localhost")
     host = fields.Str(required=False, dump_default="localhost")
@@ -43,7 +37,6 @@ class DbConfig(Schema):
     username = fields.Str(required=True)
     password = fields.Str(required=False)
     secretmanager = fields.Nested(SecretManager, required=False)
-    provision = fields.Nested(ProvisionConfig, required=False)
 
 
 class NacosConfig(Schema):

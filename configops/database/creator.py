@@ -45,7 +45,7 @@ class Creator:
         self.db_config = db_config
 
     def __get_default_ok_result__(
-        self, db_name: str, user: str, permissions: str
+        self, db_name: str, user: str, permissions
     ) -> tuple[Result, Result, Result]:
         create_db_result, create_user_result, grant_user_result = (
             Result(Code.OK, f"Create database [{db_name}] ok"),
@@ -53,7 +53,7 @@ class Creator:
                 Code.OK,
                 f"Create user [{user}] ok, check the console for the key information.",
             ),
-            Result(Code.OK, f"Grant user with [{permissions}] ok"),
+            Result(Code.OK, f"Grant user with {permissions} ok"),
         )
         return create_db_result, create_user_result, grant_user_result
 
@@ -68,7 +68,9 @@ class MysqlCreator(Creator):
         self, db_name: str, user: str, pwd: str, **kwargs
     ) -> tuple[Optional[Result], Optional[Result], Optional[Result]]:
         ip_range = kwargs.get("ipsource", "%")
-        permissions = kwargs.get("permissions", "SELECT,UPDATE,DELETE,INSERT")
+        permissions = kwargs.get(
+            "permissions", ["SELECT", "INSERT", "UPDATE", "DELETE"]
+        )
         mysql_user = f"'{user}'@'{ip_range}'"
         engine = create_database_engine(self.db_config)
 
@@ -115,7 +117,7 @@ class MysqlCreator(Creator):
             try:
                 conn.execute(
                     sqlalchemy.text(
-                        f"GRANT {permissions} ON `{db_name}`.* TO {mysql_user};"
+                        f"GRANT {",".join(permissions)} ON `{db_name}`.* TO {mysql_user};"
                     )
                 )
             except DBAPIError as ex:
@@ -131,7 +133,9 @@ class PostgreCreator(Creator):
     def create(
         self, db_name: str, user: str, pwd: str, **kwargs
     ) -> tuple[Optional[Result], Optional[Result], Optional[Result]]:
-        permissions = kwargs.get("permissions", "SELECT,UPDATE,DELETE,INSERT")
+        permissions = kwargs.get(
+            "permissions", ["SELECT", "INSERT", "UPDATE", "DELETE"]
+        )
 
         create_db_result, create_user_result, grant_user_result = (
             self.__get_default_ok_result__(db_name, user, permissions)
@@ -182,12 +186,12 @@ class PostgreCreator(Creator):
                 conn.execute(sqlalchemy.text(f"GRANT USAGE ON SCHEMA public TO {user}"))
                 conn.execute(
                     sqlalchemy.text(
-                        f"GRANT {permissions} ON ALL TABLES IN SCHEMA public TO {user}"
+                        f"GRANT {",".join(permissions)} ON ALL TABLES IN SCHEMA public TO {user}"
                     )
                 )
                 conn.execute(
                     sqlalchemy.text(
-                        f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT {permissions} ON TABLES TO {user}"
+                        f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT {",".join(permissions)} ON TABLES TO {user}"
                     )
                 )
             except DBAPIError as ex:

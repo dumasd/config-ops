@@ -23,10 +23,6 @@ database:
     password: "1234"
     dialect: mysql
     changelogschema: liquibase  # liquibase的数据库变更日志表放入哪个schmea中，默认为liquibase
-    provision:                               # 数据库和账号制备配置
-      enabled: true                              # 是否开启
-      ipsource: "%"                              # 账号可使用的IP源
-      permissions: "SELECT,UPDATE,DELETE,INSERT" # 账号授予的权限    
     # secretmanager:           # 使用了三方平台管理密码
     #   aws:
     #     profile: "default"     # 使用哪个 aws profile访问aws-secretsmanager，不填默认default

@@ -61,7 +61,8 @@ class ProvisionDbUserSchema(Schema):
     dbId = fields.Str(required=True)
     dbName = fields.Str(required=True)
     user = fields.Str(required=True)
-    ipsource = fields.Str(required=False)
+    ipsource = fields.Str(required=True)
+    permissions = fields.List(fields.Str, required=False)
 
     class Meta:
         unknown = EXCLUDE
@@ -154,18 +155,14 @@ def provision():
     db_id = data.get("dbId")
     user = data.get("user")
     db_name = data.get("dbName")
-    ipsource = data.get("ipsource")
+    ipsource = data.get("ipsource", "%")
+    permissions = data.get("permissions", ["SELECT", "INSERT", "UPDATE", "DELETE"])
     db_config = get_database_cfg(current_app, db_id)
     if db_config == None:
         return make_response("Database config not found", 400)
 
     c = db_creator.get_creator(db_id, db_config)
-    provision_cfg = db_config.get("provision")
-    if provision_cfg is None or not provision_cfg.get("enabled"):
-        return make_response("Database provision unsupported", 500)
 
-    ipsource = ipsource if ipsource else provision_cfg.get("ipsource", "%")
-    permissions = provision_cfg.get("permissions")
     pwd = secret_util.generate_password(length=16, contain_special=True)
     results = c.create(db_name, user, pwd, ipsource=ipsource, permissions=permissions)
 

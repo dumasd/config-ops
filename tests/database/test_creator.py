@@ -14,7 +14,7 @@ class TestMysqlCreator:
             "username": "root",
             "password": "12345678",
         }
-        mysqlCreator = MysqlCreator(db_config)
+        mysqlCreator = MysqlCreator("db1", db_config)
         db, user, grant = mysqlCreator.create(
             db_name="dev_2", user="dev_2", pwd="1234@Ass", ipsource="%"
         )
@@ -30,7 +30,7 @@ class TestPostgreCreator:
             "username": "wukai",
             "password": "1234",
         }
-        postgreCreator = PostgreCreator(db_config)
+        postgreCreator = PostgreCreator("db2", db_config)
         db, user, grant = postgreCreator.create(
             db_name="gtt_videomart_meta", user="gtt_videomart_meta", pwd="123456@Aa"
         )
