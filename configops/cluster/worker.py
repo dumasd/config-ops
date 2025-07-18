@@ -7,10 +7,9 @@ from configops.utils.constants import (
     SystemType,
 )
 import configops
-from configops.config import get_config
+from configops.config import get_config, get_node_cfg
 from configops.cluster.messages import Message, MessageType
 from configops.cluster.worker_handler import MESSAGE_HANDLER_MAP
-from configops.config import get_node_cfg
 from configops.api.utils import BaseResult
 from urllib.parse import urlparse
 

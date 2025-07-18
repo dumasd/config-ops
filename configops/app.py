@@ -1,10 +1,11 @@
+import os
+import argparse
+import logging
 from flask import Flask, jsonify
 from flask.json.provider import DefaultJSONProvider
 from flask_compress import Compress
 from flask_caching import Cache
-import argparse
-import logging
-import os
+from flask_socketio import SocketIO
 from datetime import datetime, timedelta
 from marshmallow import ValidationError
 from configops.api.common import bp as common_bp
@@ -23,7 +24,6 @@ from configops.utils.logging_configurator import DefaultLoggingConfigurator
 from configops.database import db
 from configops.cluster import controller as clueter_controller
 from configops.cluster import worker as clueter_worker
-from flask_socketio import SocketIO
 
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ def create_app(config_file=None):
     app.json_provider_class = CustomJSONProvider
     app.json = app.json_provider_class(app)
 
-    # 静态资源压缩缓存
+    # Static resources cache
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = timedelta(days=90)
     if constants.NodeRole.CONTROLLER.matches(node_config["role"]):
         app.config["COMPRESS_MIMETYPES"] = [
@@ -143,17 +143,15 @@ if __name__ == "__main__":
     logger.info("Starting flask app")
     parser = argparse.ArgumentParser(description="Run the config-ops application")
     parser.add_argument(
-        "--host", type=str, default="127.0.0.1", help="服务Host", required=False
+        "--host", type=str, default="127.0.0.1", help="Server Host", required=False
     )
     parser.add_argument(
-        "--port", type=int, default="5000", help="服务端口", required=False
+        "--port", type=int, default="5000", help="Server Port", required=False
     )
-    parser.add_argument("--debug", help="是否开启Debug模式", required=False)
-    parser.add_argument("--config", type=str, help="YAML配置文件", required=False)
+    parser.add_argument("--debug", help="Debug mode", required=False)
+    parser.add_argument("--config", type=str, help="YAML config file", required=False)
     args = parser.parse_args()
-    debug = False
-    if args.debug:
-        debug = True
+    debug = True if args.debug else False
 
     app = create_app(config_file=args.config)
     socketio = app.config.get(constants.CONTROLLER_SOCKETIO)
