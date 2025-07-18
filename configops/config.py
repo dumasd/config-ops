@@ -5,7 +5,7 @@ import re
 from typing import Optional
 from flask import current_app
 from ruamel.yaml import YAML
-from jsonschema import Draft7Validator, ValidationError
+from jsonschema import Draft7Validator
 from marshmallow import Schema, fields, validate
 from configops.utils.constants import CONFIG_ENV_NAME, CONFIG_FILE_ENV_NAME, SystemType
 from configops.utils.exception import ConfigOpsException
@@ -43,8 +43,8 @@ CONFIG_SCHEMA = {
                     "properties": {
                         "url": {
                             "type": "string",
-                            "format": "uri",
-                            "description": "Nacos server URL. Example: http://localhost:8848",
+                            "pattern": r"^https?://[^:/\s]+:\d+$",
+                            "description": "Nacos server URL and the port is required. Example: http://localhost:8848, https://nacos.example.com:443",
                         },
                         "username": {
                             "type": "string",
@@ -155,6 +155,29 @@ CONFIG_SCHEMA = {
                         "password": {
                             "type": "string",
                             "description": "Graphdb password",
+                        },
+                        "aws_iam_authentication": {
+                            "type": "object",
+                            "description": "AWS IAM authentication configurations",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean",
+                                    "default": False,
+                                    "description": "Enable AWS IAM authentication",
+                                },
+                                "region": {
+                                    "type": "string",
+                                    "description": "AWS region for IAM authentication",
+                                },
+                                "access_key": {
+                                    "type": "string",
+                                    "description": "AWS access key ID for IAM authentication",
+                                },
+                                "secret_key": {
+                                    "type": "string",
+                                    "description": "AWS secret access key for IAM authentication",
+                                },
+                            },
                         },
                         "secretmanager": {"$ref": "#/definitions/SecretManager"},
                     },
@@ -456,7 +479,7 @@ def load_config(config_file=None):
             error_log_text = "Invalid configuration details [key: error message]:\n"
             for error in errors:
                 error_log_text += f"    - {error['key']}: {error['message']}\n"
-            logger.error(error_log_text)    
+            logger.error(error_log_text)
             raise ConfigOpsException(
                 "Invalid configuration, please check the logs for the details."
             )
