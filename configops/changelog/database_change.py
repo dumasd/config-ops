@@ -244,9 +244,10 @@ class DatabaseChangeLog:
         change_sets = {}
         if not stdout:
             return change_sets
+        stdout_lines = stdout.splitlines()
         start_change_set = False
         change_set_id = None
-        for line in stdout:
+        for line in stdout_lines:
             end_match = re.search(r"^--\s+Release\sDatabase\sLock", line)
             if end_match:
                 break

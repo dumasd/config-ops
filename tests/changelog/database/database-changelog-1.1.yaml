@@ -6,13 +6,13 @@ databaseChangeLog:
           < 12;}
     comment: example-comment
     context: gradle-example
-    id: database-changelog-1.1-1111
+    id: database-changelog-1.1-1
     labels: before
 - changeSet:
     author: jack.hua
     changes:
     - sql: {sql: DELETE FROM company WHERE id > 100;}
     comment: example-comment
-    context: gradle-example
-    id: database-changelog-1.1-1112
+    context: gradle-examplex
+    id: database-changelog-1.1-2
     labels: before
