@@ -36,6 +36,7 @@ msgpack==1.1.0
 gremlinpython
 SPARQLWrapper
 ansible-runner==2.4.1
+rfc3987-syntax==1.1.0
 pytest
 pytest-cov
 pytest-mock
