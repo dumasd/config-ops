@@ -31,6 +31,7 @@ setup(
         "sqlfluff>=3.1.1",
         "psycopg2-binary==2.9.9",
         "jsonschema==4.23.0",
+        "rfc3987-syntax==1.1.0"
     ],
     entry_points={
         "console_scripts": [
