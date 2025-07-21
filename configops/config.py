@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 CONFIG_SCHEMA = {
-    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
         "logging": {
