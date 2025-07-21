@@ -3,8 +3,10 @@ import yaml
 import hashlib
 import msgpack
 import base64
+import logging
 from configops.utils.secret_util import encrypt_data, decrypt_data
 
+logger = logging.getLogger(__name__)
 
 def __clean_string__(value: str) -> str:
     """
@@ -74,8 +76,11 @@ def pack_changes(changes, secret: Optional[str]) -> bytes:
     return packed_data
 
 
-def unpack_changes(changes_bytes: bytes, secret:Optional[str]):
+def unpack_changes(changes_bytes: bytes, secret: Optional[str]):
     if secret:
-        secret_key = base64.b64decode(secret)
-        return msgpack.unpackb(decrypt_data(changes_bytes, secret_key))
+        try:
+            secret_key = base64.b64decode(secret)
+            return msgpack.unpackb(decrypt_data(changes_bytes, secret_key))
+        except Exception as e:
+            logger.warning(f"Error decrypting changes: {e}")
     return msgpack.unpackb(changes_bytes)
