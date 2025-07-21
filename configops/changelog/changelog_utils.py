@@ -83,4 +83,4 @@ def unpack_changes(changes_bytes: bytes, secret: Optional[str]):
             return msgpack.unpackb(decrypt_data(changes_bytes, secret_key))
         except Exception as e:
             logger.warning(f"Error decrypting changes: {e}")
-    return msgpack.unpackb(changes_bytes)
+    return msgpack.unpackb(changes_bytes, raw=True)
