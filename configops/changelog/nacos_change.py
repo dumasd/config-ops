@@ -550,6 +550,10 @@ class NacosChangeLog:
             NacosChangeLog.push_remote(client, changes, delete_changes)
             for log in logs:
                 log.exectype = ChangelogExeType.EXECUTED.value
+        except Exception as e:
+            for log in logs:
+                log.exectype = ChangelogExeType.FAILED.value
+            raise e
         finally:
             db.session.commit()
 
