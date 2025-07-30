@@ -170,10 +170,15 @@ def provision():
     for idx, result in enumerate(results):
         if result is None:
             continue
-        if not result.is_ok():
+        if not result.is_success():
             return make_response(result.msg, 400)
-        resp["messages"].append(result.msg)
 
+        resp["messages"].append(result.msg)
+        if idx == 1 and result.is_ok():
+            resp["credentials"] = {
+                "username": user,
+                "password": pwd,
+            }
     return resp
 
 

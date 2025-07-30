@@ -31,8 +31,11 @@ class Result:
     def __str__(self):
         return f"[{self.code.name}] {self.msg}"
 
+    def is_success(self):
+        return self.is_ok() or self.is_exists()
+
     def is_ok(self):
-        return Code.OK == self.code or Code.EXISTS == self.code
+        return Code.OK == self.code
 
     def is_exists(self):
         return Code.EXISTS == self.code
@@ -71,6 +74,7 @@ class MysqlCreator(Creator):
         permissions = kwargs.get(
             "permissions", ["SELECT", "INSERT", "UPDATE", "DELETE"]
         )
+        password_method = kwargs.get("password_method", "mysql_native_password")
         mysql_user = f"'{user}'@'{ip_range}'"
         engine = create_database_engine(self.db_config)
 
@@ -97,7 +101,9 @@ class MysqlCreator(Creator):
             # 创建用户
             try:
                 conn.execute(
-                    sqlalchemy.text(f"CREATE USER {mysql_user} IDENTIFIED BY :pwd;"),
+                    sqlalchemy.text(
+                        f"CREATE USER {mysql_user} IDENTIFIED WITH {password_method} BY :pwd;"
+                    ),
                     {"pwd": pwd},
                 )
                 store_secret(self.db_id, db_name, user, pwd)
