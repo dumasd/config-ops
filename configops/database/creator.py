@@ -10,7 +10,7 @@ from configops.database.db import db, ConfigOpsProvisionSecret
 from configops.config import get_config
 from configops.utils.exception import ConfigOpsException
 from configops.utils.constants import SystemType
-from configops.utils.secret_util import encrypt_data
+from configops.utils.secret_util import encrypt_data, decrypt_data
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +46,7 @@ class Creator:
     def __init__(self, db_id: str, db_config):
         self.db_id = db_id
         self.db_config = db_config
+        self.engine = create_database_engine(db_config)
 
     def __get_default_ok_result__(
         self, db_name: str, user: str, permissions
@@ -60,66 +61,65 @@ class Creator:
         )
         return create_db_result, create_user_result, grant_user_result
 
-    def create(
-        self, db_name: str, user: str, pwd: str, **kwargs
-    ) -> tuple[Optional[Result], Optional[Result], Optional[Result]]: ...
+    def create_database(self, db_name: str, **kwargs) -> Result:
+        raise NotImplementedError("create_database not implemented by subclasses")
+
+    def create_user(self, user: str, pwd: str, **kwargs) -> Result:
+        raise NotImplementedError("create_user not implemented by subclasses")
+
+    def grant_user(self, user: str, db_name: str, **kwargs) -> Result:
+        raise NotImplementedError("grant_user not implemented by subclasses")
 
 
 class MysqlCreator(Creator):
 
-    def create(
-        self, db_name: str, user: str, pwd: str, **kwargs
-    ) -> tuple[Optional[Result], Optional[Result], Optional[Result]]:
-        ip_range = kwargs.get("ipsource", "%")
-        permissions = kwargs.get(
-            "permissions", ["SELECT", "INSERT", "UPDATE", "DELETE"]
-        )
-        password_method = kwargs.get("password_method", "mysql_native_password")
-        mysql_user = f"'{user}'@'{ip_range}'"
-        engine = create_database_engine(self.db_config)
-
-        create_db_result, create_user_result, grant_user_result = (
-            self.__get_default_ok_result__(db_name, user, permissions)
-        )
-        permissions_text = ",".join(permissions)
-        with engine.connect() as conn:
-            # 创建数据库
+    def create_database(self, db_name, **kwargs) -> Result:
+        result = Result(Code.OK, f"Create database [{db_name}] ok")
+        with self.engine.connect() as conn:
             try:
                 conn.execute(sqlalchemy.text(f"CREATE DATABASE `{db_name}`;"))
             except DBAPIError as ex:
                 err_message = str(ex.orig)
                 if err_message.find("1007") >= 0:
                     logger.warning(f"Mysql create database warning. {ex}")
-                    create_db_result = Result(
-                        Code.EXISTS, f"Database [{db_name}] already exists"
-                    )
+                    result = Result(Code.EXISTS, f"Database [{db_name}] already exists")
                 else:
                     logger.error(f"Mysql create database error. {ex}")
-                    create_db_result = Result(Code.ERROR, err_message)
-                    return create_db_result, None, None
+                    result = Result(Code.ERROR, err_message)
+        return result
 
-            # 创建用户
+    def create_user(self, user: str, pwd: str, **kwargs) -> Result:
+        ip_range = kwargs.get("ipsource", "%")
+        mysql_user = f"'{user}'@'{ip_range}'"
+        result = Result(
+            Code.OK,
+            f"Create user [{user}] ok, check the console for the key information.",
+        )
+        with self.engine.connect() as conn:
             try:
                 conn.execute(
-                    sqlalchemy.text(
-                        f"CREATE USER {mysql_user} IDENTIFIED WITH {password_method} BY :pwd;"
-                    ),
+                    sqlalchemy.text(f"CREATE USER {mysql_user} IDENTIFIED BY :pwd;"),
                     {"pwd": pwd},
                 )
-                store_secret(self.db_id, db_name, user, pwd)
             except DBAPIError as ex:
                 err_message = str(ex.orig)
                 if err_message.find("1396") >= 0:
                     logger.warning(f"Mysql create user warning. {ex}")
-                    create_user_result = Result(
-                        Code.EXISTS, f"User [{user}] already exists"
-                    )
+                    result = Result(Code.EXISTS, f"User [{user}] already exists")
                 else:
                     logger.error(f"Mysql create user error. {ex}")
-                    create_user_result = Result(Code.ERROR, err_message)
-                    return None, create_user_result, None
+                    result = Result(Code.ERROR, err_message)
+        return result
 
-            # 授权
+    def grant_user(self, user: str, db_name: str, **kwargs) -> Result:
+        ip_range = kwargs.get("ipsource", "%")
+        permissions = kwargs.get(
+            "permissions", ["SELECT", "INSERT", "UPDATE", "DELETE"]
+        )
+        mysql_user = f"'{user}'@'{ip_range}'"
+        result = Result(Code.OK, f"Grant user with {permissions} ok")
+        permissions_text = ",".join(permissions)
+        with self.engine.connect() as conn:
             try:
                 conn.execute(
                     sqlalchemy.text(
@@ -129,62 +129,62 @@ class MysqlCreator(Creator):
             except DBAPIError as ex:
                 err_message = str(ex)
                 logger.warning(f"Mysql grant user error. {ex}")
-                grant_user_result = Result(Code.ERROR, err_message)
-                return None, None, grant_user_result
-        return create_db_result, create_user_result, grant_user_result
+                result = Result(Code.ERROR, err_message)
+        return result
 
 
 class PostgreCreator(Creator):
-
-    def create(
-        self, db_name: str, user: str, pwd: str, **kwargs
-    ) -> tuple[Optional[Result], Optional[Result], Optional[Result]]:
-        permissions = kwargs.get(
-            "permissions", ["SELECT", "INSERT", "UPDATE", "DELETE"]
-        )
-
-        create_db_result, create_user_result, grant_user_result = (
-            self.__get_default_ok_result__(db_name, user, permissions)
-        )
-        permissions_text = ",".join(permissions)
-        engine = create_database_engine(self.db_config)
-        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+    def create_database(self, db_name: str, **kwargs) -> Result:
+        result = Result(Code.OK, f"Create database [{db_name}] ok")
+        with self.engine.connect().execution_options(
+            isolation_level="AUTOCOMMIT"
+        ) as conn:
             try:
                 conn.execute(sqlalchemy.text(f"CREATE DATABASE {db_name}"))
             except DBAPIError as ex:
                 err_message = str(ex.orig)
                 if _ALREADY_EXISTS in err_message:
                     logger.warning(f"Postgre create database warning: {ex}")
-                    create_db_result = Result(
-                        Code.EXISTS, f"Database [{db_name}] already exists"
-                    )
+                    result = Result(Code.EXISTS, f"Database [{db_name}] already exists")
                 else:
-                    create_db_result = Result(Code.ERROR, err_message)
-                    return create_db_result, None, None
+                    result = Result(Code.ERROR, err_message)
+        return result
 
+    def create_user(self, user: str, pwd: str, **kwargs) -> Result:
+        result = Result(
+            Code.OK,
+            f"Create user [{user}] ok, check the console for the key information.",
+        )
+        with self.engine.connect().execution_options(
+            isolation_level="AUTOCOMMIT"
+        ) as conn:
             try:
                 conn.execute(
                     sqlalchemy.text(f"CREATE USER {user} WITH PASSWORD :pwd"),
                     {"pwd": pwd},
                 )
-                store_secret(self.db_id, db_name, user, pwd)
             except DBAPIError as ex:
                 err_message = str(ex.orig)
                 if _ALREADY_EXISTS in err_message:
                     logger.warning(f"Postgre create user warning: {ex}")
-                    create_user_result = Result(
-                        Code.EXISTS, f"User [{user}] already exists"
-                    )
+                    result = Result(Code.EXISTS, f"User [{user}] already exists")
                 else:
-                    create_user_result = Result(Code.ERROR, err_message)
-                    return None, create_user_result, None
+                    result = Result(Code.ERROR, err_message)
+        return result
 
-        # 切换到db，授权
-        engine = create_database_engine(
+    def grant_user(self, user: str, db_name: str, **kwargs) -> Result:
+        permissions = kwargs.get(
+            "permissions", ["SELECT", "INSERT", "UPDATE", "DELETE"]
+        )
+        permissions_text = ",".join(permissions)
+        grant_engine = create_database_engine(
             self.db_config,
             db_name,
         )
-        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+        result = Result(Code.OK, f"Grant user with {permissions} ok")
+        with grant_engine.connect().execution_options(
+            isolation_level="AUTOCOMMIT"
+        ) as conn:
             try:
                 conn.execute(
                     sqlalchemy.text(f"GRANT CONNECT ON DATABASE {db_name} TO {user}")
@@ -203,10 +203,8 @@ class PostgreCreator(Creator):
             except DBAPIError as ex:
                 err_message = str(ex.orig)
                 logger.error(f"Postgre grant user error: {ex}")
-                grant_user_result = Result(Code.ERROR, err_message)
-                return None, None, grant_user_result
-
-        return create_db_result, create_user_result, grant_user_result
+                result = Result(Code.ERROR, err_message)
+        return result
 
 
 def get_creator(db_id: str, db_config) -> Creator:
@@ -219,7 +217,7 @@ def get_creator(db_id: str, db_config) -> Creator:
         raise ConfigOpsException(f"Unsupported dialect {dialect}")
 
 
-def store_secret(db_id: str, db_name: str, user: str, pwd: str):
+def store_secret(db_id: str, user: str, pwd: str):
     _secret = get_config(current_app, "config.node.secret")
     if _secret:
         secret_key = base64.b64decode(_secret)
@@ -231,16 +229,43 @@ def store_secret(db_id: str, db_name: str, user: str, pwd: str):
             )
             .first()
         )
+        
         if provision_secret:
             provision_secret.password = encrypted_password
         else:
             provision_secret = ConfigOpsProvisionSecret(
                 system_id=db_id,
                 system_type=SystemType.DATABASE.value,
-                object=db_name,
+                object="",
                 username=user,
                 password=encrypted_password,
             )
             db.session.add(provision_secret)
-
         db.session.commit()
+
+
+def update_db(db_id: str, db_name: str, user: str) -> Optional[str]:
+    _secret = get_config(current_app, "config.node.secret")
+    if not _secret:
+        return None
+
+    provision_secret = (
+        db.session.query(ConfigOpsProvisionSecret)
+        .filter_by(
+            system_id=db_id, system_type=SystemType.DATABASE.value, username=user
+        )
+        .first()
+    )
+    if provision_secret:
+        if provision_secret.object:
+            db_names = provision_secret.object.split(",")
+            if db_name not in db_names:
+                db_names.append(db_name)
+            provision_secret.object = ",".join(db_names)
+        else:
+            provision_secret.object = db_name
+        db.session.commit()
+        secret_key = base64.b64decode(_secret)
+        raw_password = decrypt_data(provision_secret.password, secret_key).decode()
+        return raw_password
+    return None

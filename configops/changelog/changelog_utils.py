@@ -8,6 +8,7 @@ from configops.utils.secret_util import encrypt_data, decrypt_data
 
 logger = logging.getLogger(__name__)
 
+
 def __clean_string__(value: str) -> str:
     """
     Clean a string by removing leading and trailing whitespace and converting it to lowercase.
@@ -55,13 +56,13 @@ def get_change_set_checksum_new(changes) -> str:
     return hashlib.sha256("".join(new_changes).encode()).hexdigest()
 
 
-def is_ctx_included(contexts: str, changeSetCtx: str) -> bool:
+def is_ctx_included(contexts: str, change_set_ctx: str) -> bool:
     if contexts:
-        contextList = contexts.split(",")
-        if changeSetCtx:
-            changeSetCtxList = changeSetCtx.split(",")
-            for changeSetCtx in changeSetCtxList:
-                if changeSetCtx in contextList:
+        context_list = contexts.split(",")
+        if change_set_ctx:
+            change_set_ctx_list = change_set_ctx.split(",")
+            for change_set_ctx in change_set_ctx_list:
+                if change_set_ctx in context_list:
                     return True
         return False
     else:
@@ -71,7 +72,7 @@ def is_ctx_included(contexts: str, changeSetCtx: str) -> bool:
 def pack_changes(changes, secret: Optional[str]) -> bytes:
     packed_data = msgpack.packb(changes)
     if secret:
-        secret_key = base64.b64decode(secret) 
+        secret_key = base64.b64decode(secret)
         return encrypt_data(packed_data, secret_key)
     return packed_data
 

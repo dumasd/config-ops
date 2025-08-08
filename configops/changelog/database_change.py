@@ -124,24 +124,26 @@ class DatabaseChangeLog:
         # 设置classpath 和 defaultsFile
         liquibase_cfg = get_liquibase_cfg(self.app)
         if liquibase_cfg:
-            defaultsFile = liquibase_cfg.get("defaults-file")
-            jdbcDriverDir = liquibase_cfg.get("jdbc-drivers-dir")
-            defaultsFileOpt = (
+            defaults_file = liquibase_cfg.get("defaults-file")
+            jdbc_driver_dir = liquibase_cfg.get("jdbc-drivers-dir")
+            defaults_file_option = (
                 command_args_str.find("--defaults-file") < 0
                 or command_args_str.find("--defaultsFile") < 0
             )
-            if defaultsFile and os.path.exists(defaultsFile) and defaultsFileOpt:
+            if defaults_file and os.path.exists(defaults_file) and defaults_file_option:
                 command_args_str = (
                     command_args_str
                     + " --defaults-file "
-                    + os.path.abspath(defaultsFile)
+                    + os.path.abspath(defaults_file)
                 )
 
-            classpathOpt = command_args_str.find("--classpath") < 0
-            if jdbcDriverDir and os.path.exists(jdbcDriverDir) and classpathOpt:
+            classpath_option = command_args_str.find("--classpath") < 0
+            if jdbc_driver_dir and os.path.exists(jdbc_driver_dir) and classpath_option:
                 separator = ";" if platform.system() == "Windows" else ":"
-                base = os.path.abspath(jdbcDriverDir)
-                jar_files = [f for f in os.listdir(jdbcDriverDir) if f.endswith(".jar")]
+                base = os.path.abspath(jdbc_driver_dir)
+                jar_files = [
+                    f for f in os.listdir(jdbc_driver_dir) if f.endswith(".jar")
+                ]
                 classpath = separator.join(os.path.join(base, jar) for jar in jar_files)
                 if classpath:
                     command_args_str = command_args_str + " --classpath " + classpath

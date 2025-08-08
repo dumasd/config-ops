@@ -159,19 +159,19 @@ class ElasticsearchChangelog:
                                 f"Repeat include file!!! changeLogFile: {self.changelog_file}, file: {file}"
                             )
                         include_files.append(file)
-                        childLog = ElasticsearchChangelog(
+                        child_log = ElasticsearchChangelog(
                             changelog_file=f"{base_dir}/{file}", app=self.app
                         )
-                        for change_set_id in childLog.change_set_dict:
+                        for change_set_id in child_log.change_set_dict:
                             if change_set_id in changeSetDict:
                                 raise ChangeLogException(
                                     f"Repeat change set id: {change_set_id}. Please check your changelog"
                                 )
                             else:
-                                changeSetDict[change_set_id] = childLog.change_set_dict[
+                                changeSetDict[change_set_id] = child_log.change_set_dict[
                                     change_set_id
                                 ]
-                        changeSets.extend(childLog.change_set_list)
+                        changeSets.extend(child_log.change_set_list)
 
         elif os.path.isdir(self.changelog_file):
             changelogfiles = []
@@ -182,17 +182,17 @@ class ElasticsearchChangelog:
             # 根据文件名排序
             sorted_changelogfiles = sorted(changelogfiles, key=extract_version)
             for file in sorted_changelogfiles:
-                childLog = ElasticsearchChangelog(changelog_file=file, app=self.app)
-                for change_set_id in childLog.change_set_dict:
+                child_log = ElasticsearchChangelog(changelog_file=file, app=self.app)
+                for change_set_id in child_log.change_set_dict:
                     if change_set_id in changeSetDict:
                         raise ChangeLogException(
                             f"Repeat change set id: {change_set_id}. Please check your changelog"
                         )
                     else:
-                        changeSetDict[change_set_id] = childLog.change_set_dict[
+                        changeSetDict[change_set_id] = child_log.change_set_dict[
                             change_set_id
                         ]
-                changeSets.extend(childLog.change_set_list)
+                changeSets.extend(child_log.change_set_list)
 
         else:
             raise ChangeLogException(
@@ -301,8 +301,8 @@ class ElasticsearchChangelog:
         for change_set_obj in self.change_set_list:
             change_set_id = str(change_set_obj["id"])
             # 判断是否在指定的contexts里面
-            changeSetCtx = change_set_obj.get("context")
-            if not changelog_utils.is_ctx_included(contexts, changeSetCtx):
+            change_set_ctx = change_set_obj.get("context")
+            if not changelog_utils.is_ctx_included(contexts, change_set_ctx):
                 continue
 
             is_execute = True
