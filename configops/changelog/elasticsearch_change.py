@@ -205,8 +205,8 @@ class ElasticsearchChangelog:
         self, change_set_obj, elasticsearch_id: str, contexts: str, variables: dict
     ) -> bool:
         change_set_id = str(change_set_obj["id"])
-        checksum = changelog_utils.get_change_set_checksum(
-            {"changes": change_set_obj["changes"]}
+        checksum = changelog_utils.get_change_set_checksum_v2(
+            change_set_obj["changes"], SystemType.ELASTICSEARCH
         )
         current_filename = change_set_obj["filename"]
         is_execute = True

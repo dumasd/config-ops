@@ -9,7 +9,7 @@ nacosChangeLog:
         - namespace: blue
           group: group
           dataId: config.yaml
-          format: yaml # 只支持yaml和properties
+          format: "yaml" # 只支持yaml和properties
           patchContent: |-
             spring: 
               application: 
@@ -18,18 +18,18 @@ nacosChangeLog:
             notice:
             arr:
               list1:
-                - 111
+              - 111
               list2:
-                - name: wk
-                  age: 30
-                  position: dev
+              - name: wk
+                age: 30
+                position: dev
         - namespace: blue
           group: group
           dataId: config.properties
           format: properties
           deleteContent: |-
             delete.aaa = 9
-            delete.ccc = fff  
+            delete.ccc = fff
         - namespace: blue
           group: group
           dataId: config.json
@@ -37,8 +37,7 @@ nacosChangeLog:
           patchContent: |-
             {
               "name": "bruce.wu",
-              "age": 30,
-              "gender": 1,
+              "age": 30, "gender": 1,
               "address": {
                 "country": "China",
                 "province": "Jiangsu",

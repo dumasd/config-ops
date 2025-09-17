@@ -8,4 +8,4 @@ elasticsearchChangeLog:
       changes:
         # RestApi参考：https://elasticsearch.bookhub.tech/rest_apis
         - method: DELETE # elastic api method: GET,PUT,POST,DELETE,HEAD,OPTIONS
-          path: /movies/_doc/ne4hi5MB9ZR8U_UdCzXn # elastic api
+          path: "/movies/_doc/ne4hi5MB9ZR8U_UdCzXn"  # elastic api

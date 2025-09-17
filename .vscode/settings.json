@@ -7,5 +7,6 @@
     "sonarlint.connectedMode.project": {
         "connectionId": "https-sonar-agileforge-tech",
         "projectKey": "devops-config-ops"
-    }
+    },
+    "python.defaultInterpreterPath": ".venv/bin/python"
 }

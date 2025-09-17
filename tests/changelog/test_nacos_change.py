@@ -1,11 +1,9 @@
 import logging
 from ruamel import yaml as ryaml
-from configops.changelog import nacos_change
-from configops.utils import nacos_client
+from configops.changelog import changelog_utils, nacos_change
 from jsonschema import Draft7Validator, ValidationError
-import json
 import unittest
-from configops.app import app
+from configops.utils.constants import SystemType
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +11,16 @@ logger = logging.getLogger(__name__)
 class TestNacosChange(unittest.TestCase):
 
     def setUp(self):
-        app.config["TESTING"] = True
-        self.client = app.test_client()
+        pass
+
+    def test_nacos_checksum(self):
+        changelog_file = "tests/changelog/nacos/changelog-1.0.yaml"
+        nacos_change_log = nacos_change.NacosChangeLog(changelog_file=changelog_file, app=None)
+        for change_set_obj in nacos_change_log.change_set_list:
+            checksum = changelog_utils.get_change_set_checksum_v2(
+                change_set_obj["changes"], SystemType.NACOS
+            )
+            logger.info(f"change_set_id: {change_set_obj['id']}, checksum: {checksum}")
 
     def test_schema_validation(self):
         yaml_content = """

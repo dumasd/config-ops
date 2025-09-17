@@ -260,8 +260,8 @@ class NacosChangeLog:
     ) -> bool:
         change_set_id = str(change_set_obj["id"])
         # 计算checksum
-        checksum = changelog_utils.get_change_set_checksum(
-            {"changes": change_set_obj["changes"]}
+        checksum = changelog_utils.get_change_set_checksum_v2(
+            change_set_obj["changes"], SystemType.NACOS
         )
         current_filename = change_set_obj["filename"]
         is_execute = True
