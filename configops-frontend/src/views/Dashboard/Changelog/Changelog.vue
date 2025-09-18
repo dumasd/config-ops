@@ -115,7 +115,7 @@ const tableColumns = reactive<TableColumn[]>([
               {t('exampleDemo.del')}
             </BaseButton>
             {row.exectype === 'FAILED' && row.system_type !== 'DATABASE' ? (
-              <BaseButton type="warning" onClick={() => skip_change_set(row)}>
+              <BaseButton type="warning" onClick={() => skipChangeSet(row)}>
                 {t('exampleDemo.skip')}
               </BaseButton>
             ) : null}
@@ -195,7 +195,7 @@ const action = (row: any, type: string) => {
   dialogVisible.value = true
 }
 
-const skip_change_set = (row: any) => {
+const skipChangeSet = (row: any) => {
   const data = [
     {
       change_set_id: row.change_set_id,
@@ -205,7 +205,7 @@ const skip_change_set = (row: any) => {
     }
   ]
   updateChangelogsApi(currentObjectId.value, data).then((res) => {
-    ElMessage.success(t('common.ok'))
+    //ElMessage.success(t('common.ok'))
   }).finally(() => {
     getList()
   })

@@ -71,7 +71,7 @@ if [ "$VERBOSE" == "1" ]; then
     echo "Backend dist: $BACKEND_DIST"
 fi
 
-cd $FRONTEND_DIR && npm run build:$ENV
+cd $FRONTEND_DIR && pnpm run build:$ENV
 mkdir -p ${BACKEND_DIST}
 rm -rf ${BACKEND_DIST}/*
 cp -R $FRONTEND_DIR/dist-$ENV/* ${BACKEND_DIST}

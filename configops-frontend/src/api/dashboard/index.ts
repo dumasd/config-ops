@@ -25,7 +25,7 @@ export const updateChangelogsApi = (
   data: any[]
 ): Promise<IResponse<any>> => {
   return request.put({
-    url: '/api/dashboard/changeset/v1',
+    url: '/api/dashboard/changelogs/v1',
     params: { managed_object_id: managed_object_id },
     data: data
   })
