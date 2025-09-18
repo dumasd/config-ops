@@ -525,7 +525,8 @@ export default {
     important: 'Important',
     content: 'Content',
     save: 'Save',
-    detail: 'Detail'
+    detail: 'Detail',
+    skip: 'Skip'
   },
   userDemo: {
     title: 'User management',

@@ -212,6 +212,26 @@ class DeleteChangelogMessageHandler(BaseMessageHandler):
         return BaseResult.ok()
 
 
+class UpdateChangelogMessageHandler(BaseMessageHandler):
+    def handle(self, message: Message, namespace) -> BaseResult:
+        data = message.data
+        system_id = data["system_id"]
+        system_type = SystemType[data["system_type"]]
+        change_sets = data["change_sets"]
+        app = namespace.app
+        with app.app_context():
+            for change_set in change_sets:
+                log = db.session.query(ConfigOpsChangeLog).filter(
+                    ConfigOpsChangeLog.system_id == system_id,
+                    ConfigOpsChangeLog.system_type == system_type.name,
+                    ConfigOpsChangeLog.change_set_id == change_set["change_set_id"],
+                ).first()
+                log.checksum = changelog_utils.get_edit_new_checksum(log.checksum, log.exectype, change_set["exec_status"])
+                log.exectype = change_set["exec_status"]
+            db.session.commit()
+        return BaseResult.ok()
+
+
 class QueryChangesetMessageHandler(BaseMessageHandler):
     def handle(self, message: Message, namespace) -> BaseResult:
         data = message.data
@@ -325,6 +345,7 @@ class QuerySecretMessageHandler(BaseMessageHandler):
 MESSAGE_HANDLER_MAP = {
     MessageType.QUERY_CHANGE_LOG.name: QueryChangelogMessageHandler(),
     MessageType.DELETE_CHANGE_LOG.name: DeleteChangelogMessageHandler(),
+    MessageType.EDIT_CHNAGE_LOG.name: UpdateChangelogMessageHandler(),
     MessageType.QUERY_CHANGE_SET.name: QueryChangesetMessageHandler(),
     MessageType.QUERY_SECRET.name: QuerySecretMessageHandler(),
     MessageType.UPGRADE_WORKER.name: UpgradeWorkerMessageHandler(),

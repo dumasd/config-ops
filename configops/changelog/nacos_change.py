@@ -289,10 +289,11 @@ class NacosChangeLog:
                 log.checksum = checksum
             else:
                 runOnChange = change_set_obj.get("runOnChange", False)
-                if runOnChange and log.checksum != checksum:
+                if runOnChange and changelog_utils.is_changeset_changed(log, checksum):
                     log.exectype = ChangelogExeType.INIT.value
                     log.checksum = checksum
                 else:
+                    log.checksum = checksum
                     is_execute = False
         else:
             log = ConfigOpsChangeLog()

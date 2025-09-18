@@ -515,7 +515,8 @@ export default {
     important: '重要',
     content: '内容',
     save: '保存',
-    detail: '详情'
+    detail: '详情',
+    skip: '跳过'
   },
   userDemo: {
     title: '用户管理',

@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { reactive, ref, unref, watch } from 'vue'
 import { useUserStoreWithOut } from '@/store/modules/user'
-import { getManagedObjectsApi, getChangelogsApi, deleteChangelogsApi } from '@/api/dashboard'
+import { getManagedObjectsApi, getChangelogsApi, deleteChangelogsApi, updateChangelogsApi } from '@/api/dashboard'
 import { ManagedObjectItem, ChangelogItem } from '@/api/dashboard/types'
 import { useTable } from '@/hooks/web/useTable'
 import { useI18n } from '@/hooks/web/useI18n'
@@ -13,7 +13,7 @@ import { useValidator } from '@/hooks/web/useValidator'
 import { BaseButton } from '@/components/Button'
 import Changeset from './components/Changeset.vue'
 import { Dialog } from '@/components/Dialog'
-import { ElOption, FormRules } from 'element-plus'
+import { ElOption, FormRules, ElMessage } from 'element-plus'
 
 const { t } = useI18n()
 
@@ -101,18 +101,24 @@ const tableColumns = reactive<TableColumn[]>([
   {
     field: 'action',
     label: t('userDemo.action'),
-    width: 200,
+    width: 300,
     slots: {
       default: (data: any) => {
         const row = data.row
+        // 获取当前选中的 managed_object 的 system_type
         return (
           <>
+            <BaseButton type="success" onClick={() => action(row, 'detail')}>
+              {t('exampleDemo.detail')}
+            </BaseButton>
             <BaseButton type="danger" onClick={() => delData(row)}>
               {t('exampleDemo.del')}
             </BaseButton>
-            <BaseButton type="danger" onClick={() => action(row, 'detail')}>
-              {t('exampleDemo.detail')}
-            </BaseButton>
+            {row.exectype === 'FAILED' && row.system_type !== 'DATABASE' ? (
+              <BaseButton type="warning" onClick={() => skip_change_set(row)}>
+                {t('exampleDemo.skip')}
+              </BaseButton>
+            ) : null}
           </>
         )
       }
@@ -187,6 +193,22 @@ const action = (row: any, type: string) => {
   actionType.value = type
   currentRow.value = row
   dialogVisible.value = true
+}
+
+const skip_change_set = (row: any) => {
+  const data = [
+    {
+      change_set_id: row.change_set_id,
+      system_id: row.system_id,
+      system_type: row.system_type,
+      exec_status: 'EXECUTED'
+    }
+  ]
+  updateChangelogsApi(currentObjectId.value, data).then((res) => {
+    ElMessage.success(t('common.ok'))
+  }).finally(() => {
+    getList()
+  })
 }
 
 const fetchManagedObjects = () => {

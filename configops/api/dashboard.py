@@ -7,8 +7,8 @@ It is designed to [explain what the file does or its main use case].
 
 from flask import Blueprint, jsonify, make_response, request, current_app, session
 import logging, asyncio, threading, os
-from marshmallow import Schema, fields, EXCLUDE
-from configops.utils.constants import PermissionModule
+from marshmallow import Schema, fields, EXCLUDE, validate
+from configops.utils.constants import PermissionModule, ChangelogExeType
 from configops.database.db import db, ManagedObjects, Worker, GroupPermission
 from configops.api.utils import BaseResult, CallbackFuture, auth_required, do_check_auth
 from marshmallow import Schema, fields, EXCLUDE
@@ -30,6 +30,14 @@ class ApiDeleteChangelogSchema(Schema):
 
     class Meta:
         unknown = EXCLUDE
+
+class ApiUpdateChangelogSchema(Schema):
+    change_set_id = fields.Str(required=True)
+    system_id = fields.Str(required=True)
+    system_type = fields.Str(required=True)
+    exec_status = fields.Str(required=True, validate=validate.OneOf([e.value for e in ChangelogExeType]))
+    class Meta:
+        unknown = EXCLUDE    
 
 
 @bp.route("/api/dashboard/managed_objects/v1", methods=["GET"])
@@ -181,6 +189,60 @@ async def delete_changelogs():
         ).response()
 
 
+@bp.route("/api/dashboard/changelogs/v1", methods=["PUT"])
+async def update_changelogs():
+    check_auth_resp = do_check_auth(
+        module=PermissionModule.MANAGED_OBJECT_CHANGELOG_MANAGE, actions=["EDIT"]
+    )
+    if check_auth_resp:
+        return check_auth_resp
+
+    managed_object_id = request.args["managed_object_id"]
+    managed_object = (
+        db.session.query(ManagedObjects)
+        .filter(ManagedObjects.id == managed_object_id)
+        .first()
+    )
+    changelogs = request.get_json()
+    if len(changelogs) <= 0:
+        return BaseResult().response()
+    
+    change_sets = []
+    for item in changelogs:
+        ApiUpdateChangelogSchema().load(item)
+        if (
+            item["system_id"] != managed_object.system_id
+            or item["system_type"] != managed_object.system_type
+        ):
+            return make_response("Illegal paramaters", 400)
+        change_sets.append(item)
+
+    message = Message(
+        type=MessageType.EDIT_CHNAGE_LOG,
+        data={
+            "system_id": managed_object.system_id,
+            "system_type": managed_object.system_type,
+            "change_sets": change_sets,
+        },
+    )
+
+    event = threading.Event()
+    controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
+    future = CallbackFuture(event)
+
+    controller_ns.send_message(managed_object.worker_id, message, future)
+
+    if event.wait(5):
+        result = future.result()
+        if result:
+            return result
+        else:
+            raise future.exception()
+    else:
+        return BaseResult.error(
+            "Update timed out. Please refresh the data or try again."
+        ).response()
+
 @bp.route("/api/dashboard/changeset/v1", methods=["GET"])
 async def get_changeset():
     check_auth_resp = do_check_auth(
@@ -225,6 +287,8 @@ async def get_changeset():
         return BaseResult.error(
             "Deletion timed out. Please refresh the data or try again."
         ).response()
+
+    
 
 
 @bp.route("/api/dashboard/secrets/v1", methods=["GET"])

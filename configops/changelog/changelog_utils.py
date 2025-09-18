@@ -5,13 +5,16 @@ import hashlib
 import msgpack
 import base64
 import logging
+from configops.database.db import ConfigOpsChangeLog
 from configops.utils import config_handler
-from configops.utils.constants import SystemType, UNKNOWN
+from configops.utils.constants import ChangelogExeType, SystemType, UNKNOWN
 from configops.utils.secret_util import encrypt_data, decrypt_data
 
 logger = logging.getLogger(__name__)
 
-CHECKSUM_VERSION = "2"
+CHECKSUM_VERSION_V0 = "0" # 手动将changeset置为success时，用的version
+CHECKSUM_VERSION_V1 = "1"
+CHECKSUM_VERSION_V2 = "2"
 
 
 def __clean_string__(value: str) -> str:
@@ -81,7 +84,36 @@ def get_change_set_checksum_v2(changes, system_type: SystemType) -> str:
         change_str = json.dumps(change, sort_keys=True, ensure_ascii=False)
         change_hash = hashlib.sha256(change_str.encode()).hexdigest()
         checksum_changes.append(change_hash)
-    return CHECKSUM_VERSION + ":" +hashlib.sha256("".join(checksum_changes).encode()).hexdigest()
+    return CHECKSUM_VERSION_V2 + ":" +hashlib.sha256("".join(checksum_changes).encode()).hexdigest()
+
+def is_changeset_changed(config_ops_change_log: ConfigOpsChangeLog, checksum: str) -> bool:
+    if not config_ops_change_log.checksum:
+        return True
+    if config_ops_change_log.checksum == checksum:
+        return False
+    pre_version_checksume = config_ops_change_log.checksum.split(":")
+    new_version_checksume = checksum.split(":")
+
+    pre_version = CHECKSUM_VERSION_V1 if len(pre_version_checksume) <= 1 else pre_version_checksume[0]
+    new_version = CHECKSUM_VERSION_V1 if len(new_version_checksume) <= 1 else new_version_checksume[0]
+
+    if pre_version != new_version:
+        # checksum version is not the same, consider as not changed
+        return False
+
+    pre_checksum = pre_version_checksume[0] if len(pre_version_checksume) <= 1 else pre_version_checksume[1]
+    new_checksum = new_version_checksume[0] if len(new_version_checksume) <= 1 else new_version_checksume[1]
+    return pre_checksum != new_checksum
+
+def get_edit_new_checksum(checksum:str, old_exectype:str, new_exectype:str) -> str:
+    if old_exectype == new_exectype:
+        return checksum
+    pre_version_checksume = checksum.split(":")
+    pre_checksum = pre_version_checksume[0] if len(pre_version_checksume) <= 1 else pre_version_checksume[1]
+    if (old_exectype == ChangelogExeType.FAILED.value or old_exectype == ChangelogExeType.INIT.value) and new_exectype == ChangelogExeType.EXECUTED.value:
+        # 表示跳过，重新设置version为0，下次执行时会重新计算checksum
+        return CHECKSUM_VERSION_V0 + ":" + pre_checksum
+    return checksum
 
 
 def is_ctx_included(contexts: str, change_set_ctx: str) -> bool:

@@ -20,6 +20,17 @@ export const deleteChangelogsApi = (
   })
 }
 
+export const updateChangelogsApi = (
+  managed_object_id,
+  data: any[]
+): Promise<IResponse<any>> => {
+  return request.put({
+    url: '/api/dashboard/changeset/v1',
+    params: { managed_object_id: managed_object_id },
+    data: data
+  })
+}
+
 export const getChangesetApi = (searchParams): Promise<IResponse<ChangelogItem[]>> => {
   return request.get({ url: '/api/dashboard/changeset/v1', params: searchParams })
 }
