@@ -1,7 +1,7 @@
-import logging, uuid, asyncio
+import logging
 from flask import request
-from flask_socketio import Namespace, send, emit, disconnect
-from configops.utils.constants import CONTROLLER_NAMESPACE
+from flask_socketio import Namespace, emit, disconnect
+from configops.utils.constants import CONTROLLER_NAMESPACE, FutureCallback
 from configops.database.db import (
     db,
     Worker,
@@ -27,7 +27,7 @@ class ControllerNamespace(Namespace):
         super().__init__(namespace)
         self.app = app
         self.worker_map = {}
-        self.send_future_map = {}
+        self.send_callback_map = {}
 
     def is_worker_online(self, worker_id) -> Optional[ClusterWorkerInfo]:
         for worker_info in self.worker_map.values():
@@ -35,7 +35,7 @@ class ControllerNamespace(Namespace):
                 return worker_info
         return None
 
-    def send_message(self, worker_id, message: Message, future: asyncio.Future = None):
+    def send_message(self, worker_id, message: Message, callback: FutureCallback = None):
         worker_info = self.is_worker_online(worker_id)
         if worker_info:
             emit(
@@ -45,10 +45,10 @@ class ControllerNamespace(Namespace):
                 namespace=self.namespace,
                 broadcast=False,
             )
-            if future:
-                self.send_future_map[message.request_id] = future
-        elif future:
-            future.set_exception(ConfigOpsException("Worker is offline"))
+            if callback:
+                self.send_callback_map[message.request_id] = callback
+        elif callback:
+            callback.on_error(ConfigOpsException("Worker is offline"))
 
     def on_connect(self, auth):
         worker_name = auth["name"]
@@ -162,12 +162,11 @@ class WorkerInfoMessageHandler(ManagedObjectsMessageHandler):
 
 
 class CommonFuturedMessageHandler(BaseMessageHandler):
-
+    
     def handle(self, sid, message: Message, namespace: ControllerNamespace):
-        future = namespace.send_future_map.pop(message.request_id)
-        if future:
-            future.set_result(message.data)
-
+        callable = namespace.send_callback_map.pop(message.request_id)
+        if callable:
+            callable.on_complete(message.data)
 
 MESSAGE_HANDLER_MAP = {}
 

@@ -5,12 +5,12 @@ This Python file contains functionality for [briefly describe the purpose of the
 It is designed to [explain what the file does or its main use case].
 """
 
-from flask import Blueprint, jsonify, make_response, request, current_app, session
-import logging, asyncio, threading, os
+from flask import Blueprint, make_response, request, current_app, session
+import logging, asyncio, os
 from marshmallow import Schema, fields, EXCLUDE, validate
-from configops.utils.constants import PermissionModule, ChangelogExeType
+from configops.utils.constants import PermissionModule, ChangelogExeType, FutureCallback
 from configops.database.db import db, ManagedObjects, Worker, GroupPermission
-from configops.api.utils import BaseResult, CallbackFuture, auth_required, do_check_auth
+from configops.api.utils import BaseResult, auth_required, do_check_auth
 from marshmallow import Schema, fields, EXCLUDE
 from configops.utils.constants import CONTROLLER_NAMESPACE, X_WORKSPACE
 from configops.cluster.messages import Message, MessageType
@@ -31,13 +31,17 @@ class ApiDeleteChangelogSchema(Schema):
     class Meta:
         unknown = EXCLUDE
 
+
 class ApiUpdateChangelogSchema(Schema):
     change_set_id = fields.Str(required=True)
     system_id = fields.Str(required=True)
     system_type = fields.Str(required=True)
-    exec_status = fields.Str(required=True, validate=validate.OneOf([e.value for e in ChangelogExeType]))
+    exec_status = fields.Str(
+        required=True, validate=validate.OneOf([e.value for e in ChangelogExeType])
+    )
+
     class Meta:
-        unknown = EXCLUDE    
+        unknown = EXCLUDE
 
 
 @bp.route("/api/dashboard/managed_objects/v1", methods=["GET"])
@@ -117,19 +121,15 @@ async def get_changelogs():
             "system_type": managed_object.system_type,
         },
     )
-    event = threading.Event()
-    future = CallbackFuture(event)
+    loop = asyncio.get_event_loop()
+    future = loop.create_future()
+    callback = FutureCallback(future, loop)
 
     controller_namespace = current_app.config.get(CONTROLLER_NAMESPACE)
-    controller_namespace.send_message(managed_object.worker_id, message, future)
-    if event.wait(5):
-        result = future.result()
-        if result:
-            return result
-        else:
-            raise future.exception()
-    else:
-        # 超时了
+    controller_namespace.send_message(managed_object.worker_id, message, callback)
+    try:
+        return await asyncio.wait_for(future, timeout=5.0)
+    except asyncio.TimeoutError:
         return BaseResult(data=[]).response(0)
 
 
@@ -172,18 +172,15 @@ async def delete_changelogs():
         },
     )
 
-    event = threading.Event()
-    controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
-    future = CallbackFuture(event)
-    controller_ns.send_message(managed_object.worker_id, message, future)
+    loop = asyncio.get_event_loop()
+    future = loop.create_future()
+    callback = FutureCallback(future, loop)
 
-    if event.wait(5):
-        result = future.result()
-        if result:
-            return result
-        else:
-            raise future.exception()
-    else:
+    controller_namespace = current_app.config.get(CONTROLLER_NAMESPACE)
+    controller_namespace.send_message(managed_object.worker_id, message, callback)
+    try:
+        return await asyncio.wait_for(future, timeout=5.0)
+    except asyncio.TimeoutError:
         return BaseResult.error(
             "Deletion timed out. Please refresh the data or try again."
         ).response()
@@ -206,7 +203,7 @@ async def update_changelogs():
     changelogs = request.get_json()
     if len(changelogs) <= 0:
         return BaseResult().response()
-    
+
     change_sets = []
     for item in changelogs:
         ApiUpdateChangelogSchema().load(item)
@@ -226,22 +223,19 @@ async def update_changelogs():
         },
     )
 
-    event = threading.Event()
-    controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
-    future = CallbackFuture(event)
+    loop = asyncio.get_event_loop()
+    future = loop.create_future()
+    callback = FutureCallback(future, loop)
 
-    controller_ns.send_message(managed_object.worker_id, message, future)
-
-    if event.wait(5):
-        result = future.result()
-        if result:
-            return result
-        else:
-            raise future.exception()
-    else:
+    controller_namespace = current_app.config.get(CONTROLLER_NAMESPACE)
+    controller_namespace.send_message(managed_object.worker_id, message, callback)
+    try:
+        return await asyncio.wait_for(future, timeout=5.0)
+    except asyncio.TimeoutError:
         return BaseResult.error(
             "Update timed out. Please refresh the data or try again."
         ).response()
+
 
 @bp.route("/api/dashboard/changeset/v1", methods=["GET"])
 async def get_changeset():
@@ -271,24 +265,18 @@ async def get_changeset():
         },
     )
 
-    event = threading.Event()
-    controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
-    future = CallbackFuture(event)
+    loop = asyncio.get_event_loop()
+    future = loop.create_future()
+    callback = FutureCallback(future, loop)
 
-    controller_ns.send_message(managed_object.worker_id, message, future)
-
-    if event.wait(5):
-        result = future.result()
-        if result:
-            return result
-        else:
-            raise future.exception()
-    else:
+    controller_namespace = current_app.config.get(CONTROLLER_NAMESPACE)
+    controller_namespace.send_message(managed_object.worker_id, message, callback)
+    try:
+        return await asyncio.wait_for(future, timeout=5.0)
+    except asyncio.TimeoutError:
         return BaseResult.error(
-            "Deletion timed out. Please refresh the data or try again."
+            "Get timed out. Please refresh the data or try again."
         ).response()
-
-    
 
 
 @bp.route("/api/dashboard/secrets/v1", methods=["GET"])
@@ -321,19 +309,15 @@ async def get_secrets():
         },
     )
 
-    event = threading.Event()
-    controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
-    future = CallbackFuture(event)
+    loop = asyncio.get_event_loop()
+    future = loop.create_future()
+    callback = FutureCallback(future, loop)
 
-    controller_ns.send_message(managed_object.worker_id, message, future)
-
-    if event.wait(20):
-        result = future.result()
-        if result:
-            return result
-        else:
-            raise future.exception()
-    else:
+    controller_namespace = current_app.config.get(CONTROLLER_NAMESPACE)
+    controller_namespace.send_message(managed_object.worker_id, message, callback)
+    try:
+        return await asyncio.wait_for(future, timeout=5.0)
+    except asyncio.TimeoutError:
         return BaseResult.error(
-            "Deletion timed out. Please refresh the data or try again."
+            "Timed out. Please refresh the data or try again."
         ).response()

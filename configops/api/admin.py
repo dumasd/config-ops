@@ -1,5 +1,5 @@
-from flask import Blueprint, jsonify, make_response, request, current_app
-import logging, asyncio, threading
+from flask import Blueprint, make_response, request, current_app
+import logging, asyncio
 import os
 import secrets
 import base64
@@ -16,9 +16,9 @@ from configops.database.db import (
     Group,
     paginate,
 )
-from configops.api.utils import BaseResult, CallbackFuture, auth_required, do_check_auth
+from configops.api.utils import BaseResult, auth_required, do_check_auth
 from marshmallow import Schema, fields, EXCLUDE, validate
-from configops.utils.constants import CONTROLLER_NAMESPACE
+from configops.utils.constants import CONTROLLER_NAMESPACE, FutureCallback
 from configops.cluster.messages import Message, MessageType
 
 
@@ -461,11 +461,13 @@ async def upgrade_worker():
         type=MessageType.UPGRADE_WORKER,
         data=data,
     )
-    event = threading.Event()
-    future = CallbackFuture(event)
-    controller_ns = current_app.config.get(CONTROLLER_NAMESPACE)
-    controller_ns.send_message(worker_id, message, future)
 
+    loop = asyncio.get_event_loop()
+    future = loop.create_future()
+    callback = FutureCallback(future, loop)
+
+    controller_namespace = current_app.config.get(CONTROLLER_NAMESPACE)
+    controller_namespace.send_message(worker_id, message, callback)
     return BaseResult().response(0)
 
 

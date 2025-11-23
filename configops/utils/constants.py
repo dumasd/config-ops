@@ -109,3 +109,16 @@ def extract_version(name):
         suffix = match.group(2) or ""
         return version_numbers, suffix
     return (0,), ""  # 默认返回最小版本
+
+class FutureCallback:
+    def __init__(self, future, loop):
+        self.future = future
+        self.loop = loop
+
+    def on_complete(self, result: any):
+        if self.future and not self.future.done():
+            self.loop.call_soon_threadsafe(self.future.set_result, result)
+
+    def on_error(self, error: Exception):
+        if self.future and not self.future.done():
+            self.loop.call_soon_threadsafe(self.future.set_exception, error)
